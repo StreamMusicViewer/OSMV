@@ -1,7 +1,7 @@
 <Window x:Class="OBS_StreamMusicViewer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="OBS Stream Music Viewer" Height="185" Width="420"
+        Title="OBS Stream Music Viewer" Height="240" Width="420"
         Background="#18181A" WindowStyle="SingleBorderWindow"
         ResizeMode="CanMinimize"
         ShowInTaskbar="True"
@@ -40,6 +40,23 @@
                       Foreground="#B0B0B0" FontSize="12" Margin="0,8,0,0"
                       Checked="DynamicColorCheckBox_Changed"
                       Unchecked="DynamicColorCheckBox_Changed"/>
+
+            <!-- Option : visualiseur audio -->
+            <CheckBox x:Name="AudioVisualizerCheckBox"
+                      Content="&#x1F39A; Visualiseur audio"
+                      Foreground="#B0B0B0" FontSize="12" Margin="0,4,0,0"
+                      Checked="AudioVisualizerCheckBox_Changed"
+                      Unchecked="AudioVisualizerCheckBox_Changed"/>
+
+            <!-- Sélection du périphérique audio -->
+            <StackPanel x:Name="AudioDevicePanel" Margin="12,4,0,0" Orientation="Horizontal" Visibility="Collapsed">
+                <TextBlock Text="&#x1F50A;" Foreground="#606060" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <ComboBox x:Name="AudioDeviceComboBox"
+                          Width="220" Height="22" FontSize="11"
+                          Background="#28282A" Foreground="#B0B0B0"
+                          BorderBrush="#404040"
+                          SelectionChanged="AudioDeviceComboBox_SelectionChanged"/>
+            </StackPanel>
 
             <!-- Error message if needed -->
             <TextBlock x:Name="ErrorText" Text=""

@@ -9,41 +9,172 @@
 </head>
 
 <body>
-    <div id="now-playing-widget" class="widget-container">
-        <div id="content" class="content">
-            <div class="album-art-container">
-                <img id="album-art" src="" alt="Album Art" class="album-art">
-                <div class="music-icon">🎵</div>
-            </div>
-            <div class="track-info">
-                <div id="title" class="track-title"><span class="scroll-text">Aucune lecture en cours</span></div>
-                <div id="artist" class="track-artist"><span class="scroll-text"></span></div>
+    <!-- Conteneur flex : visualiseur + widget empilés -->
+    <div class="obs-stack">
+
+        <!-- Visualiseur audio (flexbox pousse automatiquement au-dessus du widget) -->
+        <div id="visualizer-wrapper" class="visualizer-wrapper visualizer-hidden">
+            <canvas id="visualizer"></canvas>
+        </div>
+
+        <div id="now-playing-widget" class="widget-container">
+            <div id="content" class="content">
+                <div class="album-art-container">
+                    <img id="album-art" src="" alt="Album Art" class="album-art">
+                    <div class="music-icon">🎵</div>
+                </div>
+                <div class="track-info">
+                    <div id="title" class="track-title"><span class="scroll-text">Aucune lecture en cours</span></div>
+                    <div id="artist" class="track-artist"><span class="scroll-text"></span></div>
+                </div>
             </div>
         </div>
-    </div>
+
+    </div><!-- /.obs-stack -->
 
     <!-- Canvas caché pour l'extraction de couleur -->
     <canvas id="color-canvas" style="display:none;"></canvas>
 
     <script>
+        // ═══════════════════════════════════════════════════════════════
+        //  AudioVisualizer — 20 barres lues depuis le tableau fft[] du JSON
+        //  L'app C# (WASAPI Loopback + FFT) écrit les valeurs, on les affiche.
+        // ═══════════════════════════════════════════════════════════════
+        class AudioVisualizer {
+            constructor(canvasId, wrapperId) {
+                this.canvas = document.getElementById(canvasId);
+                this.wrapper = document.getElementById(wrapperId);
+                this.ctx = this.canvas.getContext('2d');
+                this.BAR_COUNT = 20;
+                this.hue = 260; // violet par défaut
+                this._enabled = false;
+                this._animFrame = null;
+
+                // Valeurs courantes interpolées (pour une animation fluide entre les frames JSON ~1s)
+                this._current = new Float32Array(this.BAR_COUNT).fill(0);
+                // Cible venant du dernier JSON
+                this._target = new Float32Array(this.BAR_COUNT).fill(0);
+
+                this._resizeObserver = new ResizeObserver(() => this._resize());
+                this._resizeObserver.observe(this.wrapper);
+                this._resize();
+            }
+
+            _resize() {
+                const w = this.wrapper.offsetWidth;
+                const h = this.wrapper.offsetHeight;
+                if (w > 0 && h > 0) {
+                    this.canvas.width = w;
+                    this.canvas.height = h;
+                }
+            }
+
+            enable() {
+                if (this._enabled) return;
+                this._enabled = true;
+                this.wrapper.classList.remove('visualizer-hidden');
+                this._draw();
+            }
+
+            disable() {
+                if (!this._enabled) return;
+                this._enabled = false;
+                this.wrapper.classList.add('visualizer-hidden');
+                if (this._animFrame) {
+                    cancelAnimationFrame(this._animFrame);
+                    this._animFrame = null;
+                }
+                this._current.fill(0);
+                this._target.fill(0);
+            }
+
+            /** Met à jour les cibles depuis le tableau fft[] du JSON (20 valeurs 0–1) */
+            updateBands(fftArray) {
+                if (!fftArray || fftArray.length < this.BAR_COUNT) return;
+                for (let i = 0; i < this.BAR_COUNT; i++)
+                    this._target[i] = fftArray[i];
+            }
+
+            /** Met à jour la teinte (même hue que le fond dynamique du widget) */
+            setHue(h) { this.hue = h; }
+
+            _draw() {
+                if (!this._enabled) return;
+                this._animFrame = requestAnimationFrame(() => this._draw());
+
+                const { canvas, ctx, BAR_COUNT } = this;
+                const W = canvas.width;
+                const H = canvas.height;
+
+                ctx.clearRect(0, 0, W, H);
+
+                // Interpolation exponentielle vers la cible (smooth visuel entre frames JSON)
+                const LERP = 0.15;
+                for (let i = 0; i < BAR_COUNT; i++)
+                    this._current[i] += (this._target[i] - this._current[i]) * LERP;
+
+                const GAP = 4;
+                const barWidth = (W - GAP * (BAR_COUNT - 1)) / BAR_COUNT;
+                const MIN_H = 3;
+                const h = this.hue;
+
+                for (let i = 0; i < BAR_COUNT; i++) {
+                    const amp = this._current[i];
+                    const barH = Math.max(MIN_H, amp * H);
+                    const x = i * (barWidth + GAP);
+                    const y = H - barH;
+
+                    // Gradient vertical
+                    const grad = ctx.createLinearGradient(0, y, 0, H);
+                    grad.addColorStop(0, `hsla(${h}, 85%, 72%, 0.85)`);
+                    grad.addColorStop(0.5, `hsla(${h}, 80%, 55%, 0.92)`);
+                    grad.addColorStop(1, `hsla(${h}, 75%, 40%, 1.00)`);
+
+                    // Barre arrondie en haut
+                    const radius = Math.min(barWidth / 2, 4);
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + barWidth - radius, y);
+                    ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
+                    ctx.lineTo(x + barWidth, H);
+                    ctx.lineTo(x, H);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Reflet brillant sur le pic
+                    if (amp > 0.05) {
+                        ctx.fillStyle = `hsla(${h}, 100%, 90%, ${amp * 0.55})`;
+                        ctx.fillRect(x + 1, y, barWidth - 2, 2);
+                    }
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  NowPlayingWidget
+        // ═══════════════════════════════════════════════════════════════
         class NowPlayingWidget {
             constructor() {
                 this.currentSong = null;
                 this.updateInterval = 1000; // 1 seconde
-                this.autoReloadInterval = 10 * 60 * 1000; // 10 minutes
+                this.autoReloadInterval = 10 * 60 * 1000;
                 this.jsonFile = 'current_song.json';
 
-                // Timer pour masquer le widget après 10s d'inactivité
-                this.hideDelay = 10 * 1000; // 10 secondes
+                this.hideDelay = 10 * 1000;
                 this._hideTimer = null;
                 this._widgetVisible = true;
 
-                // Couleur dynamique
                 this._dynamicColorEnabled = false;
                 this._colorCanvas = document.getElementById('color-canvas');
                 this._colorCtx = this._colorCanvas.getContext('2d');
+                this._currentHue = 260;
 
-                // Éléments DOM
+                this._audioVisualizerEnabled = false;
+                this._visualizer = new AudioVisualizer('visualizer', 'visualizer-wrapper');
+
                 this.elements = {
                     container: document.getElementById('now-playing-widget'),
                     content: document.getElementById('content'),
@@ -62,18 +193,12 @@
 
             async fetchCurrentSong() {
                 try {
-                    // Ajouter un timestamp pour éviter le cache
                     const cacheBuster = `?t=${Date.now()}`;
                     const response = await fetch(this.jsonFile + cacheBuster);
-
-                    if (!response.ok) {
-                        throw new Error('Fichier JSON non trouvé');
-                    }
-
-                    const data = await response.json();
-                    return data;
+                    if (!response.ok) throw new Error('Fichier JSON non trouvé');
+                    return await response.json();
                 } catch (error) {
-                    console.error('Erreur lors de la lecture du fichier JSON:', error);
+                    console.error('Erreur JSON:', error);
                     return null;
                 }
             }
@@ -82,7 +207,6 @@
                 if (!this.currentSong && newSong) return true;
                 if (this.currentSong && !newSong) return true;
                 if (!this.currentSong && !newSong) return false;
-
                 return (
                     this.currentSong.title !== newSong.title ||
                     this.currentSong.artist !== newSong.artist ||
@@ -90,51 +214,30 @@
                 );
             }
 
-            // ─── Couleur dynamique ───────────────────────────────────────────
-
-            /**
-             * Extrait la couleur dominante d'une image base64 via canvas.
-             * Utilise un échantillonnage par blocs pour trouver la teinte la plus présente.
-             * Retourne {r, g, b} ou null.
-             */
+            // ─── Couleur dynamique ──────────────────────────────────────────
             extractDominantColor(base64) {
                 return new Promise((resolve) => {
                     const img = new Image();
                     img.crossOrigin = 'anonymous';
                     img.onload = () => {
-                        const SIZE = 80; // réduire pour perf
+                        const SIZE = 80;
                         this._colorCanvas.width = SIZE;
                         this._colorCanvas.height = SIZE;
                         this._colorCtx.drawImage(img, 0, 0, SIZE, SIZE);
-
                         const data = this._colorCtx.getImageData(0, 0, SIZE, SIZE).data;
 
-                        // Bucket par teinte (HSL) pour trouver la couleur dominante non-neutre
                         const buckets = new Array(36).fill(0).map(() => ({ r: 0, g: 0, b: 0, count: 0 }));
-
                         for (let i = 0; i < data.length; i += 4) {
                             const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
                             if (a < 128) continue;
-
                             const { h, s, l } = this.rgbToHsl(r, g, b);
-                            // Ignorer les couleurs trop neutres (grises/blanc/noir)
                             if (s < 0.15 || l < 0.1 || l > 0.9) continue;
-
                             const bucket = Math.floor(h / 10);
-                            buckets[bucket].r += r;
-                            buckets[bucket].g += g;
-                            buckets[bucket].b += b;
-                            buckets[bucket].count += 1;
+                            buckets[bucket].r += r; buckets[bucket].g += g;
+                            buckets[bucket].b += b; buckets[bucket].count++;
                         }
-
-                        // Trouver le bucket le plus peuplé
                         let best = buckets.reduce((a, b) => b.count > a.count ? b : a, buckets[0]);
-
-                        if (best.count === 0) {
-                            resolve(null);
-                            return;
-                        }
-
+                        if (best.count === 0) { resolve(null); return; }
                         resolve({
                             r: Math.round(best.r / best.count),
                             g: Math.round(best.g / best.count),
@@ -150,9 +253,8 @@
                 r /= 255; g /= 255; b /= 255;
                 const max = Math.max(r, g, b), min = Math.min(r, g, b);
                 let h, s, l = (max + min) / 2;
-                if (max === min) {
-                    h = s = 0;
-                } else {
+                if (max === min) { h = s = 0; }
+                else {
                     const d = max - min;
                     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
                     switch (max) {
@@ -164,61 +266,44 @@
                 return { h: h * 360, s, l };
             }
 
-            /**
-             * Applique la couleur dominante au widget sous forme de fond semi-transparent
-             * et d'une bordure lumineuse colorée.
-             */
             applyDynamicColor(color) {
                 const c = this.elements.container;
-                if (!color) {
-                    this.resetDynamicColor();
-                    return;
-                }
+                if (!color) { this.resetDynamicColor(); return; }
                 const { r, g, b } = color;
-                // Fond : version sombre et saturée de la couleur (L≈20%, S≈75%)
                 const { h } = this.rgbToHsl(r, g, b);
+                this._currentHue = h;
+                this._visualizer.setHue(h);
+
                 const bgCol = `hsl(${h.toFixed(0)}, 75%, 20%)`;
                 const brdCol = `hsl(${h.toFixed(0)}, 80%, 55%)`;
                 c.style.background = bgCol;
-                c.style.borderColor = `hsl(${h.toFixed(0)}, 70%, 45%)`;
                 c.style.border = `1px solid hsl(${h.toFixed(0)}, 70%, 45%)`;
                 c.style.boxShadow =
-                    `0 8px 32px rgba(0, 0, 0, 0.5),` +
+                    `0 8px 32px rgba(0,0,0,0.5),` +
                     `0 0 0 1px ${brdCol} inset,` +
                     `0 0 30px hsl(${h.toFixed(0)}, 80%, 35% / 0.4)`;
             }
 
             resetDynamicColor() {
                 const c = this.elements.container;
-                c.style.background = '';
-                c.style.borderColor = '';
-                c.style.boxShadow = '';
+                c.style.background = ''; c.style.borderColor = ''; c.style.boxShadow = '';
+                this._currentHue = 260;
+                this._visualizer.setHue(260);
             }
 
-            // ─── Affichage ───────────────────────────────────────────────────
-
-            // Démarre le timer pour masquer le widget
+            // ─── Affichage ──────────────────────────────────────────────────
             scheduleHide() {
-                if (this._hideTimer) return; // déjà planifié
-                this._hideTimer = setTimeout(() => {
-                    this.hideWidget();
-                }, this.hideDelay);
+                if (this._hideTimer) return;
+                this._hideTimer = setTimeout(() => this.hideWidget(), this.hideDelay);
             }
 
-            // Annule le timer et s'assure que le widget est visible
             cancelHide() {
-                if (this._hideTimer) {
-                    clearTimeout(this._hideTimer);
-                    this._hideTimer = null;
-                }
-                if (!this._widgetVisible) {
-                    this.showWidget();
-                }
+                if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
+                if (!this._widgetVisible) this.showWidget();
             }
 
             hideWidget() {
-                this._widgetVisible = false;
-                this._hideTimer = null;
+                this._widgetVisible = false; this._hideTimer = null;
                 this.elements.container.classList.add('widget-hidden');
             }
 
@@ -228,25 +313,33 @@
             }
 
             async updateDisplay(songData) {
-                const isInactive = !songData || songData.status === 'paused' ||
-                    songData.status === 'closed' || songData.status === 'stopped';
+                const isInactive = !songData ||
+                    songData.status === 'paused' || songData.status === 'closed' ||
+                    songData.status === 'stopped';
 
-                if (isInactive) {
-                    this.scheduleHide();
-                } else {
-                    this.cancelHide();
-                }
+                isInactive ? this.scheduleHide() : this.cancelHide();
 
-                // Lire l'option couleur dynamique depuis le JSON
+                // ── Couleur dynamique ────────────────────────────────────────
                 const dynColorFromJson = songData && songData.dynamicColor === true;
                 if (dynColorFromJson !== this._dynamicColorEnabled) {
                     this._dynamicColorEnabled = dynColorFromJson;
-                    if (!this._dynamicColorEnabled) {
-                        this.resetDynamicColor();
-                    }
+                    if (!this._dynamicColorEnabled) this.resetDynamicColor();
                 }
 
-                // Si aucune chanson n'est en lecture
+                // ── Visualiseur audio ────────────────────────────────────────
+                const vizFromJson = songData && songData.audioVisualizer === true;
+                if (vizFromJson !== this._audioVisualizerEnabled) {
+                    this._audioVisualizerEnabled = vizFromJson;
+                    if (this._audioVisualizerEnabled) this._visualizer.enable();
+                    else this._visualizer.disable();
+                }
+
+                // Injecter les données FFT fraîches à chaque poll
+                if (this._audioVisualizerEnabled && songData && songData.fft) {
+                    this._visualizer.updateBands(songData.fft);
+                }
+
+                // ── Aucune chanson ───────────────────────────────────────────
                 if (!songData) {
                     await this.fadeOut();
                     this.setScrollText(this.elements.title, 'Aucune lecture en cours');
@@ -257,23 +350,17 @@
                     return;
                 }
 
-                // Vérifier si la chanson a changé
+                // ── Changement de chanson ────────────────────────────────────
                 if (this.hasSongChanged(songData)) {
-                    console.log('🎵 Nouvelle chanson:', songData.title, '-', songData.artist);
-
-                    // Transition fade out
+                    console.log('🎵', songData.title, '-', songData.artist);
                     await this.fadeOut();
 
-                    // Mise à jour du contenu
                     this.setScrollText(this.elements.title, songData.title);
                     this.setScrollText(this.elements.artist, songData.artist);
 
-                    // Mise à jour de la pochette d'album
                     if (songData.thumbnail) {
                         this.elements.albumArt.src = `data:image/jpeg;base64,${songData.thumbnail}`;
                         this.elements.albumArt.style.display = 'block';
-
-                        // Couleur dynamique si activée
                         if (this._dynamicColorEnabled) {
                             const color = await this.extractDominantColor(songData.thumbnail);
                             this.applyDynamicColor(color);
@@ -283,63 +370,39 @@
                         this.resetDynamicColor();
                     }
 
-                    // Transition fade in
                     await this.fadeIn();
-
                     this.currentSong = songData;
                 }
             }
 
-            // Définit le texte et active le défilement si nécessaire
             setScrollText(container, text) {
                 const span = container.querySelector('.scroll-text');
-
-                // Annuler le cycle en cours
-                if (span._scrollTimer) {
-                    clearTimeout(span._scrollTimer);
-                    span._scrollTimer = null;
-                }
+                if (span._scrollTimer) { clearTimeout(span._scrollTimer); span._scrollTimer = null; }
                 span.style.transition = 'none';
                 span.style.transform = 'translateX(0)';
                 span.textContent = text;
-
-                // Mesurer le débordement après rendu
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        const overflow = span.scrollWidth - container.clientWidth;
-                        if (overflow > 0) {
-                            this.startScrollCycle(span, overflow);
-                        }
-                    });
-                });
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    const overflow = span.scrollWidth - container.clientWidth;
+                    if (overflow > 0) this.startScrollCycle(span, overflow);
+                }));
             }
 
-            // Cycle : pause → ← gauche → pause → droite → → recommence
             startScrollCycle(span, overflow) {
                 const scrollDuration = Math.min(18000, Math.max(5000, (overflow / 50) * 1000));
-                const pauseDuration = 3000; // 3s aux deux bouts
-
+                const pause = 3000;
                 const doCycle = () => {
-                    // Phase 1 : pause au début (position gauche)
                     span._scrollTimer = setTimeout(() => {
-                        // Phase 2 : défilement vers la gauche
                         span.style.transition = `transform ${scrollDuration}ms linear`;
                         span.style.transform = `translateX(-${overflow}px)`;
-
-                        // Phase 3 : pause à la fin
                         span._scrollTimer = setTimeout(() => {
                             span._scrollTimer = setTimeout(() => {
-                                // Phase 4 : retour vers la droite en douceur
                                 span.style.transition = `transform ${scrollDuration}ms linear`;
                                 span.style.transform = 'translateX(0)';
-
-                                // Après le retour, recommencer le cycle
                                 span._scrollTimer = setTimeout(doCycle, scrollDuration);
-                            }, pauseDuration);
+                            }, pause);
                         }, scrollDuration);
-                    }, pauseDuration);
+                    }, pause);
                 };
-
                 doCycle();
             }
 
@@ -347,7 +410,7 @@
                 return new Promise(resolve => {
                     this.elements.content.classList.remove('fade-in');
                     this.elements.content.classList.add('fade-out');
-                    setTimeout(resolve, 300); // Durée de la transition
+                    setTimeout(resolve, 300);
                 });
             }
 
@@ -355,7 +418,7 @@
                 return new Promise(resolve => {
                     this.elements.content.classList.remove('fade-out');
                     this.elements.content.classList.add('fade-in');
-                    setTimeout(resolve, 300); // Durée de la transition
+                    setTimeout(resolve, 300);
                 });
             }
 
@@ -365,25 +428,13 @@
             }
 
             startPolling() {
-                // Premier appel immédiat
                 this.poll();
-
-                // Ensuite polling régulier
-                setInterval(() => {
-                    this.poll();
-                }, this.updateInterval);
-
-                // Rechargement automatique toutes les 10 minutes pour éviter les bugs d'affichage
-                setTimeout(() => {
-                    location.reload();
-                }, this.autoReloadInterval);
+                setInterval(() => this.poll(), this.updateInterval);
+                setTimeout(() => location.reload(), this.autoReloadInterval);
             }
         }
 
-        // Initialiser le widget au chargement de la page
-        document.addEventListener('DOMContentLoaded', () => {
-            new NowPlayingWidget();
-        });
+        document.addEventListener('DOMContentLoaded', () => { new NowPlayingWidget(); });
     </script>
 </body>
 

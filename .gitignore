@@ -37,3 +37,4 @@ SUCCESS.md
 *.dll
 *.exe
 current_song.json
+spectralizer

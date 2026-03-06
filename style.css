@@ -5,6 +5,44 @@
     box-sizing: border-box;
 }
 
+/* ─── Conteneur principal (visualiseur + widget empilés) ───────────── */
+.obs-stack {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+}
+
+/* ─── Visualiseur audio ──────────────────────────────────────────── */
+.visualizer-wrapper {
+    width: 100%;
+    height: 64px;
+    opacity: 1;
+    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+    pointer-events: none;
+}
+
+.visualizer-wrapper.visualizer-hidden {
+    opacity: 0;
+    transform: translateY(8px);
+    /* Collapse height so the widget doesn't jump when hidden */
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out,
+        height 0.6s ease-in-out, margin 0.6s ease-in-out;
+}
+
+#visualizer {
+    width: 100%;
+    height: 64px;
+    display: block;
+}
+
 html,
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,9 +52,6 @@ body {
 
 /* Container principal du widget */
 .widget-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
     max-width: 450px;
     padding: 20px;
     background: rgba(15, 15, 15, 0.88);

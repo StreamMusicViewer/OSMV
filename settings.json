@@ -1,3 +1,5 @@
 {
-  "dynamicColor": true
+  "dynamicColor": true,
+  "audioVisualizer": true,
+  "audioDeviceId": "{0.0.0.00000000}.{09211f33-3946-41a7-8bd3-57ebf44f32ac}"
 }

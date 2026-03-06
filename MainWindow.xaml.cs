@@ -9,7 +9,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Windows.Media.Control;
 using Windows.Storage.Streams;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using NAudio.CoreAudioApi;
 
 namespace OBS_StreamMusicViewer
 {
@@ -27,6 +29,14 @@ namespace OBS_StreamMusicViewer
         // Option : couleur dynamique
         private bool _dynamicColorEnabled = false;
 
+        // Option : visualiseur audio
+        private bool _audioVisualizerEnabled = false;
+        private AudioCaptureService _audioCapture;
+        
+        // Sélection du périphérique audio
+        private string _audioDeviceId = null;
+        private System.Collections.Generic.List<MMDevice> _audioDevices = new System.Collections.Generic.List<MMDevice>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -37,6 +47,7 @@ namespace OBS_StreamMusicViewer
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += Timer_Tick;
 
+            InitAudioDevices();
             LoadSettings();
             InitializeTrayIcon();
             InitializeMediaManager();
@@ -54,18 +65,43 @@ namespace OBS_StreamMusicViewer
                     using var doc = JsonDocument.Parse(json);
                     if (doc.RootElement.TryGetProperty("dynamicColor", out var val))
                         _dynamicColorEnabled = val.GetBoolean();
+                    if (doc.RootElement.TryGetProperty("audioVisualizer", out var viz))
+                        _audioVisualizerEnabled = viz.GetBoolean();
+                    if (doc.RootElement.TryGetProperty("audioDeviceId", out var devId))
+                        _audioDeviceId = devId.GetString();
                 }
             }
             catch { /* ignore */ }
 
             DynamicColorCheckBox.IsChecked = _dynamicColorEnabled;
+            AudioVisualizerCheckBox.IsChecked = _audioVisualizerEnabled;
+            AudioDevicePanel.Visibility = _audioVisualizerEnabled ? Visibility.Visible : Visibility.Collapsed;
+
+            // Restauration de la sélection du combobox depuis _audioDeviceId
+            if (_audioDevices.Count > 0)
+            {
+                int idx = _audioDevices.FindIndex(d => d.ID == _audioDeviceId);
+                if (idx >= 0)
+                    AudioDeviceComboBox.SelectedIndex = idx;
+            }
+
+            // Auto-démarrage de la capture audio si l'option était activée
+            if (_audioVisualizerEnabled)
+            {
+                _audioCapture = new AudioCaptureService();
+                _audioCapture.Start(GetSelectedDevice());
+            }
         }
 
         private void SaveSettings()
         {
             try
             {
-                var data = new { dynamicColor = _dynamicColorEnabled };
+                var data = new { 
+                    dynamicColor = _dynamicColorEnabled, 
+                    audioVisualizer = _audioVisualizerEnabled,
+                    audioDeviceId = _audioDeviceId
+                };
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 File.WriteAllText(_settingsFilePath, JsonSerializer.Serialize(data, options));
             }
@@ -76,6 +112,84 @@ namespace OBS_StreamMusicViewer
         {
             _dynamicColorEnabled = DynamicColorCheckBox.IsChecked == true;
             SaveSettings();
+        }
+
+        private void AudioVisualizerCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            _audioVisualizerEnabled = AudioVisualizerCheckBox.IsChecked == true;
+            AudioDevicePanel.Visibility = _audioVisualizerEnabled ? Visibility.Visible : Visibility.Collapsed;
+            SaveSettings();
+
+            if (_audioVisualizerEnabled)
+            {
+                _audioCapture ??= new AudioCaptureService();
+                if (!_audioCapture.IsRunning)
+                {
+                    _audioCapture.Start(GetSelectedDevice());
+                }
+            }
+            else
+            {
+                _audioCapture?.Stop();
+            }
+        }
+
+        private void InitAudioDevices()
+        {
+            try
+            {
+                var enumerator = new MMDeviceEnumerator();
+                _audioDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
+                
+                AudioDeviceComboBox.Items.Clear();
+                int defaultIdx = 0;
+                var defaultDevice = enumerator.HasDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
+                                    ? enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
+                                    : null;
+                                    
+                for (int i = 0; i < _audioDevices.Count; i++)
+                {
+                    var device = _audioDevices[i];
+                    AudioDeviceComboBox.Items.Add(device.FriendlyName);
+                    
+                    if (defaultDevice != null && device.ID == defaultDevice.ID)
+                        defaultIdx = i;
+                }
+                
+                if (_audioDevices.Count > 0)
+                {
+                    AudioDeviceComboBox.SelectedIndex = defaultIdx;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Erreur InitAudioDevices: " + ex.Message);
+            }
+        }
+
+        private MMDevice GetSelectedDevice()
+        {
+            int index = AudioDeviceComboBox.SelectedIndex;
+            if (index >= 0 && index < _audioDevices.Count)
+                return _audioDevices[index];
+            return null;
+        }
+
+        private void AudioDeviceComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            var device = GetSelectedDevice();
+            if (device != null)
+            {
+                _audioDeviceId = device.ID;
+                SaveSettings();
+                
+                if (_audioVisualizerEnabled)
+                {
+                    _audioCapture?.Stop();
+                    _audioCapture = new AudioCaptureService();
+                    _audioCapture.Start(device);
+                }
+            }
         }
 
         // ─── System Tray ────────────────────────────────────────────────────────
@@ -153,6 +267,8 @@ namespace OBS_StreamMusicViewer
 
             // Fermeture réelle
             _timer?.Stop();
+            _audioCapture?.Stop();
+            _audioCapture?.Dispose();
             _notifyIcon?.Dispose();
             try { WriteJsonDump(null, null, null, "closed", null); } catch { }
         }
@@ -277,9 +393,13 @@ namespace OBS_StreamMusicViewer
                         artist       = artist,
                         album        = album,
                         thumbnail    = thumbnailB64,
-                        status       = status,
-                        dynamicColor = _dynamicColorEnabled,
-                        timestamp    = DateTime.Now.ToString("o")
+                        status          = status,
+                        dynamicColor    = _dynamicColorEnabled,
+                        audioVisualizer = _audioVisualizerEnabled,
+                        fft             = _audioVisualizerEnabled && _audioCapture != null
+                                            ? (object)_audioCapture.GetBands()
+                                            : null,
+                        timestamp       = DateTime.Now.ToString("o")
                     };
                 }
 
