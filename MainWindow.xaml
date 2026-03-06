@@ -36,14 +36,14 @@
 
             <!-- Option : couleur dynamique selon la pochette -->
             <CheckBox x:Name="DynamicColorCheckBox"
-                      Content="&#x1F3A8; Couleur selon la pochette"
+                      Content="&#x1F3A8; Match cover color"
                       Foreground="#B0B0B0" FontSize="12" Margin="0,8,0,0"
                       Checked="DynamicColorCheckBox_Changed"
                       Unchecked="DynamicColorCheckBox_Changed"/>
 
             <!-- Option : visualiseur audio -->
             <CheckBox x:Name="AudioVisualizerCheckBox"
-                      Content="&#x1F39A; Visualiseur audio (beta)"
+                      Content="&#x1F39A; Audio visualizer (beta)"
                       Foreground="#B0B0B0" FontSize="12" Margin="0,4,0,0"
                       Checked="AudioVisualizerCheckBox_Changed"
                       Unchecked="AudioVisualizerCheckBox_Changed"/>
@@ -62,7 +62,7 @@
                              Background="#28282A" Foreground="#B0B0B0" BorderBrush="#404040"
                              Padding="2" VerticalContentAlignment="Center"
                              LostFocus="DiscordClientIdTextBox_LostFocus"
-                             ToolTip="L'ID de votre application Discord (Portail Développeur)"/>
+                             ToolTip="Your Discord Application ID (Developer Portal)"/>
                 </StackPanel>
             </StackPanel>
 

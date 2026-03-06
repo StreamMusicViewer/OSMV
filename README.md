@@ -91,12 +91,10 @@ The C# application gracefully accesses Windows Runtime APIs to retrieve media in
 See the [TROUBLESHOOTING.md](TROUBLESHOOTING.md) guide.
 
 ## 🤩 Future
-In the future, i want to add :
-- an audio visualiser
+In the future, I want to add :
 - a bar for where we are on the music 
-- a better support for sites (like newgrounds) where there is no cover or artist support (maybe get rid of the Windows Media Control limits)
+- better support for sites (like Newgrounds) where there is no cover or artist support (maybe get rid of the Windows Media Control limits)
 - a Linux version
-- a whole interface on the app for controlling what is in the final output (show/hide the bar, show/hide the visualizer)
 
 ## 🤝 Contributing
 Contributions are welcome! Feel free to open issues or submit pull requests.

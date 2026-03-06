@@ -25,7 +25,7 @@ namespace OBS_StreamMusicViewer
 
                 _client.OnReady += (sender, e) =>
                 {
-                    System.Diagnostics.Debug.WriteLine($"[Discord RPC] Initialisé pour l'utilisateur {e.User.Username}");
+                    System.Diagnostics.Debug.WriteLine($"[Discord RPC] Initialized for user {e.User.Username}");
                 };
 
                 _client.Initialize();
@@ -33,7 +33,7 @@ namespace OBS_StreamMusicViewer
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Discord RPC] Erreur d'initialisation: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Discord RPC] Initialization error: {ex.Message}");
             }
         }
 
@@ -62,7 +62,7 @@ namespace OBS_StreamMusicViewer
                 _client.SetPresence(new RichPresence()
                 {
                     Details = title,
-                    State = $"de {artist}",
+                    State = $"by {artist}",
                     Assets = new Assets()
                     {
                         LargeImageKey = !string.IsNullOrWhiteSpace(coverUrl) ? coverUrl : "placeholder",
@@ -72,13 +72,13 @@ namespace OBS_StreamMusicViewer
                     },
                     Buttons = new[]
                     {
-                        new Button() { Label = "Site Web", Url = "https://streammusicviewer.github.io/site/" }
+                        new Button() { Label = "Website", Url = "https://streammusicviewer.github.io/site/" }
                     }
                 });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Discord RPC] Erreur UpdatePresence: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[Discord RPC] UpdatePresence error: {ex.Message}");
             }
         }
 

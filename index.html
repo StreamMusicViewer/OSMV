@@ -202,7 +202,7 @@
             }
 
             init() {
-                console.log('🎵 Now Playing Widget initialisé');
+                console.log('🎵 Now Playing Widget initialized');
                 this.startPolling();
             }
 
@@ -210,10 +210,10 @@
                 try {
                     const cacheBuster = `?t=${Date.now()}`;
                     const response = await fetch(this.jsonFile + cacheBuster);
-                    if (!response.ok) throw new Error('Fichier JSON non trouvé');
+                    if (!response.ok) throw new Error('JSON file not found');
                     return await response.json();
                 } catch (error) {
-                    console.error('Erreur JSON:', error);
+                    console.error('JSON Error:', error);
                     return null;
                 }
             }
@@ -351,15 +351,15 @@
                     }
                     else this._visualizer.disable();
                 } else if (this._audioVisualizerEnabled) {
-                    // Coupe l'animation si la musique est en pause/stoppée
+                    // Stop animation if music is paused/stopped
                     if (isInactive) this._visualizer.disable();
                     else this._visualizer.enable();
                 }
 
-                // ── Aucune chanson ───────────────────────────────────────────
+                // ── No song playing ───────────────────────────────────────────
                 if (!songData) {
                     await this.fadeOut();
-                    this.setScrollText(this.elements.title, 'Aucune lecture en cours');
+                    this.setScrollText(this.elements.title, 'Nothing currently playing');
                     this.setScrollText(this.elements.artist, '');
                     this.elements.albumArt.style.display = 'none';
                     this.resetDynamicColor();
@@ -367,7 +367,7 @@
                     return;
                 }
 
-                // ── Changement de chanson ────────────────────────────────────
+                // ── Song changed ────────────────────────────────────
                 if (this.hasSongChanged(songData)) {
                     console.log('🎵', songData.title, '-', songData.artist);
                     await this.fadeOut();

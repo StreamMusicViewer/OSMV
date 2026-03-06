@@ -9,12 +9,17 @@ OBS-StreamMusicViewer/
 ├── .gitignore
 ├── App.xaml                  ← Base interface
 ├── App.xaml.cs
+├── DiscordRpcService.cs      ← Discord Rich Presence logic
 ├── MainWindow.xaml           ← Window design
-├── MainWindow.xaml.cs        ← Music retrieval logic
+├── MainWindow.xaml.cs        ← Music retrieval & core logic
 ├── OBS-StreamMusicViewer.csproj ← CRITICAL - project file
+├── OSMV_logo.ico             ← Application icon
 ├── README.md
+├── TROUBLESHOOTING.md
 ├── compile.bat               ← Compilation script
+├── current_song.json         ← Generated data (after run)
 ├── index.html                ← OBS display
+├── settings.json             ← Saved user preferences
 └── style.css                 ← OBS styles
 ```
 

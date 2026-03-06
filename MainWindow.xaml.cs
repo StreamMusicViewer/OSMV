@@ -23,9 +23,9 @@ namespace OBS_StreamMusicViewer
 
         // System tray icon
         private NotifyIcon _notifyIcon;
-        private bool _isClosing = false; // true only when "Quitter" is clicked
+        private bool _isClosing = false; // true only when "Quit" is clicked
 
-        // Option : couleur dynamique
+        // Option : color match
         private bool _dynamicColorEnabled = false;
 
         // Option : visualiseur audio
@@ -178,17 +178,17 @@ namespace OBS_StreamMusicViewer
             _notifyIcon.Text = "OBS Stream Music Viewer";
             _notifyIcon.Visible = true;
 
-            // Double-clic → restaurer la fenêtre
+            // Double-click → restore window
             _notifyIcon.DoubleClick += (s, e) => RestoreWindow();
 
-            // Menu contextuel
+            // Context Menu
             var contextMenu = new ContextMenuStrip();
 
-            var menuShow = new ToolStripMenuItem("Afficher");
+            var menuShow = new ToolStripMenuItem("Show");
             menuShow.Font = new Font(menuShow.Font, System.Drawing.FontStyle.Bold);
             menuShow.Click += (s, e) => RestoreWindow();
 
-            var menuQuit = new ToolStripMenuItem("Quitter");
+            var menuQuit = new ToolStripMenuItem("Quit");
             menuQuit.Click += (s, e) =>
             {
                 _isClosing = true;
@@ -210,7 +210,7 @@ namespace OBS_StreamMusicViewer
             Activate();
         }
 
-        // Quand la fenêtre est minimisée → la cacher dans le tray
+        // Hide to tray when minimized
         private void Window_StateChanged(object sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
@@ -220,12 +220,12 @@ namespace OBS_StreamMusicViewer
                 _notifyIcon.ShowBalloonTip(
                     2000,
                     "OBS Stream Music Viewer",
-                    "L'application tourne en arrière-plan.",
+                    "The application is running in the background.",
                     ToolTipIcon.Info);
             }
         }
 
-        // Interception de la fermeture : minimiser au lieu de quitter (sauf si "Quitter" cliqué)
+        // Intercept close: minimize instead of quit (unless "Quit" was clicked)
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (!_isClosing)
