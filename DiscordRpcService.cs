@@ -51,10 +51,14 @@ namespace OBS_StreamMusicViewer
                     State = $"de {artist}",
                     Assets = new Assets()
                     {
-                        LargeImageKey = !string.IsNullOrWhiteSpace(coverUrl) ? coverUrl : "osmv_logo",
+                        LargeImageKey = !string.IsNullOrWhiteSpace(coverUrl) ? coverUrl : "placeholder",
                         LargeImageText = $"{title} - {artist}",
                         SmallImageKey = "osmv_logo",
                         SmallImageText = "OBS Stream Music Viewer"
+                    },
+                    Buttons = new[]
+                    {
+                        new Button() { Label = "Site Web", Url = "https://streammusicviewer.github.io/site/" }
                     }
                 });
             }
