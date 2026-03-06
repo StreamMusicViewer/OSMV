@@ -270,6 +270,7 @@ namespace OBS_StreamMusicViewer
                 {
                     WriteJsonDump(null, null, null, "closed", null);
                     UpdateUI("No active media", "---", "closed", null);
+                    UpdateDiscordRpc(null, null, false);
                     return;
                 }
 
@@ -278,6 +279,7 @@ namespace OBS_StreamMusicViewer
                 {
                     WriteJsonDump(null, null, null, "closed", null);
                     UpdateUI("No media properties", "---", "closed", null);
+                    UpdateDiscordRpc(null, null, false);
                     return;
                 }
 
