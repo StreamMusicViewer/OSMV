@@ -17,23 +17,65 @@ namespace OBS_StreamMusicViewer
     {
         private DispatcherTimer _timer;
         private string _outputFilePath;
+        private string _settingsFilePath;
         private GlobalSystemMediaTransportControlsSessionManager _sessionManager;
 
         // System tray icon
         private NotifyIcon _notifyIcon;
         private bool _isClosing = false; // true only when "Quitter" is clicked
 
+        // Option : couleur dynamique
+        private bool _dynamicColorEnabled = false;
+
         public MainWindow()
         {
             InitializeComponent();
-            _outputFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_song.json");
+            _outputFilePath  = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_song.json");
+            _settingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.json");
 
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += Timer_Tick;
 
+            LoadSettings();
             InitializeTrayIcon();
             InitializeMediaManager();
+        }
+
+        // ─── Settings ────────────────────────────────────────────────────────────
+
+        private void LoadSettings()
+        {
+            try
+            {
+                if (File.Exists(_settingsFilePath))
+                {
+                    string json = File.ReadAllText(_settingsFilePath);
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("dynamicColor", out var val))
+                        _dynamicColorEnabled = val.GetBoolean();
+                }
+            }
+            catch { /* ignore */ }
+
+            DynamicColorCheckBox.IsChecked = _dynamicColorEnabled;
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                var data = new { dynamicColor = _dynamicColorEnabled };
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                File.WriteAllText(_settingsFilePath, JsonSerializer.Serialize(data, options));
+            }
+            catch { /* ignore */ }
+        }
+
+        private void DynamicColorCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            _dynamicColorEnabled = DynamicColorCheckBox.IsChecked == true;
+            SaveSettings();
         }
 
         // ─── System Tray ────────────────────────────────────────────────────────
@@ -154,9 +196,9 @@ namespace OBS_StreamMusicViewer
                     return;
                 }
 
-                string title = mediaProps.Title ?? "Unknown Title";
-                string artist = mediaProps.Artist ?? "Unknown Artist";
-                string album = mediaProps.AlbumTitle ?? "";
+                string title  = mediaProps.Title       ?? "Unknown Title";
+                string artist = mediaProps.Artist      ?? "Unknown Artist";
+                string album  = mediaProps.AlbumTitle  ?? "";
 
                 var playbackInfo = session.GetPlaybackInfo();
                 string status = "unknown";
@@ -207,7 +249,7 @@ namespace OBS_StreamMusicViewer
 
         private void UpdateUI(string title, string artist, string status, BitmapImage image)
         {
-            TitleText.Text = title;
+            TitleText.Text  = title;
             ArtistText.Text = artist;
             StatusText.Text = "Status: " + status;
 
@@ -231,12 +273,13 @@ namespace OBS_StreamMusicViewer
                 {
                     data = new
                     {
-                        title = title,
-                        artist = artist,
-                        album = album,
-                        thumbnail = thumbnailB64,
-                        status = status,
-                        timestamp = DateTime.Now.ToString("o")
+                        title        = title,
+                        artist       = artist,
+                        album        = album,
+                        thumbnail    = thumbnailB64,
+                        status       = status,
+                        dynamicColor = _dynamicColorEnabled,
+                        timestamp    = DateTime.Now.ToString("o")
                     };
                 }
 

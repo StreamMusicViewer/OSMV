@@ -22,6 +22,9 @@
         </div>
     </div>
 
+    <!-- Canvas caché pour l'extraction de couleur -->
+    <canvas id="color-canvas" style="display:none;"></canvas>
+
     <script>
         class NowPlayingWidget {
             constructor() {
@@ -34,6 +37,11 @@
                 this.hideDelay = 10 * 1000; // 10 secondes
                 this._hideTimer = null;
                 this._widgetVisible = true;
+
+                // Couleur dynamique
+                this._dynamicColorEnabled = false;
+                this._colorCanvas = document.getElementById('color-canvas');
+                this._colorCtx = this._colorCanvas.getContext('2d');
 
                 // Éléments DOM
                 this.elements = {
@@ -77,9 +85,117 @@
 
                 return (
                     this.currentSong.title !== newSong.title ||
-                    this.currentSong.artist !== newSong.artist
+                    this.currentSong.artist !== newSong.artist ||
+                    this.currentSong.thumbnail !== newSong.thumbnail
                 );
             }
+
+            // ─── Couleur dynamique ───────────────────────────────────────────
+
+            /**
+             * Extrait la couleur dominante d'une image base64 via canvas.
+             * Utilise un échantillonnage par blocs pour trouver la teinte la plus présente.
+             * Retourne {r, g, b} ou null.
+             */
+            extractDominantColor(base64) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        const SIZE = 80; // réduire pour perf
+                        this._colorCanvas.width = SIZE;
+                        this._colorCanvas.height = SIZE;
+                        this._colorCtx.drawImage(img, 0, 0, SIZE, SIZE);
+
+                        const data = this._colorCtx.getImageData(0, 0, SIZE, SIZE).data;
+
+                        // Bucket par teinte (HSL) pour trouver la couleur dominante non-neutre
+                        const buckets = new Array(36).fill(0).map(() => ({ r: 0, g: 0, b: 0, count: 0 }));
+
+                        for (let i = 0; i < data.length; i += 4) {
+                            const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+                            if (a < 128) continue;
+
+                            const { h, s, l } = this.rgbToHsl(r, g, b);
+                            // Ignorer les couleurs trop neutres (grises/blanc/noir)
+                            if (s < 0.15 || l < 0.1 || l > 0.9) continue;
+
+                            const bucket = Math.floor(h / 10);
+                            buckets[bucket].r += r;
+                            buckets[bucket].g += g;
+                            buckets[bucket].b += b;
+                            buckets[bucket].count += 1;
+                        }
+
+                        // Trouver le bucket le plus peuplé
+                        let best = buckets.reduce((a, b) => b.count > a.count ? b : a, buckets[0]);
+
+                        if (best.count === 0) {
+                            resolve(null);
+                            return;
+                        }
+
+                        resolve({
+                            r: Math.round(best.r / best.count),
+                            g: Math.round(best.g / best.count),
+                            b: Math.round(best.b / best.count)
+                        });
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = `data:image/jpeg;base64,${base64}`;
+                });
+            }
+
+            rgbToHsl(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                        case g: h = ((b - r) / d + 2) / 6; break;
+                        case b: h = ((r - g) / d + 4) / 6; break;
+                    }
+                }
+                return { h: h * 360, s, l };
+            }
+
+            /**
+             * Applique la couleur dominante au widget sous forme de fond semi-transparent
+             * et d'une bordure lumineuse colorée.
+             */
+            applyDynamicColor(color) {
+                const c = this.elements.container;
+                if (!color) {
+                    this.resetDynamicColor();
+                    return;
+                }
+                const { r, g, b } = color;
+                // Fond : version sombre et saturée de la couleur (L≈20%, S≈75%)
+                const { h } = this.rgbToHsl(r, g, b);
+                const bgCol = `hsl(${h.toFixed(0)}, 75%, 20%)`;
+                const brdCol = `hsl(${h.toFixed(0)}, 80%, 55%)`;
+                c.style.background = bgCol;
+                c.style.borderColor = `hsl(${h.toFixed(0)}, 70%, 45%)`;
+                c.style.border = `1px solid hsl(${h.toFixed(0)}, 70%, 45%)`;
+                c.style.boxShadow =
+                    `0 8px 32px rgba(0, 0, 0, 0.5),` +
+                    `0 0 0 1px ${brdCol} inset,` +
+                    `0 0 30px hsl(${h.toFixed(0)}, 80%, 35% / 0.4)`;
+            }
+
+            resetDynamicColor() {
+                const c = this.elements.container;
+                c.style.background = '';
+                c.style.borderColor = '';
+                c.style.boxShadow = '';
+            }
+
+            // ─── Affichage ───────────────────────────────────────────────────
 
             // Démarre le timer pour masquer le widget
             scheduleHide() {
@@ -121,12 +237,22 @@
                     this.cancelHide();
                 }
 
+                // Lire l'option couleur dynamique depuis le JSON
+                const dynColorFromJson = songData && songData.dynamicColor === true;
+                if (dynColorFromJson !== this._dynamicColorEnabled) {
+                    this._dynamicColorEnabled = dynColorFromJson;
+                    if (!this._dynamicColorEnabled) {
+                        this.resetDynamicColor();
+                    }
+                }
+
                 // Si aucune chanson n'est en lecture
                 if (!songData) {
                     await this.fadeOut();
                     this.setScrollText(this.elements.title, 'Aucune lecture en cours');
                     this.setScrollText(this.elements.artist, '');
                     this.elements.albumArt.style.display = 'none';
+                    this.resetDynamicColor();
                     await this.fadeIn();
                     return;
                 }
@@ -146,8 +272,15 @@
                     if (songData.thumbnail) {
                         this.elements.albumArt.src = `data:image/jpeg;base64,${songData.thumbnail}`;
                         this.elements.albumArt.style.display = 'block';
+
+                        // Couleur dynamique si activée
+                        if (this._dynamicColorEnabled) {
+                            const color = await this.extractDominantColor(songData.thumbnail);
+                            this.applyDynamicColor(color);
+                        }
                     } else {
                         this.elements.albumArt.style.display = 'none';
+                        this.resetDynamicColor();
                     }
 
                     // Transition fade in
