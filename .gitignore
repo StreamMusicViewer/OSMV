@@ -34,6 +34,7 @@ desktop.ini
 NEXT_STEP.md
 SUCCESS.md
 
+*.zip
 *.dll
 *.exe
 current_song.json
