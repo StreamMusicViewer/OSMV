@@ -11,7 +11,6 @@ using Windows.Media.Control;
 using Windows.Storage.Streams;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using NAudio.CoreAudioApi;
 
 namespace OBS_StreamMusicViewer
 {
@@ -31,11 +30,18 @@ namespace OBS_StreamMusicViewer
 
         // Option : visualiseur audio
         private bool _audioVisualizerEnabled = false;
-        private AudioCaptureService _audioCapture;
+
+        // Option : Discord Rich Presence
+        private bool _discordRpcEnabled = false;
+        private string _discordClientId = "1479531788731809913"; // ID personnalisé
+        private DiscordRpcService _discordRpc;
         
-        // Sélection du périphérique audio
-        private string _audioDeviceId = null;
-        private System.Collections.Generic.List<MMDevice> _audioDevices = new System.Collections.Generic.List<MMDevice>();
+        // iTunes API Helpers pour Discord RPC
+        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient();
+        private string _lastDiscordTitle = null;
+        private string _lastDiscordArtist = null;
+        private string _currentCoverUrl = null;
+        private bool _isFetchingCover = false;
 
         public MainWindow()
         {
@@ -47,7 +53,6 @@ namespace OBS_StreamMusicViewer
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += Timer_Tick;
 
-            InitAudioDevices();
             LoadSettings();
             InitializeTrayIcon();
             InitializeMediaManager();
@@ -67,29 +72,25 @@ namespace OBS_StreamMusicViewer
                         _dynamicColorEnabled = val.GetBoolean();
                     if (doc.RootElement.TryGetProperty("audioVisualizer", out var viz))
                         _audioVisualizerEnabled = viz.GetBoolean();
-                    if (doc.RootElement.TryGetProperty("audioDeviceId", out var devId))
-                        _audioDeviceId = devId.GetString();
+                    if (doc.RootElement.TryGetProperty("discordRpc", out var rpc))
+                        _discordRpcEnabled = rpc.GetBoolean();
+                    if (doc.RootElement.TryGetProperty("discordClientId", out var cid))
+                        _discordClientId = cid.GetString();
                 }
             }
             catch { /* ignore */ }
 
             DynamicColorCheckBox.IsChecked = _dynamicColorEnabled;
             AudioVisualizerCheckBox.IsChecked = _audioVisualizerEnabled;
-            AudioDevicePanel.Visibility = _audioVisualizerEnabled ? Visibility.Visible : Visibility.Collapsed;
+            DiscordRpcCheckBox.IsChecked = _discordRpcEnabled;
+            DiscordSettingsPanel.Visibility = _discordRpcEnabled ? Visibility.Visible : Visibility.Collapsed;
+            DiscordClientIdTextBox.Text = _discordClientId;
 
-            // Restauration de la sélection du combobox depuis _audioDeviceId
-            if (_audioDevices.Count > 0)
+            // Auto-démarrage Discord RPC
+            if (_discordRpcEnabled && !string.IsNullOrWhiteSpace(_discordClientId))
             {
-                int idx = _audioDevices.FindIndex(d => d.ID == _audioDeviceId);
-                if (idx >= 0)
-                    AudioDeviceComboBox.SelectedIndex = idx;
-            }
-
-            // Auto-démarrage de la capture audio si l'option était activée
-            if (_audioVisualizerEnabled)
-            {
-                _audioCapture = new AudioCaptureService();
-                _audioCapture.Start(GetSelectedDevice());
+                _discordRpc = new DiscordRpcService();
+                _discordRpc.Initialize(_discordClientId);
             }
         }
 
@@ -100,7 +101,8 @@ namespace OBS_StreamMusicViewer
                 var data = new { 
                     dynamicColor = _dynamicColorEnabled, 
                     audioVisualizer = _audioVisualizerEnabled,
-                    audioDeviceId = _audioDeviceId
+                    discordRpc = _discordRpcEnabled,
+                    discordClientId = _discordClientId
                 };
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 File.WriteAllText(_settingsFilePath, JsonSerializer.Serialize(data, options));
@@ -117,77 +119,45 @@ namespace OBS_StreamMusicViewer
         private void AudioVisualizerCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             _audioVisualizerEnabled = AudioVisualizerCheckBox.IsChecked == true;
-            AudioDevicePanel.Visibility = _audioVisualizerEnabled ? Visibility.Visible : Visibility.Collapsed;
+            SaveSettings();
+        }
+
+        private void DiscordRpcCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            _discordRpcEnabled = DiscordRpcCheckBox.IsChecked == true;
+            DiscordSettingsPanel.Visibility = _discordRpcEnabled ? Visibility.Visible : Visibility.Collapsed;
             SaveSettings();
 
-            if (_audioVisualizerEnabled)
+            if (_discordRpcEnabled && !string.IsNullOrWhiteSpace(_discordClientId))
             {
-                _audioCapture ??= new AudioCaptureService();
-                if (!_audioCapture.IsRunning)
-                {
-                    _audioCapture.Start(GetSelectedDevice());
-                }
+                _discordRpc ??= new DiscordRpcService();
+                _discordRpc.Initialize(_discordClientId);
             }
             else
             {
-                _audioCapture?.Stop();
+                _discordRpc?.ClearPresence();
+                _discordRpc?.Dispose();
+                _discordRpc = null;
             }
         }
 
-        private void InitAudioDevices()
+        private void DiscordClientIdTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            try
+            if (_discordClientId != DiscordClientIdTextBox.Text)
             {
-                var enumerator = new MMDeviceEnumerator();
-                _audioDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).ToList();
-                
-                AudioDeviceComboBox.Items.Clear();
-                int defaultIdx = 0;
-                var defaultDevice = enumerator.HasDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
-                                    ? enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
-                                    : null;
-                                    
-                for (int i = 0; i < _audioDevices.Count; i++)
-                {
-                    var device = _audioDevices[i];
-                    AudioDeviceComboBox.Items.Add(device.FriendlyName);
-                    
-                    if (defaultDevice != null && device.ID == defaultDevice.ID)
-                        defaultIdx = i;
-                }
-                
-                if (_audioDevices.Count > 0)
-                {
-                    AudioDeviceComboBox.SelectedIndex = defaultIdx;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Erreur InitAudioDevices: " + ex.Message);
-            }
-        }
-
-        private MMDevice GetSelectedDevice()
-        {
-            int index = AudioDeviceComboBox.SelectedIndex;
-            if (index >= 0 && index < _audioDevices.Count)
-                return _audioDevices[index];
-            return null;
-        }
-
-        private void AudioDeviceComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            var device = GetSelectedDevice();
-            if (device != null)
-            {
-                _audioDeviceId = device.ID;
+                _discordClientId = DiscordClientIdTextBox.Text;
                 SaveSettings();
-                
-                if (_audioVisualizerEnabled)
+
+                if (_discordRpcEnabled)
                 {
-                    _audioCapture?.Stop();
-                    _audioCapture = new AudioCaptureService();
-                    _audioCapture.Start(device);
+                    _discordRpc?.ClearPresence();
+                    _discordRpc?.Dispose();
+                    
+                    if (!string.IsNullOrWhiteSpace(_discordClientId))
+                    {
+                        _discordRpc = new DiscordRpcService();
+                        _discordRpc.Initialize(_discordClientId);
+                    }
                 }
             }
         }
@@ -267,8 +237,7 @@ namespace OBS_StreamMusicViewer
 
             // Fermeture réelle
             _timer?.Stop();
-            _audioCapture?.Stop();
-            _audioCapture?.Dispose();
+            _discordRpc?.Dispose();
             _notifyIcon?.Dispose();
             try { WriteJsonDump(null, null, null, "closed", null); } catch { }
         }
@@ -318,6 +287,7 @@ namespace OBS_StreamMusicViewer
 
                 var playbackInfo = session.GetPlaybackInfo();
                 string status = "unknown";
+                bool isPlaying = false;
                 if (playbackInfo != null)
                 {
                     switch (playbackInfo.PlaybackStatus)
@@ -326,7 +296,10 @@ namespace OBS_StreamMusicViewer
                         case GlobalSystemMediaTransportControlsSessionPlaybackStatus.Opened:   status = "opened";   break;
                         case GlobalSystemMediaTransportControlsSessionPlaybackStatus.Changing: status = "changing"; break;
                         case GlobalSystemMediaTransportControlsSessionPlaybackStatus.Stopped:  status = "stopped";  break;
-                        case GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing:  status = "playing";  break;
+                        case GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing:  
+                            status = "playing"; 
+                            isPlaying = true;
+                            break;
                         case GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused:   status = "paused";   break;
                     }
                 }
@@ -356,11 +329,51 @@ namespace OBS_StreamMusicViewer
 
                 UpdateUI(title, artist, status, bitmapImage);
                 WriteJsonDump(title, artist, album, status, base64Image);
+                UpdateDiscordRpc(title, artist, isPlaying);
             }
             catch (Exception ex)
             {
                 ErrorText.Text = "Error during tick: " + ex.Message;
             }
+        }
+
+        private async void UpdateDiscordRpc(string title, string artist, bool isPlaying)
+        {
+            if (!_discordRpcEnabled || _discordRpc == null) return;
+
+            if (title != _lastDiscordTitle || artist != _lastDiscordArtist)
+            {
+                _lastDiscordTitle = title;
+                _lastDiscordArtist = artist;
+                _currentCoverUrl = null;
+
+                if (!_isFetchingCover && !string.IsNullOrEmpty(title))
+                {
+                    _isFetchingCover = true;
+                    try
+                    {
+                        string query = Uri.EscapeDataString($"{artist} {title}");
+                        string url = $"https://itunes.apple.com/search?term={query}&entity=song&limit=1";
+                        using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+                        var response = await _httpClient.SendAsync(request);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var json = await response.Content.ReadAsStringAsync();
+                            using var doc = JsonDocument.Parse(json);
+                            var results = doc.RootElement.GetProperty("results");
+                            if (results.GetArrayLength() > 0)
+                            {
+                                var artwork = results[0].GetProperty("artworkUrl100").GetString();
+                                _currentCoverUrl = artwork?.Replace("100x100bb", "512x512bb");
+                            }
+                        }
+                    }
+                    catch { }
+                    finally { _isFetchingCover = false; }
+                }
+            }
+            
+            _discordRpc.UpdatePresence(title, artist, isPlaying, _currentCoverUrl);
         }
 
         private void UpdateUI(string title, string artist, string status, BitmapImage image)
@@ -396,9 +409,6 @@ namespace OBS_StreamMusicViewer
                         status          = status,
                         dynamicColor    = _dynamicColorEnabled,
                         audioVisualizer = _audioVisualizerEnabled,
-                        fft             = _audioVisualizerEnabled && _audioCapture != null
-                                            ? (object)_audioCapture.GetBands()
-                                            : null,
                         timestamp       = DateTime.Now.ToString("o")
                     };
                 }

@@ -1,7 +1,7 @@
 <Window x:Class="OBS_StreamMusicViewer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="OBS Stream Music Viewer" Height="240" Width="420"
+        Title="OBS Stream Music Viewer" Height="254" Width="420"
         Background="#18181A" WindowStyle="SingleBorderWindow"
         ResizeMode="CanMinimize"
         ShowInTaskbar="True"
@@ -43,19 +43,27 @@
 
             <!-- Option : visualiseur audio -->
             <CheckBox x:Name="AudioVisualizerCheckBox"
-                      Content="&#x1F39A; Visualiseur audio"
+                      Content="&#x1F39A; Visualiseur audio (beta)"
                       Foreground="#B0B0B0" FontSize="12" Margin="0,4,0,0"
                       Checked="AudioVisualizerCheckBox_Changed"
                       Unchecked="AudioVisualizerCheckBox_Changed"/>
-
-            <!-- Sélection du périphérique audio -->
-            <StackPanel x:Name="AudioDevicePanel" Margin="12,4,0,0" Orientation="Horizontal" Visibility="Collapsed">
-                <TextBlock Text="&#x1F50A;" Foreground="#606060" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <ComboBox x:Name="AudioDeviceComboBox"
-                          Width="220" Height="22" FontSize="11"
-                          Background="#28282A" Foreground="#B0B0B0"
-                          BorderBrush="#404040"
-                          SelectionChanged="AudioDeviceComboBox_SelectionChanged"/>
+            <!-- Option : Discord Rich Presence -->
+            <StackPanel Margin="0,8,0,0">
+                <CheckBox x:Name="DiscordRpcCheckBox"
+                          Content="&#x1F3AE; Discord Rich Presence"
+                          Foreground="#B0B0B0" FontSize="12"
+                          Checked="DiscordRpcCheckBox_Changed"
+                          Unchecked="DiscordRpcCheckBox_Changed"/>
+                
+                <!-- Client ID Discord (visible seulement si activé) -->
+                <StackPanel x:Name="DiscordSettingsPanel" Orientation="Horizontal" Margin="20,4,0,0" Visibility="Collapsed">
+                    <TextBlock Text="Client ID:" Foreground="#606060" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBox x:Name="DiscordClientIdTextBox" Width="140" Height="20" FontSize="11"
+                             Background="#28282A" Foreground="#B0B0B0" BorderBrush="#404040"
+                             Padding="2" VerticalContentAlignment="Center"
+                             LostFocus="DiscordClientIdTextBox_LostFocus"
+                             ToolTip="L'ID de votre application Discord (Portail Développeur)"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Error message if needed -->

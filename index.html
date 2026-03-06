@@ -52,8 +52,9 @@
 
                 // Valeurs courantes interpolées (pour une animation fluide entre les frames JSON ~1s)
                 this._current = new Float32Array(this.BAR_COUNT).fill(0);
-                // Cible venant du dernier JSON
+                // Cible (générée aléatoirement)
                 this._target = new Float32Array(this.BAR_COUNT).fill(0);
+                this._updateTimer = null;
 
                 this._resizeObserver = new ResizeObserver(() => this._resize());
                 this._resizeObserver.observe(this.wrapper);
@@ -73,6 +74,7 @@
                 if (this._enabled) return;
                 this._enabled = true;
                 this.wrapper.classList.remove('visualizer-hidden');
+                this._startRandomUpdates();
                 this._draw();
             }
 
@@ -84,15 +86,28 @@
                     cancelAnimationFrame(this._animFrame);
                     this._animFrame = null;
                 }
+                if (this._updateTimer) {
+                    clearInterval(this._updateTimer);
+                    this._updateTimer = null;
+                }
                 this._current.fill(0);
                 this._target.fill(0);
             }
 
-            /** Met à jour les cibles depuis le tableau fft[] du JSON (20 valeurs 0–1) */
-            updateBands(fftArray) {
-                if (!fftArray || fftArray.length < this.BAR_COUNT) return;
-                for (let i = 0; i < this.BAR_COUNT; i++)
-                    this._target[i] = fftArray[i];
+            _startRandomUpdates() {
+                if (this._updateTimer) clearInterval(this._updateTimer);
+
+                // Générer de nouvelles cibles aléatoires toutes les 150ms
+                this._updateTimer = setInterval(() => {
+                    if (!this._enabled) return;
+                    for (let i = 0; i < this.BAR_COUNT; i++) {
+                        // Bruit aléatoire pondéré pour faire "style musique"
+                        // Plus les barres sont au centre, plus elles peuvent sauter haut
+                        const distFromCenter = Math.abs(i - this.BAR_COUNT / 2) / (this.BAR_COUNT / 2);
+                        const maxH = 1.0 - (distFromCenter * 0.4); // Les bords sont un peu plus bas
+                        this._target[i] = Math.random() * Math.random() * maxH;
+                    }
+                }, 150);
             }
 
             /** Met à jour la teinte (même hue que le fond dynamique du widget) */
@@ -330,13 +345,15 @@
                 const vizFromJson = songData && songData.audioVisualizer === true;
                 if (vizFromJson !== this._audioVisualizerEnabled) {
                     this._audioVisualizerEnabled = vizFromJson;
-                    if (this._audioVisualizerEnabled) this._visualizer.enable();
+                    if (this._audioVisualizerEnabled) {
+                        if (!isInactive) this._visualizer.enable();
+                        else this._visualizer.disable();
+                    }
                     else this._visualizer.disable();
-                }
-
-                // Injecter les données FFT fraîches à chaque poll
-                if (this._audioVisualizerEnabled && songData && songData.fft) {
-                    this._visualizer.updateBands(songData.fft);
+                } else if (this._audioVisualizerEnabled) {
+                    // Coupe l'animation si la musique est en pause/stoppée
+                    if (isInactive) this._visualizer.disable();
+                    else this._visualizer.enable();
                 }
 
                 // ── Aucune chanson ───────────────────────────────────────────
