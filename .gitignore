@@ -1,37 +1,38 @@
-# ── Windows build outputs ─────────────────────────────────────────────────────
+# ── C++ / CMake build outputs ─────────────────────────────────────────────────
+build/
+.cmake/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.a
+*.so
+*.dylib
+
+# ── Windows build artifacts ───────────────────────────────────────────────────
 windows/bin/
 windows/obj/
-windows/*.exe
-windows/*.pdb
-windows/*.dll
-windows/*.html
-windows/*.css
-windows/*.js
-windows/*.json
+*.exe
+*.pdb
+*.dll
 
-# ── Linux build outputs (PyInstaller) ─────────────────────────────────────────
+# ── Linux build artifacts ─────────────────────────────────────────────────────
 linux/dist/
 linux/build/
-linux/*.spec
 linux/.venv/
 linux/venv/
-linux/*.html
-linux/*.css
-linux/*.js
-linux/*.json
-linux/*.lock
 
-# ── Python ────────────────────────────────────────────────────────────────────
+# ── Python (legacy) ───────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
-*$py.class
 .venv/
 venv/
-ENV/
 
 # ── Generated runtime files ───────────────────────────────────────────────────
 current_song.json
 **/current_song.json
+.osmv.lock
 temp_*.jpg
 temp_*.jpeg
 temp_*.png
@@ -53,3 +54,4 @@ NEXT_STEP.md
 SUCCESS.md
 *.zip
 spectralizer
+

@@ -1,108 +1,79 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# compile.sh — Build script for OBS Stream Music Viewer (Linux)
-#
-# Produces a single self-contained binary using PyInstaller.
-# The shared OBS widget files are in ../shared/ (index.html, style.css).
+# compile.sh — Linux build script for OBS Stream Music Viewer v2 (C++ / Qt 6)
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$ROOT_DIR"
 
 echo "═══════════════════════════════════════════════════════"
-echo " OBS Stream Music Viewer — Linux Build Script"
+echo " OBS Stream Music Viewer — Linux Build (C++ / Qt 6)"
 echo "═══════════════════════════════════════════════════════"
 echo
 
-# ── 1. Check Python 3 ────────────────────────────────────────────────────────
-if ! command -v python3 &>/dev/null; then
-    echo "❌ Python 3 is not installed."
-    echo "   Install it with: sudo apt install python3 python3-pip python3-venv"
+# ── 1. Check CMake ────────────────────────────────────────────────────────────
+if ! command -v cmake &>/dev/null; then
+    echo "❌ cmake not found."
+    if command -v pacman &>/dev/null; then echo "   sudo pacman -S cmake"
+    elif command -v apt &>/dev/null;   then echo "   sudo apt install cmake"
+    elif command -v dnf &>/dev/null;   then echo "   sudo dnf install cmake"; fi
     exit 1
 fi
-PYTHON_VER=$(python3 --version)
-echo "✔  Found $PYTHON_VER"
+echo "✔  cmake $(cmake --version | head -1 | awk '{print $3}')"
 
-# ── 2. Check playerctl (runtime dependency) ──────────────────────────────────
+# ── 2. Check Qt 6 ────────────────────────────────────────────────────────────
+if ! pkg-config --exists Qt6Widgets 2>/dev/null && \
+   ! qmake6 --version &>/dev/null 2>&1; then
+    echo "⚠  Qt 6 not found in pkg-config. Trying anyway..."
+    echo "   If build fails, install Qt 6:"
+    if command -v pacman &>/dev/null; then echo "   sudo pacman -S qt6-base"
+    elif command -v apt &>/dev/null;   then echo "   sudo apt install qt6-base-dev"
+    elif command -v dnf &>/dev/null;   then echo "   sudo dnf install qt6-qtbase-devel"; fi
+else
+    echo "✔  Qt 6 found"
+fi
+
+# ── 3. Check playerctl ────────────────────────────────────────────────────────
 if ! command -v playerctl &>/dev/null; then
-    echo "⚠  playerctl is not installed."
-    if command -v pacman &>/dev/null; then
-        echo "   Install it with: sudo pacman -S playerctl"
-    elif command -v apt &>/dev/null; then
-        echo "   Install it with: sudo apt install playerctl"
-    elif command -v dnf &>/dev/null; then
-        echo "   Install it with: sudo dnf install playerctl"
-    fi
-    echo "   (The app will still build, but won't detect music without it.)"
+    echo "⚠  playerctl not found (required at runtime)."
+    if command -v pacman &>/dev/null; then echo "   sudo pacman -S playerctl"
+    elif command -v apt &>/dev/null;   then echo "   sudo apt install playerctl"
+    elif command -v dnf &>/dev/null;   then echo "   sudo dnf install playerctl"; fi
 else
-    echo "✔  Found $(playerctl --version)"
+    echo "✔  playerctl $(playerctl --version)"
 fi
 echo
 
-# ── 3. Check tk (required for the settings window) ────────────────────────────
-if ! python3 -c "import tkinter" &>/dev/null; then
-    echo "⚠  tkinter (tk) is not installed — the settings window won't work."
-    if command -v pacman &>/dev/null; then
-        echo "   Install it with: sudo pacman -S tk"
-    elif command -v apt &>/dev/null; then
-        echo "   Install it with: sudo apt install python3-tk"
-    elif command -v dnf &>/dev/null; then
-        echo "   Install it with: sudo dnf install python3-tkinter"
-    fi
-else
-    echo "✔  tkinter available"
-fi
-echo
-
-# ── 3. Create / activate virtual environment ─────────────────────────────────
-if [ ! -d ".venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv .venv
-fi
-source .venv/bin/activate
-echo "✔  Virtual environment active: $VIRTUAL_ENV"
-
-# ── 4. Upgrade pip and install requirements ──────────────────────────────────
-echo
-echo "Installing Python dependencies..."
-pip install --upgrade pip --quiet
-pip install -r requirements.txt --quiet
-pip install pyinstaller --quiet
-echo "✔  Dependencies installed."
-
-# ── 5. Kill any running instance before overwriting ─────────────────────────
+# ── 4. Kill any running instance ──────────────────────────────────────────────
 if pgrep -x osmv &>/dev/null; then
-    echo
-    echo "Stopping running OSMV instance..."
+    echo "Stopping running osmv instance..."
     pkill -x osmv || true
     sleep 1
 fi
 
-# ── 6. Build with PyInstaller ─────────────────────────────────────────────────
+# ── 5. Configure + Build ──────────────────────────────────────────────────────
+echo "Configuring..."
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+
 echo
-echo "Building standalone binary..."
-pyinstaller \
-    --onefile \
-    --name osmv \
-    --add-data "discord_rpc_service.py:." \
-    osmv.py
+echo "Building..."
+cmake --build build --parallel "$(nproc)"
 
 if [ $? -eq 0 ]; then
     echo
     echo "═══════════════════════════════════════════════════════"
     echo "✔  Build successful!"
-    echo "   Binary: $(pwd)/dist/osmv"
+    echo "   Binary: $(pwd)/build/osmv"
     echo
-    echo "   Remember to also copy the OBS widget files:"
-    echo "   ../shared/index.html"
-    echo "   ../shared/style.css"
-    echo "   into the same folder as the binary."
+    echo "   To deploy, copy the following to the same folder:"
+    echo "   - build/osmv"
+    echo "   - shared/index.html"
+    echo "   - shared/style.css"
+    echo "   - settings.json (optional)"
     echo "═══════════════════════════════════════════════════════"
 else
     echo
-    echo "═══════════════════════════════════════════════════════"
-    echo "❌ Build failed. Check the output above."
-    echo "═══════════════════════════════════════════════════════"
+    echo "❌ Build failed."
     exit 1
 fi
