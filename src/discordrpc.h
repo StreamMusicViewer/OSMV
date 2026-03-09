@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QString>
 #include <functional>
+#include <discord_rpc.h>
 
 /// Discord Rich Presence service.
 /// Wraps the discord-rpc C library.
@@ -27,7 +28,9 @@ private:
   bool m_initialized = false;
   QString m_clientId;
   int m_clearTimerId = 0; // QObject timer id for delayed clear
-
+  int m_pollTimerId = 0;  // QObject timer id for polling Discord IPC
+  QByteArray m_clientIdBytes; 
+  DiscordEventHandlers m_handlers{};
   // iTunes cover fetch callback
   QString m_lastTitle;
   QString m_lastArtist;

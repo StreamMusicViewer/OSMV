@@ -63,13 +63,18 @@ void App::start() {
   // Actually set checkbox states via findChildren
   auto checkboxes = m_window->findChildren<QCheckBox *>();
   if (checkboxes.size() >= 3) {
+    for (auto* cb : checkboxes) cb->blockSignals(true);
     checkboxes[0]->setChecked(m_dynamicColor);
     checkboxes[1]->setChecked(m_audioVisualizer);
     checkboxes[2]->setChecked(m_discordRpcEnabled);
+    for (auto* cb : checkboxes) cb->blockSignals(false);
   }
   auto edits = m_window->findChildren<QLineEdit *>();
-  if (!edits.isEmpty())
+  if (!edits.isEmpty()) {
+    edits[0]->blockSignals(true);
     edits[0]->setText(m_discordClientId);
+    edits[0]->blockSignals(false);
+  }
 
   syncDiscordRpc();
 
@@ -81,17 +86,28 @@ void App::start() {
 // ──────────────────────────────────────────────────────────────────
 void App::loadSettings() {
   QFile f(Utils::settingsPath());
-  if (!f.open(QIODevice::ReadOnly))
+  if (!f.open(QIODevice::ReadOnly)) {
+    qDebug() << "[App] loadSettings: No settings.json found.";
     return;
+  }
   auto doc = QJsonDocument::fromJson(f.readAll());
-  if (doc.isNull())
+  if (doc.isNull()) {
+    qDebug() << "[App] loadSettings: settings.json is invalid.";
     return;
+  }
   auto obj = doc.object();
   m_dynamicColor = obj.value("dynamicColor").toBool(false);
   m_audioVisualizer = obj.value("audioVisualizer").toBool(false);
   m_discordRpcEnabled = obj.value("discordRpc").toBool(false);
-  m_discordClientId =
-      obj.value("discordClientId").toString("1479531788731809913");
+  m_discordClientId = obj.value("discordClientId").toString().trimmed();
+  
+  if (m_discordClientId.isEmpty()) {
+    m_discordClientId = "1479531788731809913";
+    qDebug() << "[App] loadSettings: Client ID was empty, using default:" << m_discordClientId;
+  } else {
+    qDebug() << "[App] loadSettings: Loaded Client ID:" << m_discordClientId;
+  }
+  qDebug() << "[App] loadSettings: Discord RPC Enabled:" << m_discordRpcEnabled;
 }
 
 void App::saveSettings() {
@@ -130,11 +146,13 @@ void App::onDiscordClientIdChanged(const QString &id) {
 void App::syncDiscordRpc() {
   if (m_discordRpcEnabled && !m_discordClientId.isEmpty()) {
     if (!m_discord) {
-      m_discord = std::make_unique<DiscordRpc>();
+      qDebug() << "[App] syncDiscordRpc: Creating new DiscordRpc instance";
+      m_discord = std::make_unique<DiscordRpc>(this);
       m_discord->initialize(m_discordClientId);
     }
   } else {
     if (m_discord) {
+      qDebug() << "[App] syncDiscordRpc: Destroying DiscordRpc instance (Disabled or No ID)";
       m_discord->dispose();
       m_discord.reset();
     }
@@ -142,6 +160,7 @@ void App::syncDiscordRpc() {
 }
 
 void App::reinitDiscordRpc() {
+  qDebug() << "[App] reinitDiscordRpc called";
   if (m_discord) {
     m_discord->dispose();
     m_discord.reset();

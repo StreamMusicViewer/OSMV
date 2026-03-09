@@ -30,7 +30,22 @@ set(BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
 set(ENABLE_IO_THREAD OFF CACHE BOOL "" FORCE)
 set(CLANG_FORMAT_SUFFIX "-dummy-disabled" CACHE STRING "" FORCE)
 set(USE_STATIC_CRT OFF CACHE BOOL "" FORCE)
+
+set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    rapidjson
+    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+    GIT_TAG        v1.1.0
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(rapidjson)
+
 FetchContent_MakeAvailable(discord_rpc)
+
+# Force the discord-rpc target to use the rapidjson include path we just downloaded
+target_include_directories(discord-rpc PRIVATE ${rapidjson_SOURCE_DIR}/include)
 
 # Fix: discord-rpc's bundled rapidjson is not C++20-compliant (GCC 15).
 # Apply relaxed flags only to the discord-rpc target so our code stays strict.
@@ -71,8 +86,8 @@ endif()
 
 # ── Executable ────────────────────────────────────────────────────────────────
 if(WIN32)
-    # Temporary: removed WIN32 flag to see console output during debug
-    qt_add_executable(osmv ${COMMON_SRC} ${PLATFORM_SRC} windows/OSMV.rc)
+    # Restored WIN32 flag to hide console window in production
+    qt_add_executable(osmv WIN32 ${COMMON_SRC} ${PLATFORM_SRC} windows/OSMV.rc)
 else()
     qt_add_executable(osmv ${COMMON_SRC} ${PLATFORM_SRC})
 endif()

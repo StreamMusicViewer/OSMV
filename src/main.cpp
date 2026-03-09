@@ -11,6 +11,18 @@
 
 int main(int argc, char *argv[]) {
   QApplication qapp(argc, argv);
+  qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+      static QFile logFile(QCoreApplication::applicationDirPath() + "/debugomatic.log");
+      if (!logFile.isOpen()) {
+          logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
+      }
+      QTextStream ts(&logFile);
+      ts << msg << Qt::endl;
+  });
+
+  qDebug() << "--- OSMV Started ---";
+  qDebug() << "Log path:" << QCoreApplication::applicationDirPath() + "/debugomatic.log";
+
   qapp.setApplicationName("OBS Stream Music Viewer");
   qapp.setApplicationVersion("2.0");
   qapp.setQuitOnLastWindowClosed(

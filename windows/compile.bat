@@ -120,4 +120,4 @@ if %ERRORLEVEL% EQU 0 (
     echo ERREUR: La compilation a echoue.
 )
 
-pause
+exit /b 0

@@ -67,3 +67,5 @@ get_error.bat
 msvc_error.txt
 windows/build_log.txt
 windows/build/
+discord_log.txt
+test_discord.py
