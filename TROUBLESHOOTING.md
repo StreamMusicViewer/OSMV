@@ -53,12 +53,21 @@ If you encounter compilation errors, simply download the **Release** from the Gi
 **Cause**: `playerctl` is not installed.  
 **Solution**:
 ```bash
-sudo apt install playerctl        # Debian/Ubuntu/Mint
-sudo pacman -S playerctl          # Arch/Manjaro
-sudo dnf install playerctl        # Fedora
+sudo pacman -S playerctl        # Arch/Manjaro
+sudo apt install playerctl      # Debian/Ubuntu/Mint
+sudo dnf install playerctl      # Fedora
 ```
 
-### 2. No system tray icon appears
+### 2. `ImportError: libtk8.6.so` / tkinker not found
+**Cause**: The `tk` library is not installed (required by the settings window).  
+**Solution**:
+```bash
+sudo pacman -S tk               # Arch/Manjaro
+sudo apt install python3-tk     # Debian/Ubuntu/Mint
+sudo dnf install python3-tkinter # Fedora
+```
+
+### 3. No system tray icon appears
 **Cause**: Missing `pystray` or `Pillow` Python packages, or your desktop environment doesn't support tray icons.  
 **Solution**:
 ```bash

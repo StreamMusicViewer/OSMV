@@ -27,10 +27,31 @@ echo "✔  Found $PYTHON_VER"
 # ── 2. Check playerctl (runtime dependency) ──────────────────────────────────
 if ! command -v playerctl &>/dev/null; then
     echo "⚠  playerctl is not installed."
-    echo "   Install it with: sudo apt install playerctl"
+    if command -v pacman &>/dev/null; then
+        echo "   Install it with: sudo pacman -S playerctl"
+    elif command -v apt &>/dev/null; then
+        echo "   Install it with: sudo apt install playerctl"
+    elif command -v dnf &>/dev/null; then
+        echo "   Install it with: sudo dnf install playerctl"
+    fi
     echo "   (The app will still build, but won't detect music without it.)"
 else
     echo "✔  Found $(playerctl --version)"
+fi
+echo
+
+# ── 3. Check tk (required for the settings window) ────────────────────────────
+if ! python3 -c "import tkinter" &>/dev/null; then
+    echo "⚠  tkinter (tk) is not installed — the settings window won't work."
+    if command -v pacman &>/dev/null; then
+        echo "   Install it with: sudo pacman -S tk"
+    elif command -v apt &>/dev/null; then
+        echo "   Install it with: sudo apt install python3-tk"
+    elif command -v dnf &>/dev/null; then
+        echo "   Install it with: sudo dnf install python3-tkinter"
+    fi
+else
+    echo "✔  tkinter available"
 fi
 echo
 

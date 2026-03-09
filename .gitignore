@@ -19,6 +19,7 @@ linux/*.html
 linux/*.css
 linux/*.js
 linux/*.json
+linux/*.lock
 
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
