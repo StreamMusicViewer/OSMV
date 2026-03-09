@@ -4,6 +4,10 @@ windows/obj/
 windows/*.exe
 windows/*.pdb
 windows/*.dll
+windows/*.html
+windows/*.css
+windows/*.js
+windows/*.json
 
 # ── Linux build outputs (PyInstaller) ─────────────────────────────────────────
 linux/dist/
@@ -11,6 +15,10 @@ linux/build/
 linux/*.spec
 linux/.venv/
 linux/venv/
+linux/*.html
+linux/*.css
+linux/*.js
+linux/*.json
 
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
