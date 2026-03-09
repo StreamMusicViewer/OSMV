@@ -1,0 +1,9 @@
+# OBS Stream Music Viewer — Linux dependencies
+# Install with: pip install -r requirements.txt
+
+# System tray icon
+pystray>=0.19.0
+Pillow>=10.0.0
+
+# Discord Rich Presence (optional — comment out if not needed)
+pypresence>=4.3.0

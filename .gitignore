@@ -1,10 +1,18 @@
-# Build outputs
-bin/
-obj/
-*.exe
-*.pdb
+# ── Windows build outputs ─────────────────────────────────────────────────────
+windows/bin/
+windows/obj/
+windows/*.exe
+windows/*.pdb
+windows/*.dll
 
-# Python
+# ── Linux build outputs (PyInstaller) ─────────────────────────────────────────
+linux/dist/
+linux/build/
+linux/*.spec
+linux/.venv/
+linux/venv/
+
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -12,30 +20,27 @@ __pycache__/
 venv/
 ENV/
 
-# Generated files
+# ── Generated runtime files ───────────────────────────────────────────────────
 current_song.json
+**/current_song.json
 temp_*.jpg
 temp_*.jpeg
 temp_*.png
 
-# OS files
+# ── OS files ──────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE
+# ── IDE ───────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Temporary documentation (keep only README.md)
+# ── Misc ──────────────────────────────────────────────────────────────────────
 NEXT_STEP.md
 SUCCESS.md
-
 *.zip
-*.dll
-*.exe
-current_song.json
 spectralizer

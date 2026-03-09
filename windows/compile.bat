@@ -1,5 +1,6 @@
 @echo off
-REM Script de compilation du OBS Stream Music Viewer
+REM Script de compilation du OBS Stream Music Viewer (Windows)
+REM Les fichiers du widget OBS (index.html, style.css) se trouvent dans ..\shared\
 
 echo Compilation de l'interface graphique (OBS-StreamMusicViewer.exe)...
 echo.
@@ -29,7 +30,11 @@ if %ERRORLEVEL% EQU 0 (
     echo ============================================
     echo Compilation reussie!
     echo L'executable OBS-StreamMusicViewer.exe est pret.
-    echo Vous pouvez le lancer directement.
+    echo.
+    echo N'oubliez pas de copier les fichiers OBS widget:
+    echo   ..\shared\index.html
+    echo   ..\shared\style.css
+    echo dans le meme dossier que l'executable.
     echo ============================================
     echo.
 ) else (
