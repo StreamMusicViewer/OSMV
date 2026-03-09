@@ -1,6 +1,6 @@
-# 🔍 Troubleshooting Guide
+# Troubleshooting Guide
 
-## ✅ Repository Structure
+## Repository Structure
 
 ```
 OSMV/
@@ -19,7 +19,7 @@ OSMV/
 
 ---
 
-## 🪟 Windows Issues
+## Windows Issues
 
 ### 1. Prefer the pre-compiled release
 Download from **Releases** → no developer tools needed.
@@ -45,7 +45,7 @@ You need **Windows SDK 10.0.19041+**. Install via Visual Studio Installer → **
 
 ---
 
-## 🐧 Linux Issues
+## Linux Issues
 
 ### 1. `playerctl` not found
 ```bash
@@ -104,7 +104,7 @@ cmake --build build --parallel $(nproc)
 
 ---
 
-## 💡 Support
+## Support
 
 If your issue persists, open an **Issue** on GitHub and include:
 - Your OS and version (Windows 10/11, Ubuntu 24.04, Arch…)

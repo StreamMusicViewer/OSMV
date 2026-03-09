@@ -1,4 +1,4 @@
-# 🎵 Now Playing Widget for OBS
+# Now Playing Widget for OBS
 
 ![Status](https://img.shields.io/badge/status-working-success)
 ![Platform Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
@@ -8,17 +8,17 @@
 
 A real-time **"Now Playing"** widget for OBS that displays currently playing music with album artwork and animated transitions. Built in **C++ with Qt 6** — single codebase, runs natively on both **Windows** and **Linux**.
 
-## ✨ Features
+## Features
 
-- 🎵 **Real-time updates** — Detects currently playing music every second
-- 🖼️ **Album artwork** — Displays full-resolution album covers
-- 🎨 **Dynamic color** — Widget background matches the album cover palette
-- 🎚️ **Audio visualizer** — Animated bars in OBS (beta)
-- 🎮 **Discord Rich Presence** — Shows what you're listening to on Discord
-- 🔄 **Background operation** — Minimize to system tray
-- 🎯 **Multi-app support** — Spotify, Apple Music, Firefox, Chrome, VLC, and more
+- **Real-time updates** — Detects currently playing music every second
+- **Album artwork** — Displays full-resolution album covers
+- **Dynamic color** — Widget background matches the album cover palette
+- **Audio visualizer** — Animated bars in OBS (beta)
+- **Discord Rich Presence** — Shows what you're listening to on Discord
+- **Background operation** — Minimize to system tray
+- **Multi-app support** — Spotify, Apple Music, Firefox, Chrome, VLC, and more
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 OSMV/
@@ -43,7 +43,7 @@ OSMV/
 └── CMakeLists.txt       ← Cross-platform CMake build
 ```
 
-## 🏗️ How It Works
+## How It Works
 
 ```
 Music Player (Spotify, Apple Music, VLC, browser…)
@@ -60,7 +60,7 @@ OBS overlay
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Windows
 
@@ -85,11 +85,11 @@ sudo apt install qt6-base-dev playerctl   # Ubuntu 24.04+
 
 ---
 
-## 📺 Configure OBS
+## Configure OBS
 
 1. In OBS, add a new **Browser** source.
-2. ☑️ Check **"Local file"**.
-3. 📁 Browse and select `index.html` from the folder containing the app.
+2. Check **"Local file"**.
+3. Browse and select `index.html` from the folder containing the app.
 4. Set dimensions: **Width: 500**, **Height: 140**.
 5. Click OK.
 
@@ -97,7 +97,7 @@ sudo apt install qt6-base-dev playerctl   # Ubuntu 24.04+
 
 ---
 
-## 🔧 Compiling from Source
+## Compiling from Source
 
 **Requirements (both platforms):** [Qt 6.5+](https://www.qt.io/download), CMake 3.21+
 
@@ -133,7 +133,7 @@ windows\compile.bat
 
 ---
 
-## 🎨 Customization
+## Customization
 
 Edit `shared/style.css` to change the OBS widget appearance:
 - Colors and transparency
@@ -142,15 +142,15 @@ Edit `shared/style.css` to change the OBS widget appearance:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.
 
-## 📄 License
+## License
 MIT License — free for personal and commercial use.

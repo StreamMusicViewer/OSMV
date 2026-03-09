@@ -3,6 +3,13 @@ project(OSMV VERSION 2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Enforce dynamic MSVC runtime (/MD or /MDd) to match Qt libraries and prevent ucrtbase.dll crashes
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
 set(CMAKE_AUTOMOC ON)   # Auto-run moc for Qt
 set(CMAKE_AUTORCC ON)
 
@@ -22,18 +29,21 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 set(BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
 set(ENABLE_IO_THREAD OFF CACHE BOOL "" FORCE)
 set(CLANG_FORMAT_SUFFIX "-dummy-disabled" CACHE STRING "" FORCE)
+set(USE_STATIC_CRT OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(discord_rpc)
 
 # Fix: discord-rpc's bundled rapidjson is not C++20-compliant (GCC 15).
 # Apply relaxed flags only to the discord-rpc target so our code stays strict.
-target_compile_options(discord-rpc PRIVATE
-    -fpermissive
-    -Wno-error
-    -Wno-class-memaccess
-    -Wno-uninitialized
-    # Remove Clang-only flags that GCC doesn't know about:
-    -Wno-unknown-warning-option
-)
+if(NOT MSVC)
+    target_compile_options(discord-rpc PRIVATE
+        -fpermissive
+        -Wno-error
+        -Wno-class-memaccess
+        -Wno-uninitialized
+        # Remove Clang-only flags that GCC doesn't know about:
+        -Wno-unknown-warning-option
+    )
+endif()
 
 
 # ── Source files ──────────────────────────────────────────────────────────────
@@ -61,8 +71,8 @@ endif()
 
 # ── Executable ────────────────────────────────────────────────────────────────
 if(WIN32)
-    # WIN32 flag hides the console window on Windows
-    qt_add_executable(osmv WIN32 ${COMMON_SRC} ${PLATFORM_SRC} windows/OSMV.rc)
+    # Temporary: removed WIN32 flag to see console output during debug
+    qt_add_executable(osmv ${COMMON_SRC} ${PLATFORM_SRC} windows/OSMV.rc)
 else()
     qt_add_executable(osmv ${COMMON_SRC} ${PLATFORM_SRC})
 endif()
@@ -82,7 +92,9 @@ target_link_libraries(osmv
 
 # Windows: enable WinRT and C++/WinRT
 if(WIN32)
-    target_compile_options(osmv PRIVATE /std:c++20 /EHsc)
+    if(MSVC)
+        target_compile_options(osmv PRIVATE /std:c++20 /EHsc)
+    endif()
     target_compile_definitions(osmv PRIVATE
         UNICODE _UNICODE
         WIN32_LEAN_AND_MEAN

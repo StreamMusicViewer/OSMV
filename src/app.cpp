@@ -19,7 +19,13 @@
 // ── Constructor
 // ───────────────────────────────────────────────────────────────
 App::App(QObject *parent) : QObject(parent) {
-  m_provider = std::unique_ptr<IMediaProvider>(IMediaProvider::create());
+  try {
+    m_provider = std::unique_ptr<IMediaProvider>(IMediaProvider::create());
+  } catch (const std::exception &e) {
+    qWarning() << "Failed to initialize Media Provider:" << e.what();
+  } catch (...) {
+    qWarning() << "Failed to initialize Media Provider due to an unknown exception.";
+  }
   m_window = std::make_unique<MainWindow>();
   m_http = std::make_unique<QNetworkAccessManager>();
 
@@ -189,7 +195,12 @@ void App::fetchItunesCover(const QString &title, const QString &artist) {
 // ── Polling tick
 // ──────────────────────────────────────────────────────────────
 void App::tick() {
-  SongInfo info = m_provider->currentSong();
+  SongInfo info;
+  if (m_provider) {
+    info = m_provider->currentSong();
+  } else {
+    info.status = "closed";
+  }
 
   if (info.status == "closed" || info.status.isEmpty() ||
       info.title.isEmpty()) {

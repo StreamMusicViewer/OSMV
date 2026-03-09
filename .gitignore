@@ -48,6 +48,7 @@ desktop.ini
 *.swp
 *.swo
 *~
+.vs/
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
 NEXT_STEP.md
@@ -57,3 +58,12 @@ spectralizer
 
 # --- Test files ---
 test/
+
+# ── Temporary & Debug files ───────────────────────────────────────────────────
+TestLoad.*
+cdb_output.txt
+debug.bat
+get_error.bat
+msvc_error.txt
+windows/build_log.txt
+windows/build/
