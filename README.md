@@ -157,3 +157,6 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 
 ## License
 MIT License — free for personal and commercial use.
+
+## Author
+Ulyxx3 (<https://github.com/Ulyxx3>)
