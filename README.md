@@ -31,16 +31,19 @@ OSMV/
 │   ├── mediaprovider_linux.cpp         ← Linux: playerctl / MPRIS2
 │   ├── discordrpc.cpp / discordrpc.h
 │   └── utils.cpp / utils.h
-├── shared/              ← OBS browser source widget
+├── shared/              ← OBS browser source widget (web)
 │   ├── index.html
 │   └── style.css
-├── windows/             ← Windows-specific files
+├── windows/             ← Windows-specific build & resources
 │   ├── OSMV_logo.ico
 │   ├── OSMV.rc
 │   └── compile.bat
-├── linux/               ← Linux-specific files
+├── linux/               ← Linux-specific build
 │   └── compile.sh
-└── CMakeLists.txt       ← Cross-platform CMake build
+├── CMakeLists.txt       ← Build system configuration
+├── LICENSE              ← MIT License
+├── TROUBLESHOOTING.md   ← Common issues & solutions
+└── settings.json        ← Application configuration
 ```
 
 ## How It Works
