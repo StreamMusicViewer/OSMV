@@ -99,22 +99,49 @@ if %ERRORLEVEL% EQU 0 (
     echo OK: Build reussi!
     echo    Binaire: %BUILD_BIN%
     echo.
+    echo Mise en place du dossier de deploiement...
+    copy /Y "%BUILD_BIN%" "..\OSMV.exe" >nul
+    
     echo Deploiement des DLL Qt avec windeployqt...
-    "%QTDIR%\bin\windeployqt.exe" "%BUILD_BIN%" --no-translations --compiler-runtime >nul 2>&1
+    "%QTDIR%\bin\windeployqt.exe" "..\OSMV.exe" --no-translations --compiler-runtime >nul 2>&1
     
     REM Force copy VC runtime just in case windeployqt misses it
-    copy /Y "C:\Windows\System32\vcruntime140*.dll" "build\" >nul 2>&1
-    copy /Y "C:\Windows\System32\msvcp140*.dll" "build\" >nul 2>&1
-    copy /Y "C:\Windows\System32\concrt140*.dll" "build\" >nul 2>&1
-    copy /Y "C:\Windows\System32\ucrtbase.dll" "build\" >nul 2>&1
+    copy /Y "C:\Windows\System32\vcruntime140*.dll" "..\" >nul 2>&1
+    copy /Y "C:\Windows\System32\msvcp140*.dll" "..\" >nul 2>&1
+    copy /Y "C:\Windows\System32\concrt140*.dll" "..\" >nul 2>&1
+    copy /Y "C:\Windows\System32\ucrtbase.dll" "..\" >nul 2>&1
     
-    echo OK: DLL ajoutees a build\
-    echo.
-    echo    Pour deployer, copiez le contenu du dossier build\ et :
-    echo    - shared\index.html
-    echo    - shared\style.css
-    echo    - settings.json ^(optionnel^)
-    echo -------------------------------------------------------
+    echo Nettoyage des fichiers inutiles...
+    if exist "..\qt.conf" del /Q "..\qt.conf"
+    if exist "..\bin" rmdir /S /Q "..\bin"
+    
+    REM ── Check for WinRAR to create a true Standalone EXE ──
+    set WINRAR="C:\Program Files\WinRAR\WinRAR.exe"
+    if exist %WINRAR% (
+        echo Creation de l'executable Standalone ^(SFX^) avec WinRAR...
+        echo ;The comment below contains SFX script commands > sfx_cfg.txt
+        echo Setup=OSMV.exe >> sfx_cfg.txt
+        echo TempMode >> sfx_cfg.txt
+        echo Silent=1 >> sfx_cfg.txt
+        echo Overwrite=1 >> sfx_cfg.txt
+        echo Title=OSMV >> sfx_cfg.txt
+        
+        REM Package everything into the Standalone EXE
+        %WINRAR% a -sfx -ep1 -z"sfx_cfg.txt" "..\OSMV_Standalone.exe" "..\OSMV.exe" "..\*.dll" "..\shared" >nul
+        if exist sfx_cfg.txt del /Q sfx_cfg.txt
+        
+        echo.
+        echo -------------------------------------------------------
+        echo OK: Executable unique genere : OSMV_Standalone.exe
+        echo    Ce fichier contient TOUT ^(DLLs + Web^) et peut etre deplace seul.
+        echo -------------------------------------------------------
+    ) else (
+        echo.
+        echo -------------------------------------------------------
+        echo OK: Deploiement termine avec succes !
+        echo    WinRAR non trouve, utilisez le dossier actuel ^(OSMV.exe + DLLs^).
+        echo -------------------------------------------------------
+    )
 ) else (
     echo.
     echo ERREUR: La compilation a echoue.

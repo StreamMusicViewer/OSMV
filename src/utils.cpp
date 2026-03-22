@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QEventLoop>
 #include <QFile>
 #include <QJsonDocument>
@@ -13,11 +14,11 @@
 namespace Utils {
 
 QString jsonOutputPath() {
-  return QCoreApplication::applicationDirPath() + "/current_song.json";
+  return QDir::currentPath() + "/current_song.json";
 }
 
 QString settingsPath() {
-  return QCoreApplication::applicationDirPath() + "/settings.json";
+  return QDir::currentPath() + "/settings.json";
 }
 
 QString toBase64(const QByteArray &data) {
