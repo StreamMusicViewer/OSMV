@@ -1,71 +1,40 @@
-# ── C++ / CMake build outputs ─────────────────────────────────────────────────
-build/
-.cmake/
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-*.o
-*.a
-*.so
-*.dylib
+# ── Rust build output ──────────────────────────────────────────────────────────
+# Cargo.lock is intentionally tracked — this is a binary application.
+# Committing it ensures reproducible builds for all contributors.
+target/
 
-# ── Windows build artifacts ───────────────────────────────────────────────────
-windows/bin/
-windows/obj/
-*.exe
-*.pdb
-*.dll
-
-# ── Linux build artifacts ─────────────────────────────────────────────────────
-linux/dist/
-linux/build/
-linux/.venv/
-linux/venv/
-
-# ── Python (legacy) ───────────────────────────────────────────────────────────
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-
-# ── Generated runtime files ───────────────────────────────────────────────────
+# ── Runtime-generated files ────────────────────────────────────────────────────
 current_song.json
 **/current_song.json
+settings.json
 .osmv.lock
-temp_*.jpg
-temp_*.jpeg
-temp_*.png
+debugomatic.log
 
-# ── OS files ──────────────────────────────────────────────────────────────────
+# ── OS files ───────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# ── IDE ───────────────────────────────────────────────────────────────────────
+# ── IDE / editor ───────────────────────────────────────────────────────────────
 .vscode/
 .idea/
+.vs/
 *.swp
 *.swo
 *~
-.vs/
 
-# ── Misc ──────────────────────────────────────────────────────────────────────
-NEXT_STEP.md
-SUCCESS.md
-*.zip
-spectralizer
-
-# --- Test files ---
-test/
-
-# ── Temporary & Debug files ───────────────────────────────────────────────────
-TestLoad.*
-cdb_output.txt
-debug.bat
-get_error.bat
-msvc_error.txt
-windows/build_log.txt
+# ── Windows build leftovers (kept for reference but never rebuilt) ─────────────
 windows/build/
-discord_log.txt
-test_discord.py
+windows/bin/
+windows/obj/
+windows/current_song.json
+windows/build_log.txt
+
+# ── Linux build leftovers ──────────────────────────────────────────────────────
+linux/dist/
+linux/build/
+linux/.venv/
+
+# ── Misc ───────────────────────────────────────────────────────────────────────
+*.zip
+test/
