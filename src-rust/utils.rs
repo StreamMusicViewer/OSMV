@@ -6,7 +6,40 @@ use std::path::PathBuf;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 
-// ── Settings ─────────────────────────────────────────────────────────────────
+// ── Settings ──────────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct DiscordSettings {
+    /// Enable Discord Rich Presence
+    #[serde(default)]
+    pub enabled: bool,
+    /// Use current playing music as the RPC activity (when playing)
+    #[serde(default = "default_true")]
+    pub use_music_when_playing: bool,
+    /// Your Discord Application Client ID
+    #[serde(default)]
+    pub client_id: String,
+    /// Default activity details (line 1, shown when no music or use_music is off)
+    #[serde(default)]
+    pub custom_details: String,
+    /// Default activity state (line 2)
+    #[serde(default)]
+    pub custom_state: String,
+    /// Large image key (from your Discord app's Art Assets)
+    #[serde(default)]
+    pub large_image_key: String,
+    /// Large image tooltip text
+    #[serde(default)]
+    pub large_image_text: String,
+    /// Small image key
+    #[serde(default)]
+    pub small_image_key: String,
+    /// Small image tooltip text
+    #[serde(default)]
+    pub small_image_text: String,
+}
+
+fn default_true() -> bool { true }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -14,6 +47,8 @@ pub struct Settings {
     pub dynamic_color: bool,
     #[serde(rename = "audioVisualizer", default)]
     pub audio_visualizer: bool,
+    #[serde(default)]
+    pub discord: DiscordSettings,
 }
 
 impl Default for Settings {
@@ -21,6 +56,10 @@ impl Default for Settings {
         Self {
             dynamic_color: false,
             audio_visualizer: false,
+            discord: DiscordSettings {
+                use_music_when_playing: true,
+                ..Default::default()
+            },
         }
     }
 }
@@ -85,7 +124,6 @@ pub fn write_json(
 ) {
     let timestamp = {
         use std::time::{SystemTime, UNIX_EPOCH};
-        // RFC-3339 approximation without external chrono crate
         let secs = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
@@ -93,17 +131,7 @@ pub fn write_json(
         format_unix_as_iso8601(secs)
     };
 
-    let obj = SongJson {
-        title,
-        artist,
-        album,
-        thumbnail: thumbnail_b64,
-        status,
-        dynamic_color,
-        audio_visualizer,
-        timestamp,
-    };
-
+    let obj = SongJson { title, artist, album, thumbnail: thumbnail_b64, status, dynamic_color, audio_visualizer, timestamp };
     if let Ok(json) = serde_json::to_string_pretty(&obj) {
         let _ = std::fs::write(json_output_path(), json);
     }
@@ -115,26 +143,17 @@ pub fn write_null_json() {
 
 // ── Thumbnail fetching ────────────────────────────────────────────────────────
 
-/// Fetch an image from a `file://` or `https?://` URL and return a base64 string.
-/// Blocking — call from the background thread.
 pub fn load_thumbnail_as_base64(url: &str) -> String {
-    if url.is_empty() {
-        return String::new();
-    }
+    if url.is_empty() { return String::new(); }
 
     if let Some(path) = url.strip_prefix("file://") {
-        // URL-decode simple percent-encoding
         let decoded = percent_decode(path);
         return std::fs::read(&decoded)
             .map(|b| base64::engine::general_purpose::STANDARD.encode(&b))
             .unwrap_or_default();
     }
 
-    // Remote URL — use ureq (blocking)
-    match ureq::get(url)
-        .set("User-Agent", "OSMV/2.0")
-        .call()
-    {
+    match ureq::get(url).set("User-Agent", "OSMV/2.0").call() {
         Ok(resp) => {
             let mut buf = Vec::new();
             use std::io::Read;
@@ -167,7 +186,6 @@ fn percent_decode(s: &str) -> String {
 }
 
 fn format_unix_as_iso8601(secs: u64) -> String {
-    // Minimal ISO-8601 formatter without chrono
     let (y, m, d, h, mi, s) = unix_to_parts(secs);
     format!("{y:04}-{m:02}-{d:02}T{h:02}:{mi:02}:{s:02}Z")
 }
@@ -179,8 +197,6 @@ fn unix_to_parts(secs: u64) -> (u32, u32, u32, u32, u32, u32) {
     let hours = mins / 60;
     let h = (hours % 24) as u32;
     let days = (hours / 24) as u32;
-
-    // Civil date from day count (Richards algorithm)
     let z = days + 719468;
     let era = z / 146097;
     let doe = z - era * 146097;

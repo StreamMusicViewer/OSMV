@@ -13,7 +13,7 @@ path = "src-rust/main.rs"
 eframe = { version = "0.31", features = ["default"] }
 egui = "0.31"
 egui_extras = { version = "0.31", features = ["image"] }
-image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif"] }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "ico"] }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
@@ -25,11 +25,11 @@ base64 = "0.22"
 # HTTP for thumbnail fetching (Linux artUrl)
 ureq = { version = "2", default-features = false, features = ["tls"] }
 
-# Tray icon
-tray-icon = "0.20"
+# Discord Rich Presence
+discord-presence = "3"
 
-# Cross-platform notification (for tray balloon)
-notify-rust = { version = "4", default-features = false }
+# Single instance guard
+single-instance = "0.3"
 
 # Logging
 log = "0.4"
@@ -44,7 +44,6 @@ windows = { version = "0.61", features = [
 mpris = "2"
 
 [build-dependencies]
-# On Windows: embed icon and set subsystem to windows
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winresource = "0.1"
 
