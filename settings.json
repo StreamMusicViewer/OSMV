@@ -1,6 +1,4 @@
 {
   "dynamicColor": false,
-  "audioVisualizer": false,
-  "discordRpc": false,
-  "discordClientId": "1479531788731809913"
+  "audioVisualizer": false
 }

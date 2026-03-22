@@ -16,50 +16,6 @@ set(CMAKE_AUTORCC ON)
 # ── Qt 6 ──────────────────────────────────────────────────────────────────────
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
-# ── discord-rpc (fetched automatically) ───────────────────────────────────────
-include(FetchContent)
-
-FetchContent_Declare(
-    discord_rpc
-    GIT_REPOSITORY https://github.com/discord/discord-rpc.git
-    GIT_TAG        master
-    GIT_SHALLOW    TRUE
-)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-set(BUILD_EXAMPLES  OFF CACHE BOOL "" FORCE)
-set(ENABLE_IO_THREAD OFF CACHE BOOL "" FORCE)
-set(CLANG_FORMAT_SUFFIX "-dummy-disabled" CACHE STRING "" FORCE)
-set(USE_STATIC_CRT OFF CACHE BOOL "" FORCE)
-
-set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-    rapidjson
-    GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
-    GIT_TAG        v1.1.0
-    GIT_SHALLOW    TRUE
-)
-FetchContent_MakeAvailable(rapidjson)
-
-FetchContent_MakeAvailable(discord_rpc)
-
-# Force the discord-rpc target to use the rapidjson include path we just downloaded
-target_include_directories(discord-rpc PRIVATE ${rapidjson_SOURCE_DIR}/include)
-
-# Fix: discord-rpc's bundled rapidjson is not C++20-compliant (GCC 15).
-# Apply relaxed flags only to the discord-rpc target so our code stays strict.
-if(NOT MSVC)
-    target_compile_options(discord-rpc PRIVATE
-        -fpermissive
-        -Wno-error
-        -Wno-class-memaccess
-        -Wno-uninitialized
-        # Remove Clang-only flags that GCC doesn't know about:
-        -Wno-unknown-warning-option
-    )
-endif()
-
 
 # ── Source files ──────────────────────────────────────────────────────────────
 set(COMMON_SRC
@@ -68,8 +24,6 @@ set(COMMON_SRC
     src/app.h
     src/mainwindow.cpp
     src/mainwindow.h
-    src/discordrpc.cpp
-    src/discordrpc.h
     src/utils.cpp
     src/utils.h
     src/mediaprovider.h
@@ -94,14 +48,12 @@ endif()
 
 target_include_directories(osmv PRIVATE
     src
-    ${discord_rpc_SOURCE_DIR}/include
 )
 
 target_link_libraries(osmv
     PRIVATE
         Qt6::Widgets
         Qt6::Network
-        discord-rpc
         ${PLATFORM_LIBS}
 )
 

@@ -14,7 +14,6 @@ A real-time **"Now Playing"** widget for OBS that displays currently playing mus
 - **Album artwork** — Displays full-resolution album covers
 - **Dynamic color** — Widget background matches the album cover palette
 - **Audio visualizer** — Animated bars in OBS (beta)
-- **Discord Rich Presence** — Shows what you're listening to on Discord
 - **Background operation** — Minimize to system tray
 - **Multi-app support** — Spotify, Apple Music, Firefox, Chrome, VLC, and more
 
@@ -29,7 +28,6 @@ OSMV/
 │   ├── mediaprovider.h                 ← Abstract interface
 │   ├── mediaprovider_win.cpp           ← Windows: WinRT SMTC
 │   ├── mediaprovider_linux.cpp         ← Linux: playerctl / MPRIS2
-│   ├── discordrpc.cpp / discordrpc.h
 │   └── utils.cpp / utils.h
 ├── shared/              ← OBS browser source widget (web)
 │   ├── index.html

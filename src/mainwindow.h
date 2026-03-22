@@ -1,7 +1,6 @@
 #pragma once
 #include <QCheckBox>
 #include <QLabel>
-#include <QLineEdit>
 #include <QMainWindow>
 #include <QPixmap>
 #include <QSystemTrayIcon>
@@ -20,13 +19,9 @@ public:
   // Settings read by App
   bool dynamicColorEnabled() const;
   bool audioVisualizerEnabled() const;
-  bool discordRpcEnabled() const;
-  QString discordClientId() const;
 
 signals:
   void settingsChanged();
-  void discordRpcToggled(bool enabled);
-  void discordClientIdChanged(const QString &id);
 
 protected:
   void closeEvent(QCloseEvent *event) override;
@@ -35,8 +30,6 @@ protected:
 private slots:
   void onTrayActivated(QSystemTrayIcon::ActivationReason reason);
   void onQuitClicked();
-  void onDiscordRpcToggled(bool checked);
-  void onClientIdEditingFinished();
 
 private:
   void buildUi();
@@ -52,9 +45,6 @@ private:
   QLabel *m_error = nullptr;
   QCheckBox *m_dynColor = nullptr;
   QCheckBox *m_visualizer = nullptr;
-  QCheckBox *m_discordRpc = nullptr;
-  QWidget *m_discordRow = nullptr;
-  QLineEdit *m_clientId = nullptr;
 
   // ── Tray ────────────────────────────────────────────────────────────────
   QSystemTrayIcon *m_tray = nullptr;

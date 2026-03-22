@@ -81,19 +81,13 @@ Fixes for common players:
 chmod +x osmv
 ```
 
-### 6. Discord RPC not working
-- Discord must be **running** (not just the browser).
-- Avoid the Discord **snap** or **flatpak** — they block IPC. Use the official `.tar.gz` from https://discord.com/download.
-- Enable Discord RPC in the OSMV settings window.
-
-### 7. `./linux/compile.sh` fails
+### 6. `./linux/compile.sh` fails
 Check the error output. Common causes:
 
 | Error | Fix |
 |---|---|
 | `cmake: command not found` | `sudo pacman -S cmake` |
 | `Qt6Widgets not found` | `sudo pacman -S qt6-base` |
-| `discord_rpc.h not found` | CMake will download it automatically via `FetchContent` — check your internet connection |
 | Old cmake version | Update: `sudo pacman -Syu cmake` |
 
 Run the build manually for more details:

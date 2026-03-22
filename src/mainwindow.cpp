@@ -71,23 +71,6 @@ void MainWindow::buildUi() {
 
   m_dynColor = new QCheckBox("🎨 Match cover color", this);
   m_visualizer = new QCheckBox("🎚 Audio visualizer (beta)", this);
-  m_discordRpc = new QCheckBox("🎮 Discord Rich Presence", this);
-
-  // Discord Client ID row (shown only when Discord enabled)
-  m_discordRow = new QWidget(this);
-  auto *discordLayout = new QHBoxLayout(m_discordRow);
-  discordLayout->setContentsMargins(18, 0, 0, 0);
-  auto *cidLabel = new QLabel("Client ID:", m_discordRow);
-  cidLabel->setStyleSheet("color: #606060; font-size: 10px;");
-  m_clientId = new QLineEdit(m_discordRow);
-  m_clientId->setFixedWidth(150);
-  m_clientId->setPlaceholderText("Discord App ID");
-  m_clientId->setToolTip("Your Discord Application ID (Developer Portal)");
-  discordLayout->addWidget(cidLabel);
-  discordLayout->addWidget(m_clientId);
-  discordLayout->addStretch();
-  m_discordRow->setVisible(false);
-
   m_error = new QLabel("", this);
   m_error->setObjectName("error");
   m_error->setWordWrap(true);
@@ -100,8 +83,6 @@ void MainWindow::buildUi() {
   right->addWidget(m_dynColor);
   right->addWidget(m_visualizer);
   right->addSpacing(4);
-  right->addWidget(m_discordRpc);
-  right->addWidget(m_discordRow);
   right->addWidget(m_error);
   right->addStretch();
 
@@ -111,12 +92,6 @@ void MainWindow::buildUi() {
   connect(m_dynColor, &QCheckBox::toggled, this, &MainWindow::settingsChanged);
   connect(m_visualizer, &QCheckBox::toggled, this,
           &MainWindow::settingsChanged);
-  connect(m_discordRpc, &QCheckBox::toggled, this, [this](bool on) {
-    m_discordRow->setVisible(on);
-    emit discordRpcToggled(on);
-  });
-  connect(m_clientId, &QLineEdit::editingFinished, this,
-          &MainWindow::onClientIdEditingFinished);
 }
 
 void MainWindow::buildTray() {
@@ -184,14 +159,11 @@ bool MainWindow::dynamicColorEnabled() const { return m_dynColor->isChecked(); }
 bool MainWindow::audioVisualizerEnabled() const {
   return m_visualizer->isChecked();
 }
-bool MainWindow::discordRpcEnabled() const { return m_discordRpc->isChecked(); }
-QString MainWindow::discordClientId() const { return m_clientId->text(); }
 
 // ── Settings setters (called from App after loading settings.json)
 // ───────────── We expose these via method-like calls from App constructor in
 // app.cpp
-void MainWindow_setSettings(MainWindow *w, bool dynColor, bool viz, bool rpc,
-                            const QString &clientId) {
+void MainWindow_setSettings(MainWindow *w, bool dynColor, bool viz) {
   // We reach private members via friend or setters — using direct signal block
   // to avoid triggering signals during init
   w->findChild<QCheckBox *>(); // no-op just for compilation
@@ -200,8 +172,6 @@ void MainWindow_setSettings(MainWindow *w, bool dynColor, bool viz, bool rpc,
   (void)w;
   (void)dynColor;
   (void)viz;
-  (void)rpc;
-  (void)clientId;
 }
 
 // ── Slots
@@ -215,15 +185,6 @@ void MainWindow::onTrayActivated(QSystemTrayIcon::ActivationReason reason) {
 void MainWindow::onQuitClicked() {
   m_closing = true;
   QApplication::quit();
-}
-
-void MainWindow::onDiscordRpcToggled(bool checked) {
-  m_discordRow->setVisible(checked);
-  emit discordRpcToggled(checked);
-}
-
-void MainWindow::onClientIdEditingFinished() {
-  emit discordClientIdChanged(m_clientId->text());
 }
 
 // ── Window events ────────────────────────────────────────────────────────────
