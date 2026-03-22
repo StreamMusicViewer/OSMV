@@ -1,160 +1,98 @@
-# Now Playing Widget for OBS
+# OSMV - Now Playing Widget for OBS
 
 ![Status](https://img.shields.io/badge/status-working-success)
 ![Platform Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
 ![Platform Linux](https://img.shields.io/badge/platform-Linux-orange)
-![C++](https://img.shields.io/badge/C++-20-blueviolet)
-![Qt](https://img.shields.io/badge/Qt-6-green)
+![Rust](https://img.shields.io/badge/Language-Rust-brown)
+![egui](https://img.shields.io/badge/GUI-egui-lightgrey)
 
-A real-time **"Now Playing"** widget for OBS that displays currently playing music with album artwork and animated transitions. Built in **C++ with Qt 6** — single codebase, runs natively on both **Windows** and **Linux**.
+A modern, real-time **"Now Playing"** widget for OBS that displays currently playing music with album artwork and animated transitions. Completely rewritten in **Rust** with **egui** for a premium, lightweight, and portable experience.
 
-## Features
+## ✨ Features
 
-- **Real-time updates** — Detects currently playing music every second
-- **Album artwork** — Displays full-resolution album covers
-- **Dynamic color** — Widget background matches the album cover palette
-- **Audio visualizer** — Animated bars in OBS (beta)
-- **Background operation** — Minimize to system tray
-- **Multi-app support** — Spotify, Apple Music, Firefox, Chrome, VLC, and more
+-   **Discord Rich Presence** — Showcase your music on Discord with automatic album cover lookup (via iTunes API) and status icons (playing/paused/stopped).
+-   **Full-Resolution Album Art** — Automatically detects and displays album covers from your media player.
+-   **Modern Glassmorphism UI** — A stunning, translucent interface for both the app and the OBS widget.
+-   **Real-time Media Polling** — Detects music every second from Spotify, Apple Music, browsers, VLC, and more.
+-   **Dynamic Color Support** — Optional feature to match the widget background to the album cover palette.
+-   **Single Instance Guard** — Ensures only one instance of the app is running.
+-   **Native & Portable** — Single binary executable for Windows and Linux, no complex dependencies required.
 
-## Repository Structure
+## 📂 Repository Structure
 
 ```
 OSMV/
-├── src/                 ← C++ source (cross-platform)
-│   ├── main.cpp
-│   ├── app.cpp / app.h
-│   ├── mainwindow.cpp / mainwindow.h   ← Qt 6 UI (same on Win & Linux)
-│   ├── mediaprovider.h                 ← Abstract interface
-│   ├── mediaprovider_win.cpp           ← Windows: WinRT SMTC
-│   ├── mediaprovider_linux.cpp         ← Linux: playerctl / MPRIS2
-│   └── utils.cpp / utils.h
-├── shared/              ← OBS browser source widget (web)
+├── assets/              ← Embedded fonts and icons
+├── src-rust/            ← Core Rust implementation
+│   ├── media/           ← Media providers (Windows WinRT & Linux MPRIS)
+│   ├── app.rs           ← Application logic & background polling
+│   ├── discord.rs       ← Discord Rich Presence manager
+│   ├── gui.rs           ← egui-based interface
+│   ├── main.rs          ← Entry point & single-instance check
+│   └── utils.rs         ← Settings and JSON output
+├── shared/              ← OBS browser source/widget (HTML/CSS)
 │   ├── index.html
 │   └── style.css
-├── windows/             ← Windows-specific build & resources
-│   ├── OSMV_logo.ico
-│   ├── OSMV.rc
-│   └── compile.bat
-├── linux/               ← Linux-specific build
-│   └── compile.sh
-├── CMakeLists.txt       ← Build system configuration
-├── LICENSE              ← MIT License
-├── TROUBLESHOOTING.md   ← Common issues & solutions
-└── settings.json        ← Application configuration
+├── windows/             ← Windows build scripts & resources
+├── linux/               ← Linux build scripts
+├── Cargo.toml           ← Rust project configuration
+└── TROUBLESHOOTING.md   ← Common issues & solutions
 ```
 
-## How It Works
-
-```
-Music Player (Spotify, Apple Music, VLC, browser…)
-    ↓
-Windows: GlobalSystemMediaTransportControlsSessionManager (WinRT)
-Linux:   playerctl + MPRIS2 D-Bus
-    ↓
-OSMV Qt app (writes current_song.json every ~1s)
-    ↓
-shared/index.html  (OBS Browser Source, polls the JSON)
-    ↓
-OBS overlay
-```
-
----
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Windows
-
-1. Go to the **[Releases](../../releases)** page and download the latest `.zip`.
-2. Extract and place `osmv.exe`, `index.html`, and `style.css` in a folder.
-3. Double-click `osmv.exe`.
-4. Configure OBS (see below).
+1. Download the latest `OSMV.exe` from the **[Releases](../../releases)** page.
+2. Place it in a folder alongside the `shared/` directory.
+3. Run `OSMV.exe`.
+4. Configure Discord RPC and OBS (see below).
 
 ### Linux
-
-**Install dependencies:**
-```bash
-sudo pacman -S qt6-base playerctl   # Arch / Manjaro
-# or
-sudo apt install qt6-base-dev playerctl   # Ubuntu 24.04+
-```
-
-1. Go to the **[Releases](../../releases)** page and download the latest Linux binary.
-2. Place `osmv`, `index.html`, and `style.css` in the same folder.
-3. `chmod +x osmv && ./osmv` — an icon appears in your system tray.
-4. Configure OBS (see below).
+1. Download the Linux binary from the **[Releases](../../releases)** page.
+2. Ensure you have `libdbus` installed (standard on most distros).
+3. `chmod +x osmv && ./osmv`
+4. Configure Discord RPC and OBS (see below).
 
 ---
 
-## Configure OBS
+## 🎮 Discord Rich Presence Setup
+
+1. Open the **Discord RPC** tab in the app.
+2. Enable the feature and enter your **Application Client ID** (from [Discord Developer Portal](https://discord.com/developers/applications)).
+3. (Optional) Upload "playing", "paused", and "stopped" icons to your Discord App's Art Assets to see playback status badges.
+4. Click **Save Settings**.
+
+---
+
+## 📺 Configure OBS
 
 1. In OBS, add a new **Browser** source.
-2. Check **"Local file"**.
-3. Browse and select `index.html` from the folder containing the app.
+2. Check **Local file**.
+3. Select `shared/index.html`.
 4. Set dimensions: **Width: 500**, **Height: 140**.
-5. Click OK.
-
-*As long as the application is running, your OBS widget updates automatically.*
+5. Custom CSS is not required unless you want to override the default styles.
 
 ---
 
-## Compiling from Source
+## 🛠️ Compiling from Source
 
-**Requirements (both platforms):** [Qt 6.5+](https://www.qt.io/download), CMake 3.21+
-
-### Linux
-
-```bash
-# Arch/Manjaro
-sudo pacman -S qt6-base cmake playerctl
-
-# Ubuntu 24.04+
-sudo apt install qt6-base-dev cmake playerctl
-
-# Build
-./linux/compile.sh
-# → binary at build/osmv
-```
+You need [Rust](https://rustup.rs/) installed.
 
 ### Windows
+```powershell
+windows\compile_rust.bat
+```
+*(Produces a release binary and copies it to the root folder)*
 
-**Requirements:** Qt 6 (MSVC or MinGW), CMake, Visual Studio 2022 or MinGW
-
-```bat
-windows\compile.bat
+### Linux
+```bash
+linux/build_rust.sh
 ```
 
-The script auto-detects Qt 6 at `C:\Qt\`. Set `QTDIR` manually if needed:
-```bat
-set QTDIR=C:\Qt\6.7.0\msvc2019_64
-windows\compile.bat
-```
-
-**Deploy** by placing `osmv.exe` (or `osmv`), `shared/index.html`, and `shared/style.css` in the same folder.
-
 ---
 
-## Customization
-
-Edit `shared/style.css` to change the OBS widget appearance:
-- Colors and transparency
-- Album artwork size
-- Animation effects
-
----
-
-## Troubleshooting
-
-See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
-
----
-
-## Contributing
-
-Contributions are welcome! Feel free to open issues or submit pull requests.
-
-## License
+## 📄 License
 MIT License — free for personal and commercial use.
 
-## Author
+## 👤 Author
 Ulyxx3 (<https://github.com/Ulyxx3>)
