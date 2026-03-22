@@ -23,7 +23,7 @@ serde_json = "1"
 base64 = "0.22"
 
 # HTTP for thumbnail fetching (Linux artUrl)
-ureq = { version = "2", default-features = false, features = ["tls"] }
+ureq = { version = "2", default-features = false, features = ["tls", "json"] }
 
 # Discord Rich Presence
 discord-presence = "3"

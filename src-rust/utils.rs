@@ -25,21 +25,34 @@ pub struct DiscordSettings {
     /// Default activity state (line 2)
     #[serde(default)]
     pub custom_state: String,
-    /// Large image key (from your Discord app's Art Assets)
+    /// Large image key / placeholder (from Discord app Art Assets)
+    /// Used when there is no HTTPS art URL available
     #[serde(default)]
     pub large_image_key: String,
     /// Large image tooltip text
     #[serde(default)]
     pub large_image_text: String,
-    /// Small image key
+    /// Small image key shown in bottom-right when music is PLAYING
+    #[serde(default = "default_key_playing")]
+    pub status_key_playing: String,
+    /// Small image key shown in bottom-right when music is PAUSED
+    #[serde(default = "default_key_paused")]
+    pub status_key_paused: String,
+    /// Small image key shown in bottom-right when music is STOPPED
+    #[serde(default = "default_key_stopped")]
+    pub status_key_stopped: String,
+    /// Small image key used in custom / idle mode
     #[serde(default)]
     pub small_image_key: String,
-    /// Small image tooltip text
+    /// Small image tooltip text (custom/idle mode)
     #[serde(default)]
     pub small_image_text: String,
 }
 
 fn default_true() -> bool { true }
+fn default_key_playing() -> String { "playing".into() }
+fn default_key_paused()  -> String { "paused".into() }
+fn default_key_stopped() -> String { "stopped".into() }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {

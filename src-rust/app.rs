@@ -60,15 +60,22 @@ fn run_poll_loop(state: Arc<Mutex<AppState>>, discord: DiscordHandle) {
 
         // ── Discord RPC update ────────────────────────────────────────────────
         if discord_settings.enabled {
-            let (title, artist) = if !is_inactive {
-                (Some(info.title.clone()), Some(info.artist.clone()))
+            let (title, artist, art_url, status) = if !is_inactive {
+                (
+                    Some(info.title.clone()),
+                    Some(info.artist.clone()),
+                    Some(info.art_url.clone()),
+                    info.status.clone(),
+                )
             } else {
-                (None, None)
+                (None, None, None, "idle".to_string())
             };
             discord.send(RpcCommand::Update {
                 settings: discord_settings,
                 title,
                 artist,
+                art_url,
+                status,
             });
         }
 
