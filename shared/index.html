@@ -9,10 +9,10 @@
 </head>
 
 <body>
-    <!-- Conteneur flex : visualiseur + widget empilés -->
+    <!-- Flex container: visualizer + widget stacked -->
     <div class="obs-stack">
 
-        <!-- Visualiseur audio (flexbox pousse automatiquement au-dessus du widget) -->
+        <!-- Audio visualizer (pushed above the widget) -->
         <div id="visualizer-wrapper" class="visualizer-wrapper visualizer-hidden">
             <canvas id="visualizer"></canvas>
         </div>
@@ -24,7 +24,7 @@
                     <div class="music-icon">🎵</div>
                 </div>
                 <div class="track-info">
-                    <div id="title" class="track-title"><span class="scroll-text">Aucune lecture en cours</span></div>
+                    <div id="title" class="track-title"><span class="scroll-text">Nothing currently playing</span></div>
                     <div id="artist" class="track-artist"><span class="scroll-text"></span></div>
                 </div>
             </div>
@@ -32,13 +32,13 @@
 
     </div><!-- /.obs-stack -->
 
-    <!-- Canvas caché pour l'extraction de couleur -->
+    <!-- Hidden canvas for color extraction -->
     <canvas id="color-canvas" style="display:none;"></canvas>
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        //  AudioVisualizer — 20 barres lues depuis le tableau fft[] du JSON
-        //  L'app C# (WASAPI Loopback + FFT) écrit les valeurs, on les affiche.
+        //  AudioVisualizer — 20 bars read from the fft[] array in the JSON
+        //  The Rust app writes the values, we display them.
         // ═══════════════════════════════════════════════════════════════
         class AudioVisualizer {
             constructor(canvasId, wrapperId) {
@@ -110,7 +110,7 @@
                 }, 150);
             }
 
-            /** Met à jour la teinte (même hue que le fond dynamique du widget) */
+            /** Update hue (matches the widget dynamic background) */
             setHue(h) { this.hue = h; }
 
             _draw() {
@@ -123,7 +123,7 @@
 
                 ctx.clearRect(0, 0, W, H);
 
-                // Interpolation exponentielle vers la cible (smooth visuel entre frames JSON)
+                // Exponential interpolation (smooth visual between JSON frames)
                 const LERP = 0.15;
                 for (let i = 0; i < BAR_COUNT; i++)
                     this._current[i] += (this._target[i] - this._current[i]) * LERP;
@@ -139,13 +139,13 @@
                     const x = i * (barWidth + GAP);
                     const y = H - barH;
 
-                    // Gradient vertical
+                    // Vertical gradient
                     const grad = ctx.createLinearGradient(0, y, 0, H);
                     grad.addColorStop(0, `hsla(${h}, 85%, 72%, 0.85)`);
                     grad.addColorStop(0.5, `hsla(${h}, 80%, 55%, 0.92)`);
                     grad.addColorStop(1, `hsla(${h}, 75%, 40%, 1.00)`);
 
-                    // Barre arrondie en haut
+                    // Bar rounded at the top
                     const radius = Math.min(barWidth / 2, 4);
                     ctx.fillStyle = grad;
                     ctx.beginPath();
@@ -159,7 +159,7 @@
                     ctx.closePath();
                     ctx.fill();
 
-                    // Reflet brillant sur le pic
+                    // Bright reflection on peak
                     if (amp > 0.05) {
                         ctx.fillStyle = `hsla(${h}, 100%, 90%, ${amp * 0.55})`;
                         ctx.fillRect(x + 1, y, barWidth - 2, 2);
@@ -229,7 +229,7 @@
                 );
             }
 
-            // ─── Couleur dynamique ──────────────────────────────────────────
+            // ─── Dynamic color ──────────────────────────────────────────
             extractDominantColor(base64) {
                 return new Promise((resolve) => {
                     const img = new Image();
@@ -306,7 +306,7 @@
                 this._visualizer.setHue(260);
             }
 
-            // ─── Affichage ──────────────────────────────────────────────────
+            // ─── Display ──────────────────────────────────────────────────
             scheduleHide() {
                 if (this._hideTimer) return;
                 this._hideTimer = setTimeout(() => this.hideWidget(), this.hideDelay);
@@ -334,7 +334,7 @@
 
                 isInactive ? this.scheduleHide() : this.cancelHide();
 
-                // ── Couleur dynamique ────────────────────────────────────────
+                // ── Dynamic Color ────────────────────────────────────────
                 const dynColorFromJson = songData && songData.dynamicColor === true;
                 if (dynColorFromJson !== this._dynamicColorEnabled) {
                     this._dynamicColorEnabled = dynColorFromJson;
