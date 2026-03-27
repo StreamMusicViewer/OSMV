@@ -85,12 +85,34 @@ pub fn exe_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
+/// Returns the directory that contains shared/index.html.
+/// Priority: <exe_dir>/shared/ → <exe_dir>/../shared/ → <exe_dir>
+/// This allows the binary to live in target/release/ or at the project root
+/// without requiring it to be manually moved next to index.html.
+fn shared_dir() -> PathBuf {
+    let exe = exe_dir();
+    // Binary next to shared/ (e.g. project root after `cp target/release/osmv .`)
+    let candidate = exe.join("shared");
+    if candidate.is_dir() {
+        return candidate;
+    }
+    // Binary inside target/release/ — walk up two levels to reach project root
+    if let Some(parent) = exe.parent().and_then(|p| p.parent()) {
+        let candidate = parent.join("shared");
+        if candidate.is_dir() {
+            return candidate;
+        }
+    }
+    // Fallback: same dir as the executable
+    exe
+}
+
 pub fn json_output_path() -> PathBuf {
-    exe_dir().join("current_song.json")
+    shared_dir().join("current_song.json")
 }
 
 pub fn settings_path() -> PathBuf {
-    exe_dir().join("settings.json")
+    shared_dir().join("settings.json")
 }
 
 // ── Settings I/O ─────────────────────────────────────────────────────────────

@@ -4,15 +4,11 @@
 
 use super::{MediaProvider, SongInfo};
 
-pub struct LinuxMediaProvider {
-    player_finder: mpris::PlayerFinder,
-}
+pub struct LinuxMediaProvider;
 
 impl LinuxMediaProvider {
     pub fn new() -> Self {
-        Self {
-            player_finder: mpris::PlayerFinder::new().expect("Could not connect to D-Bus"),
-        }
+        Self
     }
 }
 
@@ -23,8 +19,15 @@ impl MediaProvider for LinuxMediaProvider {
             ..Default::default()
         };
 
+        // Create PlayerFinder locally — it holds an Rc internally and cannot
+        // be stored in a Send struct, so we build it on each call instead.
+        let finder = match mpris::PlayerFinder::new() {
+            Ok(f) => f,
+            Err(_) => return info,
+        };
+
         // Find the active player
-        let players = match self.player_finder.find_all() {
+        let players = match finder.find_all() {
             Ok(p) if !p.is_empty() => p,
             _ => return info,
         };
@@ -34,7 +37,7 @@ impl MediaProvider for LinuxMediaProvider {
             .into_iter()
             .find(|p| p.get_playback_status().ok() == Some(mpris::PlaybackStatus::Playing))
             .or_else(|| {
-                self.player_finder.find_all().ok().and_then(|mut v| {
+                finder.find_all().ok().and_then(|mut v| {
                     if v.is_empty() { None } else { Some(v.remove(0)) }
                 })
             });
