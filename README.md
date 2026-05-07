@@ -95,4 +95,4 @@ linux/build_rust.sh
 MIT License — free for personal and commercial use.
 
 ## 👤 Author
-Ulyxx3 (<https://github.com/Ulyxx3>)
+[Ulyxx3](<https://github.com/Ulyxx3>)
