@@ -1,0 +1,41 @@
+# Now Playing JSON Data 📄
+
+OSMV exports all media information to a standard JSON file located at `shared/current_song.json`. This file is read in real-time by the OBS widget (`shared/index.html`) to display the overlay.
+
+---
+
+## 📂 File Location
+
+The file is written inside the project directory under:
+`shared/current_song.json`
+
+When the player is stopped or closed, OSMV writes `null` into the file to signal that the overlay should hide.
+
+---
+
+## 📝 JSON Schema & Example
+
+Here is an example of the structure generated when a song is playing:
+
+```json filename="current_song.json"
+{
+  "title": "Summer Of '69",
+  "artist": "Bryan Adams",
+  "album": "Reckless",
+  "thumbnail": "iVBORw0KGgoAAAANSUhEUgAA...", // Base64 encoded JPEG/PNG image data
+  "status": "playing",
+  "dynamicColor": true,
+  "audioVisualizer": false,
+  "timestamp": "2026-06-17T15:35:00Z"
+}
+```
+
+### Fields description:
+- **`title`**: Name of the active song or video.
+- **`artist`**: Name of the musical artist or channel.
+- **`album`**: Album title (blank if none).
+- **`thumbnail`**: The full image file encoded in base64. The HTML widget displays this directly in the browser source without requiring external files.
+- **`status`**: Current playback state (`playing`, `paused`, or `stopped`).
+- **`dynamicColor`**: Boolean toggle indicating if the widget should apply dynamic colors.
+- **`audioVisualizer`**: Boolean toggle indicating if the widget visualizer is active.
+- **`timestamp`**: Time at which the JSON was last written, formatted in ISO 8601 (UTC).

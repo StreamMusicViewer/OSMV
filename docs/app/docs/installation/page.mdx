@@ -1,0 +1,63 @@
+import { Steps } from 'nextra/components'
+
+# Installation & Compilation 🛠️
+
+Learn how to configure your development environment, install required compiler dependencies, and build OSMV from source.
+
+---
+
+## 📋 System Dependencies
+
+Before compiling, you need to install standard system packages depending on your operating system.
+
+<Steps>
+
+### Linux (e.g., Arch Linux, Ubuntu)
+
+OSMV depends on **Qt 6**, **Clang/LLVM** (for parsing C++ bindings), **GTK 3** (for the tray icon), and **D-Bus** (for MPRIS music detection).
+
+#### Arch Linux:
+```bash
+sudo pacman -S rust clang qt6-declarative qt6-languageserver gtk3 dbus pkgconf build-essential
+```
+
+#### Ubuntu / Debian:
+```bash
+sudo apt update
+sudo apt install cargo rustc clang libclang-dev qt6-base-dev qt6-declarative-dev libgtk-3-dev libdbus-1-dev pkg-config build-essential
+```
+
+#### Fedora:
+```bash
+sudo dnf install cargo rust clang-devel qt6-qtdeclarative-devel gtk3-devel dbus-devel pkgconf-pkg-config gcc-c++
+```
+
+### Windows
+
+1. Install **Rustup** from [rustup.rs](https://rustup.rs).
+2. Install **Visual Studio C++ Build Tools** (Select the "Desktop development with C++" workload).
+3. Install **LLVM/Clang** (Make sure to check the option to add LLVM to the system `PATH` during installation).
+4. Install **Qt 6** (Select the Qt 6 Declarative/QML modules) and add the Qt `bin` directory to your system `PATH`.
+
+</Steps>
+
+---
+
+## 🏗️ Building from Source
+
+Once all dependencies are installed, you can compile the application:
+
+### On Linux:
+Run the provided build script:
+```bash
+chmod +x linux/build_rust.sh
+./linux/build_rust.sh
+```
+
+### On Windows:
+Run the batch compiler in a developer command prompt:
+```cmd
+windows\compile_rust.bat
+```
+
+The optimized release executable `osmv` (or `OSMV.exe`) will be copied directly to the project root directory.

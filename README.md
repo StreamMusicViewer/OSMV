@@ -26,12 +26,12 @@ Afin de garantir un impact minimal sur les performances en stream, OSMV est main
 
 ## 📖 Documentation Complète (GitHub Pages)
 
-Retrouvez toute la documentation interactive sur notre site GitHub Pages ou localement dans le dossier `/docs` :
+Retrouvez toute la documentation interactive sur [streammusicviewer.github.io/OSMV](https://streammusicviewer.github.io/OSMV/) :
 
-- ⚙️ **[Dépendances & Compilation](docs/installation.md)** — Installer Qt6, Clang, D-Bus, GTK3 et compiler pour Windows/Linux.
-- 📐 **[Architecture Détaillée](docs/architecture.md)** — Fonctionnement interne, IPC (`quit.lock`) et hot-reload.
-- 🛠️ **[Configuration OBS & Discord](docs/configuration.md)** — Configurer le widget HTML/CSS, l'affichage de l'heure et l'RPC.
-- ❓ **[Guide de Résolution de Problèmes](docs/troubleshooting.md)** — Icône invisible, problèmes MPRIS, etc.
+- ⚙️ **[Installation & Dépendances](https://streammusicviewer.github.io/OSMV/docs/installation/)** — Installer Qt6, Clang, D-Bus, GTK3 et compiler.
+- 📐 **[Architecture & Performance](https://streammusicviewer.github.io/OSMV/docs/architecture/)** — Fonctionnement interne du daemon et du GUI.
+- 🛠️ **[Configuration OBS & Discord](https://streammusicviewer.github.io/OSMV/docs/obs/)** — Configurer les widgets OBS et l'intégration Discord RPC.
+- ❓ **[Foire Aux Questions (FAQ)](https://streammusicviewer.github.io/OSMV/docs/faq/)** — Résolution des problèmes d'icônes, d'autostart, etc.
 
 ---
 

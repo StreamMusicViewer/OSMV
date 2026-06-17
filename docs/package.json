@@ -1,0 +1,40 @@
+{
+  "name": "osmv-docs",
+  "author": "Ulyxx3",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "homepage": "https://StreamMusicViewer.github.io/OSMV",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "postbuild": "next-sitemap && pagefind --site .next/server/app --output-path public/_pagefind",
+    "deploy": "next build && gh-pages -d out --nojekyll"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.34.0",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^0.564.0",
+    "next": "^16.1.6",
+    "nextra": "^4.6.1",
+    "nextra-theme-docs": "^4.6.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
+    "@tailwindcss/postcss": "4.1.18",
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.14",
+    "autoprefixer": "^10.4.24",
+    "gh-pages": "^6.3.0",
+    "next-sitemap": "^4.2.3",
+    "pagefind": "^1.4.0",
+    "tailwindcss": "^4.1.18"
+  },
+  "browserslist": [
+    ">= .25%",
+    "not dead"
+  ]
+}

@@ -1,0 +1,33 @@
+# FAQ ❓
+
+Frequently Asked Questions and troubleshooting quick tips for OSMV.
+
+---
+
+## 🖥️ How do I bring back the configuration window?
+
+If you closed the window using the **Passer en Headless** (🌙) button, the heavy GUI process is killed to save RAM, but the daemon is still running in the background.
+
+To open the configuration window again:
+- Right-click the **OSMV Tray Icon** in your system tray (notification area).
+- Select **Afficher Configuration** (Show Configuration).
+- Alternatively, you can just run the `osmv` executable again; it will automatically notice the daemon is already running and spawn the GUI instead of starting a new instance.
+
+---
+
+## 🐧 Why is my System Tray Icon invisible on Linux?
+
+Wayland compositors (like Hyprland) and desktop environments like GNOME do not support classic system trays out of the box.
+
+- **On Hyprland / Waybar**: Make sure the `"tray"` module is active in your Waybar config.
+- **On GNOME**: Install the [AppIndicator and KStatusNotifierItem Support](https://extensions.gnome.org/extension/615/appindicator-support/) extension.
+- Make sure package dependency `libappindicator-gtk3` or `libayatana-appindicator3` is installed on your Linux system.
+
+---
+
+## ⚡ Can I make OSMV launch automatically on startup?
+
+Yes!
+- **On Linux (Hyprland)**: Add `exec-once = /path/to/osmv` in your `hyprland.conf`.
+- **On Windows**: Create a shortcut of `OSMV.exe`, press `Win + R`, type `shell:startup`, and paste the shortcut into the folder.
+- *Note: Startup launch is extremely lightweight (~15MB of RAM) because it starts headlessly in the background, only spawning the GUI when manually requested.*

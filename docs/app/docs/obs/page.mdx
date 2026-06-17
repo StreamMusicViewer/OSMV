@@ -1,0 +1,42 @@
+import { Highlight } from '@/components/content'
+
+# OBS Studio Integration 📺
+
+OSMV integrates seamlessly with OBS Studio to display both the animated music overlay widget and the dynamic clock text.
+
+---
+
+## 🎨 Adding the Music Widget (Browser Source)
+
+The music widget uses a local HTML file to display the current track's album cover, title, artist, and status with beautiful CSS animations.
+
+### Step-by-step Setup:
+
+1. Click the <Highlight>+</Highlight> icon in the **Sources** box of OBS Studio.
+2. Select <Highlight>Browser</Highlight> (Navigateur).
+3. Name the source (e.g., "OSMV Music").
+4. In the properties window:
+   - Check the **Local file** (Fichier local) box.
+   - Click **Browse** and select `shared/index.html` from your OSMV folder.
+   - Set **Width** (Largeur) to `500`.
+   - Set **Height** (Hauteur) to `140`.
+5. Click **OK**.
+
+---
+
+## ⏰ Adding the Clock (Text Source)
+
+If you have the **Time Module** enabled, OSMV writes the formatted local time to a text file.
+
+### Step-by-step Setup:
+
+1. Click the <Highlight>+</Highlight> icon in the **Sources** box of OBS Studio.
+2. Select <Highlight>Text (GDI+)</Highlight> on Windows or <Highlight>Text (FreeType 2)</Highlight> on Linux.
+3. Name the source (e.g., "OSMV Clock").
+4. In the properties window:
+   - Check the **Read from file** (Lire depuis un fichier) box.
+   - Click **Browse** and choose `shared/dynamic_text/Time.txt` from your OSMV folder.
+5. Click **OK**.
+
+> [!TIP]
+> For best text quality, configure a large font size (e.g., 72pt) in the source properties, and then resize the source bounds directly on the OBS preview screen to fit your scene.

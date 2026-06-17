@@ -1,0 +1,27 @@
+# Now Playing Module 🎵
+
+The **Now Playing** module detects music playing on your system in real-time and exports information (title, artist, album, cover art) for use in your OBS stream.
+
+---
+
+## ⚡ How it Works
+
+OSMV runs a lightweight background daemon that polls the operating system's native media controllers:
+- **Windows**: Uses the **WinRT Global System Media Transport Controls (GSMTC)** API. It automatically detects media from players like Spotify, Apple Music, web browsers (YouTube, Twitch), VLC, etc.
+- **Linux**: Uses the **D-Bus MPRIS (Media Player Remote Interintegration Specification)** API. It listens to active MPRIS-compatible media players on the system.
+
+Every second, the daemon updates the active music state, retrieves or downloads the album cover, and writes the results to `shared/current_song.json`.
+
+---
+
+## ⚙️ Configuration Options
+
+From the QML settings panel, you can configure the following options:
+
+1. **Now Playing Enabled (ON/OFF)**:
+   - When toggled **ON**, OSMV monitors playback.
+   - When toggled **OFF**, background media polling and image processing are completely stopped. The file `current_song.json` is deleted to tell the OBS widget to fade out.
+2. **Dynamic Background Color (ON/OFF)**:
+   - Tells the OBS widget whether it should extract color palettes from the album cover to blend the background color dynamically.
+3. **Audio Visualizer (ON/OFF)**:
+   - Enables or disables the integrated responsive CSS/JS audio visualizer bars on the OBS overlay widget.

@@ -1,0 +1,28 @@
+# Discord Rich Presence (RPC) ⬡
+
+OSMV features an automated **Discord Rich Presence** manager that updates your Discord status activity with your current playing track details and custom messages.
+
+---
+
+## ⚡ Key Features
+
+- **Automated Album Artwork**: Uses the iTunes Search API to fetch high-resolution album cover URLs. These are uploaded on-the-fly to Discord to show the exact album cover as the large RPC image.
+- **Custom Idle Messages**: Show custom details and state when you are not playing any music.
+- **Interactive Controls**: Toggle Discord RPC ON/OFF dynamically from the settings.
+
+---
+
+## ⚙️ How to Setup
+
+To display your status on Discord, you need a custom Application Client ID:
+
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Click **New Application** and give it a name (e.g., "OSMV" or "Listening to").
+3. Copy the **Application ID** (Client ID).
+4. Paste the Client ID into the **Discord Client ID** input field in the OSMV settings panel.
+5. (Optional) In the **Rich Presence -> Art Assets** tab of your Discord app portal, upload small status icons named:
+   - `playing`
+   - `paused`
+   - `stopped`
+   These will show up in the bottom-right corner of your cover image to represent play status.
+6. Click **Save Settings** in OSMV.

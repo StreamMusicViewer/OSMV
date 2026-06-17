@@ -1,0 +1,36 @@
+# Time Module ⏰
+
+The **Time Module** writes the current system time to a plain text file, allowing you to easily add a dynamic clock overlay to your stream scene.
+
+---
+
+## 📂 File Output
+
+The time is written in real-time (every second) to:
+`shared/dynamic_text/Time.txt`
+
+In OBS Studio, you can display this by adding a **Text (GDI+)** source on Windows or a **Text (FreeType 2)** source on Linux, checking **Read from file**, and choosing this file.
+
+---
+
+## ⚙️ Available Format Codes
+
+You can fully customize the output format in the QML settings panel using these tags:
+
+| Code | Output | Example |
+| :--- | :--- | :--- |
+| `$h` | Hours (12-hour or 24-hour style) | `14` or `02` |
+| `$m` | Minutes | `45` |
+| `$s` | Seconds | `08` |
+| `$tt`| AM / PM indicator | `PM` (Requires 12-hour format checked) |
+
+---
+
+## 📝 Format Examples
+
+| Format String | Resulting Output |
+| :--- | :--- |
+| `$h:$m:$s` | `14:45:08` |
+| `$h:$m` | `14:45` |
+| `$h:$m:$s $tt` | `02:45:08 PM` |
+| `$h hours, $m mins` | `14 hours, 45 mins` |
