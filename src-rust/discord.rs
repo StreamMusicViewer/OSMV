@@ -26,20 +26,20 @@ use crate::utils::DiscordSettings;
 pub enum RpcCommand {
     Update {
         settings: DiscordSettings,
-        title:    Option<String>,
-        artist:   Option<String>,
-        art_url:  Option<String>,
-        status:   String,
+        title: Option<String>,
+        artist: Option<String>,
+        art_url: Option<String>,
+        status: String,
     },
-    Clear,
-    Shutdown,
 }
 
 pub struct DiscordHandle {
     tx: Sender<RpcCommand>,
 }
 impl DiscordHandle {
-    pub fn send(&self, cmd: RpcCommand) { let _ = self.tx.send(cmd); }
+    pub fn send(&self, cmd: RpcCommand) {
+        let _ = self.tx.send(cmd);
+    }
 }
 
 pub fn start_discord_thread(initial_settings: DiscordSettings) -> DiscordHandle {
@@ -58,38 +58,45 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
 
     loop {
         let cmd = match rx.recv_timeout(Duration::from_secs(5)) {
-            Ok(c)  => c,
+            Ok(c) => c,
             Err(_) => continue,
         };
 
         match cmd {
-            RpcCommand::Shutdown => break,
-
-            RpcCommand::Clear => {
-                if let Some(ref mut c) = client { let _ = c.clear_activity(); }
-            }
-
-            RpcCommand::Update { settings, title, artist, art_url, status } => {
+            RpcCommand::Update {
+                settings,
+                title,
+                artist,
+                art_url,
+                status,
+            } => {
                 // Toggle off
                 if !settings.enabled {
-                    if let Some(ref mut c) = client { let _ = c.clear_activity(); }
+                    if let Some(ref mut c) = client {
+                        let _ = c.clear_activity();
+                    }
                     client = None;
                     current_client_id.clear();
+                    cover_cache.clear();
                     continue;
                 }
 
                 // (Re)connect if client ID changed
                 if settings.client_id != current_client_id || client.is_none() {
                     if let Ok(id) = settings.client_id.parse::<u64>() {
-                        if let Some(ref mut old) = client { let _ = old.clear_activity(); }
+                        if let Some(ref mut old) = client {
+                            let _ = old.clear_activity();
+                        }
                         println!("Connecting to Discord RPC with Client ID: {}...", id);
                         let mut c = Client::new(id);
                         c.on_ready(|_ctx| {
                             println!("Successfully connected to Discord Rich Presence!");
-                        }).persist();
+                        })
+                        .persist();
                         c.on_error(|err| {
                             eprintln!("Discord RPC Error: {:?}", err);
-                        }).persist();
+                        })
+                        .persist();
                         c.start();
                         thread::sleep(Duration::from_millis(400));
                         current_client_id = settings.client_id.clone();
@@ -111,7 +118,10 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
                         format!("by {}", artist.as_deref().unwrap_or("")),
                     )
                 } else {
-                    (settings.custom_details.clone(), settings.custom_state.clone())
+                    (
+                        settings.custom_details.clone(),
+                        settings.custom_state.clone(),
+                    )
                 };
 
                 // ── Large image ───────────────────────────────────────────────
@@ -166,21 +176,22 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
                 let (small_key, small_text): (String, String) = if music_active {
                     match status.as_str() {
                         "playing" => (settings.status_key_playing.clone(), "Playing".into()),
-                        "paused"  => (settings.status_key_paused.clone(),  "Paused".into()),
+                        "paused" => (settings.status_key_paused.clone(), "Paused".into()),
                         "stopped" => (settings.status_key_stopped.clone(), "Stopped".into()),
-                        _         => (String::new(), String::new()),
+                        _ => (String::new(), String::new()),
                     }
                 } else {
-                    (settings.small_image_key.clone(), settings.small_image_text.clone())
+                    (
+                        settings.small_image_key.clone(),
+                        settings.small_image_text.clone(),
+                    )
                 };
 
                 // ── Set activity ──────────────────────────────────────────────
                 if let Err(e) = c.set_activity(|a| {
                     let a = a.details(&details).state(&state);
                     a.assets(|assets| {
-                        let assets = assets
-                            .large_image(&large_image)
-                            .large_text(&large_text);
+                        let assets = assets.large_image(&large_image).large_text(&large_text);
                         if !small_key.is_empty() {
                             assets.small_image(&small_key).small_text(&small_text)
                         } else {
@@ -193,8 +204,6 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
             }
         }
     }
-
-    if let Some(ref mut c) = client { let _ = c.clear_activity(); }
 }
 
 // ── iTunes Search API ─────────────────────────────────────────────────────────
@@ -204,7 +213,13 @@ fn fetch_itunes_cover(title: &str, artist: &str) -> Option<String> {
     // Simple URL-safe encoding: replace spaces with +, strip special chars
     let query = format!("{} {}", title, artist)
         .chars()
-        .map(|c| if c.is_alphanumeric() || c == ' ' { c } else { ' ' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == ' ' {
+                c
+            } else {
+                ' '
+            }
+        })
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -215,10 +230,7 @@ fn fetch_itunes_cover(title: &str, artist: &str) -> Option<String> {
         query
     );
 
-    let resp = ureq::get(&url)
-        .set("User-Agent", "OSMV/2.0")
-        .call()
-        .ok()?;
+    let resp = ureq::get(&url).set("User-Agent", "OSMV/2.0").call().ok()?;
 
     let json: serde_json::Value = resp.into_json().ok()?;
 

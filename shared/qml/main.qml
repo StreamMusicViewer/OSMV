@@ -65,13 +65,13 @@ Window {
 
                 Item { width: 4; height: 1; anchors.verticalCenter: parent.verticalCenter }
 
-                // ── Onglet Discord RPC ────────────────────────────────────────
+                // ── Onglet Time ───────────────────────────────────────────────
                 OsmvTabButton {
-                    id: tabDC
+                    id: tabTime
                     targetIndex: 1
-                    label: locale.t("tab_discord_rpc")
-                    icon: "⬡"
-                    width: 110
+                    label: locale.currentLanguage === "fr" ? "Temps" : "Time"
+                    icon: "⏰"
+                    width: 90
                     currentIndex: swipeView.currentIndex
                     onTabClicked: swipeView.currentIndex = 1
                     anchors.verticalCenter: parent.verticalCenter
@@ -79,12 +79,12 @@ Window {
 
                 Item { width: 4; height: 1; anchors.verticalCenter: parent.verticalCenter }
 
-                // ── Onglet Paramètres ─────────────────────────────────────────
+                // ── Onglet Discord RPC ────────────────────────────────────────
                 OsmvTabButton {
-                    id: tabSettings
+                    id: tabDC
                     targetIndex: 2
-                    label: locale.t("tab_settings")
-                    icon: "⚙"
+                    label: locale.t("tab_discord_rpc")
+                    icon: "⬡"
                     width: 110
                     currentIndex: swipeView.currentIndex
                     onTabClicked: swipeView.currentIndex = 2
@@ -93,16 +93,58 @@ Window {
 
                 Item { width: 4; height: 1; anchors.verticalCenter: parent.verticalCenter }
 
-                // ── Onglet Aide ───────────────────────────────────────────────
+                // ── Onglet Paramètres ─────────────────────────────────────────
                 OsmvTabButton {
-                    id: tabHelp
+                    id: tabSettings
                     targetIndex: 3
-                    label: locale.t("tab_help")
-                    icon: "🛈"
-                    width: 80
+                    label: locale.t("tab_settings")
+                    icon: "⚙"
+                    width: 110
                     currentIndex: swipeView.currentIndex
                     onTabClicked: swipeView.currentIndex = 3
                     anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Item { width: 4; height: 1; anchors.verticalCenter: parent.verticalCenter }
+
+                // ── Onglet Aide ───────────────────────────────────────────────
+                OsmvTabButton {
+                    id: tabHelp
+                    targetIndex: 4
+                    label: locale.t("tab_help")
+                    icon: "🛈"
+                    width: 70
+                    currentIndex: swipeView.currentIndex
+                    onTabClicked: swipeView.currentIndex = 4
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Item { width: 10; height: 1; anchors.verticalCenter: parent.verticalCenter }
+
+                Button {
+                    width: 32
+                    height: 32
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "🌙"
+                    ToolTip.text: "Passer en Headless (Réduire)"
+                    ToolTip.visible: hovered
+                    onClicked: osmvEngine.quit_app(false)
+                    background: Rectangle { color: "transparent"; radius: 4; border.color: parent.hovered ? theme.colBlue : "transparent" }
+                    contentItem: Text { text: parent.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: 14 }
+                }
+
+                Item { width: 4; height: 1; anchors.verticalCenter: parent.verticalCenter }
+
+                Button {
+                    width: 32
+                    height: 32
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "❌"
+                    ToolTip.text: "Quitter complètement"
+                    ToolTip.visible: hovered
+                    onClicked: osmvEngine.quit_app(true)
+                    background: Rectangle { color: "transparent"; radius: 4; border.color: parent.hovered ? theme.colRed : "transparent" }
+                    contentItem: Text { text: parent.text; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: 14 }
                 }
             }
 
@@ -148,10 +190,26 @@ Window {
                 }
             }
 
-            NowPlayingView { }
-            DiscordView    { }
-            OsmvSettingsView { }
-            OsmvHelpView   { }
+            Loader {
+                active: Math.abs(swipeView.currentIndex - 0) <= 1
+                sourceComponent: Component { NowPlayingView { } }
+            }
+            Loader {
+                active: Math.abs(swipeView.currentIndex - 1) <= 1
+                sourceComponent: Component { TimeView { } }
+            }
+            Loader {
+                active: Math.abs(swipeView.currentIndex - 2) <= 1
+                sourceComponent: Component { DiscordView { } }
+            }
+            Loader {
+                active: Math.abs(swipeView.currentIndex - 3) <= 1
+                sourceComponent: Component { OsmvSettingsView { } }
+            }
+            Loader {
+                active: Math.abs(swipeView.currentIndex - 4) <= 1
+                sourceComponent: Component { OsmvHelpView { } }
+            }
         }
     }
 }

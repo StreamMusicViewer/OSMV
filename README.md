@@ -1,98 +1,70 @@
-# OSMV - Now Playing Widget for OBS
+# OSMV (OBS Stream Music Viewer) 🎵
 
 ![Status](https://img.shields.io/badge/status-working-success)
 ![Platform Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
 ![Platform Linux](https://img.shields.io/badge/platform-Linux-orange)
 ![Rust](https://img.shields.io/badge/Language-Rust-brown)
-![qml](https://img.shields.io/badge/GUI-QML-lightgrey)
+![Qt6](https://img.shields.io/badge/GUI-Qt%206%20QML-blueviolet)
 
-A modern, real-time **"Now Playing"** widget for OBS that displays currently playing music with album artwork and animated transitions. Completely rewritten in **Rust** with **egui** for a premium, lightweight, and portable experience.
 
-## ✨ Features
-
--   **Discord Rich Presence** — Showcase your music on Discord with automatic album cover lookup (via iTunes API) and status icons (playing/paused/stopped).
--   **Full-Resolution Album Art** — Automatically detects and displays album covers from your media player.
--   **Modern Glassmorphism UI** — A stunning, translucent interface for both the app and the OBS widget.
--   **Real-time Media Polling** — Detects music every second from Spotify, Apple Music, browsers, VLC, and more.
--   **Dynamic Color Support** — Optional feature to match the widget background to the album cover palette.
--   **Single Instance Guard** — Ensures only one instance of the app is running.
--   **Native & Portable** — Single binary executable for Windows and Linux, no complex dependencies required.
-
-## 📂 Repository Structure
-
-```
-OSMV/
-├── assets/              ← Embedded fonts and icons
-├── src-rust/            ← Core Rust implementation
-│   ├── media/           ← Media providers (Windows WinRT & Linux MPRIS)
-│   ├── app.rs           ← Application logic & background polling
-│   ├── discord.rs       ← Discord Rich Presence manager
-│   ├── gui.rs           ← egui-based interface
-│   ├── main.rs          ← Entry point & single-instance check
-│   └── utils.rs         ← Settings and JSON output
-├── shared/              ← OBS browser source/widget (HTML/CSS)
-│   ├── index.html
-│   └── style.css
-├── windows/             ← Windows build scripts & resources
-├── linux/               ← Linux build scripts
-├── Cargo.toml           ← Rust project configuration
-└── TROUBLESHOOTING.md   ← Common issues & solutions
-```
-
-## 🚀 Quick Start
-
-### Windows
-1. Download the latest `OSMV.exe` from the **[Releases](../../releases)** page.
-2. Place it in a folder alongside the `shared/` directory.
-3. Run `OSMV.exe`.
-4. Configure Discord RPC and OBS (see below).
-
-### Linux
-1. Download the Linux binary from the **[Releases](../../releases)** page.
-2. Ensure you have `libdbus` installed (standard on most distros).
-3. `chmod +x osmv && ./osmv`
-4. Configure Discord RPC and OBS (see below).
+> **OSMV** est un widget "Now Playing" en temps réel et ultra-léger pour OBS qui affiche votre musique avec pochette d'album et transitions animées, couplé à une intégration Discord Rich Presence hautement personnalisable.
 
 ---
 
-## 🎮 Discord Rich Presence Setup
+## 🚀 Nouvelle Architecture Ultra-Légère ⚡
 
-1. Open the **Discord RPC** tab in the app.
-2. Enable the feature and enter your **Application Client ID** (from [Discord Developer Portal](https://discord.com/developers/applications)).
-3. (Optional) Upload "playing", "paused", and "stopped" icons to your Discord App's Art Assets to see playback status badges.
-4. Click **Save Settings**.
+Afin de garantir un impact minimal sur les performances en stream, OSMV est maintenant divisé en deux rôles distincts au sein d'un seul exécutable :
 
----
-
-## 📺 Configure OBS
-
-1. In OBS, add a new **Browser** source.
-2. Check **Local file**.
-3. Select `shared/index.html`.
-4. Set dimensions: **Width: 500**, **Height: 140**.
-5. Custom CSS is not required unless you want to override the default styles.
+1. **Le Daemon d'Arrière-plan (~15 Mo RAM)** : 
+   - Rôle principal. Il tourne en arrière-plan, gère l'écoute des lecteurs média (via WinRT sur Windows et MPRIS sur Linux), met à jour le fichier `current_song.json` en temps réel, met à jour Discord Rich Presence et gère l'icône de la barre des tâches (System Tray).
+2. **L'Interface de Configuration QML (~378 Mo RAM)** :
+   - Lancé via `osmv --gui` (ou automatiquement au premier démarrage). C'est une interface moderne en **Qt 6 QML** avec des effets de glassmorphism.
+   - Elle vous permet de configurer l'application. Dès que vous la fermez (via le bouton **Passer en Headless** dans l'application ou l'icône de fermeture standard), **le processus d'interface se coupe complètement, libérant instantanément les 378 Mo de RAM**. Le Daemon léger continue de tourner de façon transparente.
+   - Pour réafficher l'interface, faites un clic droit sur l'icône de la barre des tâches ➔ **Afficher Configuration**.
 
 ---
 
-## 🛠️ Compiling from Source
+## 📖 Documentation Complète (GitHub Pages)
 
-You need [Rust](https://rustup.rs/) installed.
+Retrouvez toute la documentation interactive sur notre site GitHub Pages ou localement dans le dossier `/docs` :
 
-### Windows
-```powershell
-windows\compile_rust.bat
-```
-*(Produces a release binary and copies it to the root folder)*
+- ⚙️ **[Dépendances & Compilation](docs/installation.md)** — Installer Qt6, Clang, D-Bus, GTK3 et compiler pour Windows/Linux.
+- 📐 **[Architecture Détaillée](docs/architecture.md)** — Fonctionnement interne, IPC (`quit.lock`) et hot-reload.
+- 🛠️ **[Configuration OBS & Discord](docs/configuration.md)** — Configurer le widget HTML/CSS, l'affichage de l'heure et l'RPC.
+- ❓ **[Guide de Résolution de Problèmes](docs/troubleshooting.md)** — Icône invisible, problèmes MPRIS, etc.
 
-### Linux
+---
+
+## 🛠️ Dépendances de Développement en Bref
+
+Pour coder sur le projet ou le compiler vous-même, vous avez besoin des dépendances suivantes :
+
+### Linux (ex: Arch Linux)
 ```bash
-linux/build_rust.sh
+sudo pacman -S rust clang qt6-declarative qt6-languageserver gtk3 dbus pkgconf
 ```
+
+### Windows
+- **Rustup** (compilateur stable-x86_64-pc-windows-msvc)
+- **Visual Studio Build Tools** (avec le SDK C++)
+- **Qt 6.6+** (configuré dans le PATH)
+
+Pour lancer le build :
+- **Linux** : `./linux/build_rust.sh`
+- **Windows** : `windows\compile_rust.bat`
 
 ---
 
-## 📄 License
-MIT License — free for personal and commercial use.
+## 📺 Utilisation OBS
 
-## 👤 Author
-[Ulyxx3](<https://github.com/Ulyxx3>)
+1. Ajoutez une source **Navigateur** (Browser Source) dans OBS.
+2. Cochez **Fichier local** et sélectionnez `shared/index.html`.
+3. Définissez la taille sur **Largeur : 500**, **Hauteur : 140**.
+
+---
+
+## 📄 Licence
+Licence MIT — Libre d'utilisation personnelle et commerciale.
+
+## 👤 Auteur
+[Ulyxx3](https://github.com/Ulyxx3)

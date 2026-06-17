@@ -34,6 +34,15 @@ single-instance = "0.3"
 # Logging
 log = "0.4"
 
+# Datetime formatting
+chrono = { version = "0.4", features = ["clock"] }
+libc = "0.2.186"
+tray-icon = { version = "0.24.1", default-features = false, features = ["gtk"] }
+crossbeam-channel = "0.5.15"
+gtk = "0.18.2"
+glib = "0.22.7"
+image = { version = "0.25.10", features = ["ico"] }
+
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.61", features = [
     "Media_Control",
@@ -48,7 +57,8 @@ cxx-qt-build = { version = "0.7", features = ["link_qt_object_files"] }
 
 
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = true
 codegen-units = 1
+panic = "abort"
 strip = true

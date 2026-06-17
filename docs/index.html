@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>OSMV - OBS Stream Music Viewer Documentation</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Documentation complète de l'application OSMV - OBS Stream Music Viewer">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  
+  <!-- Thème moderne Premium Dark par défaut -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-defaults.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css" title="vue" disabled>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/dark.css" title="dark">
+
+  <style>
+    :root {
+      /* Palette personnalisée premium avec accent bleu/cyan électrique */
+      --theme-color: #00bcd4;
+      --base-font-size: 15px;
+      --heading-h1-color: #00bcd4;
+      --heading-h2-color: #00e5ff;
+      --sidebar-width: 280px;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    .markdown-section {
+      max-width: 850px;
+    }
+    .sidebar {
+      background-color: #1c1c1f !important;
+      border-right: 1px solid #2d2d31;
+    }
+    .sidebar-nav li a {
+      color: #b0b0b5;
+    }
+    .sidebar-nav li.active > a {
+      color: #00bcd4 !important;
+      font-weight: 600;
+    }
+    /* Logo style */
+    .app-logo {
+      max-width: 70px;
+      margin: 15px auto 5px auto;
+      display: block;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">Chargement de la documentation...</div>
+  <script>
+    window.$docsify = {
+      name: 'OSMV Documentation',
+      repo: 'https://github.com/Ulyxx3/OSMV',
+      loadSidebar: true,
+      subMaxLevel: 3,
+      auto2top: true,
+      logo: '../assets/OSMV_logo.ico',
+      search: {
+        maxAge: 86400000, // Un jour
+        paths: 'auto',
+        placeholder: {
+          '/': 'Rechercher...'
+        },
+        noData: {
+          '/': 'Aucun résultat !'
+        },
+        depth: 6
+      },
+      copyCode: {
+        buttonText: 'Copier',
+        errorText: 'Erreur',
+        successText: 'Copié'
+      }
+    }
+  </script>
+  <!-- Scripts requis pour Docsify -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+</body>
+</html>

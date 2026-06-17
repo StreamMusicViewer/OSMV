@@ -2,8 +2,17 @@
 # Deploy script for OSMV Rust — Linux
 set -e
 
+# Always run from the project root
+cd "$(dirname "$0")/.."
+
+export CC=clang
+export CXX=clang++
+
+echo "Cleaning previous build cache..."
+cargo clean
+
 echo "Building OSMV Rust (release)..."
-cargo build --release
+CC=clang CXX=clang++ cargo build --release
 
 echo "Copying binary..."
 cp target/release/osmv ./osmv

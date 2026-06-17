@@ -38,7 +38,11 @@ impl MediaProvider for LinuxMediaProvider {
             .find(|p| p.get_playback_status().ok() == Some(mpris::PlaybackStatus::Playing))
             .or_else(|| {
                 finder.find_all().ok().and_then(|mut v| {
-                    if v.is_empty() { None } else { Some(v.remove(0)) }
+                    if v.is_empty() {
+                        None
+                    } else {
+                        Some(v.remove(0))
+                    }
                 })
             });
 
@@ -60,22 +64,13 @@ impl MediaProvider for LinuxMediaProvider {
 
         // ── Metadata ─────────────────────────────────────────────────────────
         if let Ok(metadata) = player.get_metadata() {
-            info.title = metadata
-                .title()
-                .unwrap_or("Unknown Title")
-                .to_string();
+            info.title = metadata.title().unwrap_or("Unknown Title").to_string();
             info.artist = metadata
                 .artists()
                 .and_then(|a| a.first().map(|s| s.to_string()))
                 .unwrap_or_else(|| "Unknown Artist".into());
-            info.album = metadata
-                .album_name()
-                .unwrap_or_default()
-                .to_string();
-            info.art_url = metadata
-                .art_url()
-                .unwrap_or_default()
-                .to_string();
+            info.album = metadata.album_name().unwrap_or_default().to_string();
+            info.art_url = metadata.art_url().unwrap_or_default().to_string();
         }
 
         info

@@ -19,6 +19,17 @@ Item {
         border.color: theme.borderAccent
         border.width: 1
 
+        // Halo externe
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -6
+            radius: parent.radius + 6
+            color: "transparent"
+            border.color: theme.accentGlow
+            border.width: 6
+            z: -1
+        }
+
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 16

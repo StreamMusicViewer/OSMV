@@ -21,7 +21,7 @@ TextField {
     background: Rectangle {
         color:         root.activeFocus ? (theme.isDark ? "#1a1a30" : "#e5e7eb") : theme.bgInput
         radius:        theme.radiusInput
-        border.color:  root.activeFocus ? theme.accent : theme.borderWhite
+        border.color:  root.activeFocus ? theme.accent : theme.borderAccent
         border.width:  1
         Behavior on border.color { ColorAnimation { duration: 150 } }
         Behavior on color        { ColorAnimation { duration: 150 } }
