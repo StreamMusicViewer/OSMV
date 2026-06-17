@@ -36,7 +36,11 @@ impl WindowsMediaProvider {
             Ok(r) => r,
             Err(_) => return String::new(),
         };
-        if reader.LoadAsync(size as u32).and_then(|op| op.get()).is_err() {
+        if reader
+            .LoadAsync(size as u32)
+            .and_then(|op| op.get())
+            .is_err()
+        {
             return String::new();
         }
         let mut buf = vec![0u8; size as usize];
@@ -97,8 +101,12 @@ impl MediaProvider for WindowsMediaProvider {
                 .map(|s| s.to_string())
                 .unwrap_or_default();
 
-            if info.title.is_empty() { info.title = "Unknown Title".into(); }
-            if info.artist.is_empty() { info.artist = "Unknown Artist".into(); }
+            if info.title.is_empty() {
+                info.title = "Unknown Title".into();
+            }
+            if info.artist.is_empty() {
+                info.artist = "Unknown Artist".into();
+            }
 
             // Thumbnail
             if let Ok(thumb) = props.Thumbnail() {

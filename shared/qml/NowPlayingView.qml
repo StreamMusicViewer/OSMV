@@ -10,12 +10,9 @@ import io.osmv 1.0
 Item {
     id: root
 
-    // Couleur extraite de la pochette (accent par défaut)
-    property color extractedColor: theme.accent
-
-    // Définition dynamique des couleurs de bordure et de halo lumineux
-    property color borderClr: osmvEngine.dynamic_color && osmvEngine.thumbnail_path.length > 0 ? extractedColor : theme.borderAccent
-    property color glowClr: osmvEngine.dynamic_color && osmvEngine.thumbnail_path.length > 0 ? Qt.rgba(extractedColor.r, extractedColor.g, extractedColor.b, theme.isDark ? 0.25 : 0.45) : theme.accentGlow
+    // Définition statique des couleurs de bordure et de halo lumineux pour un style simple et joli
+    property color borderClr: theme.borderAccent
+    property color glowClr: theme.accentGlow
 
     // ── Fond de la carte ─────────────────────────────────────────────────────
     Rectangle {
@@ -84,6 +81,8 @@ Item {
                                 ? ("file://" + osmvEngine.thumbnail_path)
                                 : ""
                         cache: false  // toujours relire pour les nouvelles chansons
+                        sourceSize.width: 150
+                        sourceSize.height: 150
 
                         // Fondu croisé lors du changement de pochette
                         Behavior on source {
@@ -136,9 +135,19 @@ Item {
                 spacing: 4
 
                 // ── Bascules de paramètres (en haut) ──────────────────────
-                Row {
+                Flow {
                     spacing: 16
                     Layout.fillWidth: true
+
+                    OsmvSwitch {
+                        label: locale.currentLanguage === "fr" ? "Activer" : "Enable"
+                        width: 100
+                        checked: osmvEngine.now_playing_enabled
+                        onClicked: {
+                            osmvEngine.now_playing_enabled = !osmvEngine.now_playing_enabled
+                            osmvEngine.save_media_settings()
+                        }
+                    }
 
                     OsmvSwitch {
                         label: locale.t("match_cover")
@@ -285,60 +294,6 @@ Item {
         onTriggered: osmvEngine.poll()
     }
 
-    // ── Extracteur de Couleur via Canvas ──
-    Canvas {
-        id: colorExtractor
-        x: -50; y: -50; width: 10; height: 10
-        visible: true
-        opacity: 0
 
-        property string currentSource: albumImage.source.toString()
-
-        onCurrentSourceChanged: {
-            if (albumImage.status === Image.Ready) {
-                requestPaint();
-            }
-        }
-
-        Connections {
-            target: albumImage
-            function onStatusChanged() {
-                if (albumImage.status === Image.Ready) {
-                    colorExtractor.requestPaint();
-                }
-            }
-        }
-
-        onPaint: {
-            var ctx = getContext("2d");
-            ctx.clearRect(0, 0, width, height);
-            try {
-                // Échantillonne l'image sur une grille de 10x10 pour calculer une moyenne robuste
-                ctx.drawImage(albumImage, 0, 0, width, height);
-                var imageData = ctx.getImageData(0, 0, width, height);
-                var r = 0, g = 0, b = 0, count = 0;
-                for (var i = 0; i < imageData.data.length; i += 4) {
-                    r += imageData.data[i];
-                    g += imageData.data[i+1];
-                    b += imageData.data[i+2];
-                    count++;
-                }
-                if (count > 0) {
-                    r = Math.round(r / count);
-                    g = Math.round(g / count);
-                    b = Math.round(b / count);
-                    
-                    // Convertit en couleur QML
-                    var col = Qt.rgba(r / 255.0, g / 255.0, b / 255.0, 1.0);
-                    
-                    // Si la couleur est trop sombre ou trop terne, on la rehausse
-                    // en augmentant la luminosité/saturation si nécessaire.
-                    root.extractedColor = col;
-                }
-            } catch (e) {
-                // En cas d'erreur ou si l'image n'est pas encore peinte
-            }
-        }
-    }
 }
 

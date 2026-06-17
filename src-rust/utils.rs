@@ -49,30 +49,68 @@ pub struct DiscordSettings {
     pub small_image_text: String,
 }
 
-fn default_true() -> bool { true }
-fn default_key_playing() -> String { "playing".into() }
-fn default_key_paused()  -> String { "paused".into() }
-fn default_key_stopped() -> String { "stopped".into() }
+fn default_true() -> bool {
+    true
+}
+fn default_key_playing() -> String {
+    "playing".into()
+}
+fn default_key_paused() -> String {
+    "paused".into()
+}
+fn default_key_stopped() -> String {
+    "stopped".into()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TimeSettings {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_time_format")]
+    pub format: String,
+    #[serde(default)]
+    pub use_ampm: bool,
+}
+
+fn default_time_format() -> String {
+    "$h:$m:$s $tt".into()
+}
+
+impl Default for TimeSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            format: "$h:$m:$s $tt".into(),
+            use_ampm: false,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(rename = "nowPlayingEnabled", default = "default_true")]
+    pub now_playing_enabled: bool,
     #[serde(rename = "dynamicColor", default)]
     pub dynamic_color: bool,
     #[serde(rename = "audioVisualizer", default)]
     pub audio_visualizer: bool,
     #[serde(default)]
     pub discord: DiscordSettings,
+    #[serde(default)]
+    pub time: TimeSettings,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            now_playing_enabled: true,
             dynamic_color: false,
             audio_visualizer: false,
             discord: DiscordSettings {
                 use_music_when_playing: true,
                 ..Default::default()
             },
+            time: TimeSettings::default(),
         }
     }
 }
@@ -89,7 +127,7 @@ pub fn exe_dir() -> PathBuf {
 /// Priority: <exe_dir>/shared/ → <exe_dir>/../shared/ → <exe_dir>
 /// This allows the binary to live in target/release/ or at the project root
 /// without requiring it to be manually moved next to index.html.
-fn shared_dir() -> PathBuf {
+pub fn shared_dir() -> PathBuf {
     let exe = exe_dir();
     // Binary next to shared/ (e.g. project root after `cp target/release/osmv .`)
     let candidate = exe.join("shared");
@@ -166,7 +204,16 @@ pub fn write_json(
         format_unix_as_iso8601(secs)
     };
 
-    let obj = SongJson { title, artist, album, thumbnail: thumbnail_b64, status, dynamic_color, audio_visualizer, timestamp };
+    let obj = SongJson {
+        title,
+        artist,
+        album,
+        thumbnail: thumbnail_b64,
+        status,
+        dynamic_color,
+        audio_visualizer,
+        timestamp,
+    };
     if let Ok(json) = serde_json::to_string_pretty(&obj) {
         let _ = std::fs::write(json_output_path(), json);
     }
@@ -179,7 +226,9 @@ pub fn write_null_json() {
 // ── Thumbnail fetching ────────────────────────────────────────────────────────
 
 pub fn load_thumbnail_as_base64(url: &str) -> String {
-    if url.is_empty() { return String::new(); }
+    if url.is_empty() {
+        return String::new();
+    }
 
     if let Some(path) = url.strip_prefix("file://") {
         let decoded = percent_decode(path);
@@ -243,4 +292,37 @@ fn unix_to_parts(secs: u64) -> (u32, u32, u32, u32, u32, u32) {
     let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
     let y = if m <= 2 { y + 1 } else { y };
     (y, m, d, h, mi, s)
+}
+
+pub fn format_time_string(format_str: &str, use_ampm: bool) -> (String, String) {
+    let now = chrono::Local::now();
+
+    // Preview of the current local PC time
+    let current_pc_time = if use_ampm {
+        now.format("%I:%M:%S %p").to_string()
+    } else {
+        now.format("%H:%M:%S").to_string()
+    };
+
+    // Extract time components
+    let hour_str = if use_ampm {
+        now.format("%I").to_string()
+    } else {
+        now.format("%H").to_string()
+    };
+    let min_str = now.format("%M").to_string();
+    let sec_str = now.format("%S").to_string();
+    let ampm_str = if use_ampm {
+        now.format("%p").to_string()
+    } else {
+        String::new()
+    };
+
+    let live_output = format_str
+        .replace("$h", &hour_str)
+        .replace("$m", &min_str)
+        .replace("$s", &sec_str)
+        .replace("$tt", &ampm_str);
+
+    (current_pc_time, live_output)
 }

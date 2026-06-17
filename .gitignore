@@ -1,42 +1,48 @@
 # ── Rust build output ──────────────────────────────────────────────────────────
-# Cargo.lock is intentionally tracked — this is a binary application.
-# Committing it ensures reproducible builds for all contributors.
+# Cargo.lock est intentionnellement suivi pour garantir des builds reproductibles.
 target/
 
-# ── Runtime-generated files ────────────────────────────────────────────────────
+# ── Fichiers générés lors de l'exécution ──────────────────────────────────────
 current_song.json
 **/current_song.json
 settings.json
+**/settings.json
 .osmv.lock
+*quit.lock
 debugomatic.log
 
-# ── OS files ───────────────────────────────────────────────────────────────────
+# ── Fichiers système & OS ──────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# ── IDE / editor ───────────────────────────────────────────────────────────────
+# ── Éditeurs & IDE ─────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 .vs/
 *.swp
 *.swo
 *~
+.qmlls.ini
+.gemini/
 
-# ── Windows build leftovers (kept for reference but never rebuilt) ─────────────
+# ── Fichiers de compilation Windows ───────────────────────────────────────────
 windows/build/
 windows/bin/
 windows/obj/
 windows/current_song.json
 windows/build_log.txt
+OSMV.exe
+shared/OSMV.exe
 
-# ── Linux build leftovers ──────────────────────────────────────────────────────
+# ── Fichiers de compilation Linux ─────────────────────────────────────────────
 linux/dist/
 linux/build/
 linux/.venv/
+osmv
 
-# ── Misc ───────────────────────────────────────────────────────────────────────
+# ── Divers ────────────────────────────────────────────────────────────────────
 *.zip
 test/
-OSMV.exe
-shared/OSMV.exe
+shared/dynamic_text/
+

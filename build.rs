@@ -12,6 +12,7 @@ fn main() {
                 "shared/qml/main.qml",
                 "shared/qml/OsmvTabButton.qml",
                 "shared/qml/NowPlayingView.qml",
+                "shared/qml/TimeView.qml",
                 "shared/qml/DiscordView.qml",
                 "shared/qml/DiscordSection.qml",
                 "shared/qml/OsmvSwitch.qml",
