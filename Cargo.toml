@@ -9,11 +9,11 @@ name = "osmv"
 path = "src-rust/main.rs"
 
 [dependencies]
-# GUI
-eframe = { version = "0.31", features = ["default"] }
-egui = "0.31"
-egui_extras = { version = "0.31", features = ["image"] }
-image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "ico"] }
+# QML GUI via CXX-Qt (Qt 6)
+cxx = "1.0"
+cxx-qt = "0.7"
+cxx-qt-lib = { version = "0.7", features = ["qt_full"] }
+
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
@@ -44,8 +44,8 @@ windows = { version = "0.61", features = [
 mpris = "2"
 
 [build-dependencies]
-[target.'cfg(target_os = "windows")'.build-dependencies]
-winresource = "0.1"
+cxx-qt-build = { version = "0.7", features = ["link_qt_object_files"] }
+
 
 [profile.release]
 opt-level = 3
