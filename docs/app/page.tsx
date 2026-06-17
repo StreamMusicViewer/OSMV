@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { JSX } from 'react'
 
-import homeExample from '../public/assets/docs/home-example.png'
+import logo from '../public/logo.ico'
 
 export const metadata: Metadata = {
   description:
@@ -13,6 +13,9 @@ export const metadata: Metadata = {
 export default function IndexPage(): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center overflow-x-hidden pt-16 md:pt-24 w-full max-w-4xl mx-auto">
+      {/* Logo */}
+      <Image src={logo} alt="OSMV Logo" width={150} height={150} className="rounded-3xl shadow-xl my-6" />
+
       {/* Hero Section */}
       <h1 className="w-3xl text-4xl md:text-5xl lg:text-7xl font-semibold px-4 tracking-tight max-w-4xl text-center text-transparent bg-clip-text bg-gradient-to-b from-gray-900 via-gray-700 to-gray-500 dark:from-white dark:via-gray-100 dark:to-gray-400">
         OSMV
@@ -39,8 +42,6 @@ export default function IndexPage(): JSX.Element {
           </Link>
         </div>
       </div>
-
-      <Image src={homeExample} alt="OSMV" width={699} height={799} />
 
       <div className="mt-10"></div>
     </div>
