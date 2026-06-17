@@ -13,8 +13,8 @@ export const Logo = () => {
         'hover:[mask-position:100%]',
       )}
     >
-      <Image src={logo} alt="Snaz" width={48} height={48} />
-      <span className="ml-1 text-slate-900 dark:text-slate-100 font-light text-[1.6rem]">Snaz</span>
+      <Image src={logo} alt="OSMV" width={48} height={48} />
+      <span className="ml-1 text-slate-900 dark:text-slate-100 font-light text-[1.6rem]">OSMV</span>
     </div>
   )
 }

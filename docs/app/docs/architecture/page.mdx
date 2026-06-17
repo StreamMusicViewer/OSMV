@@ -1,3 +1,38 @@
-# Architecture & Performance
+# Architecture & Performance 📐
 
-This is a test.
+OSMV features a highly optimized bi-process (dual-process) architecture designed to minimize memory and CPU overhead while streaming.
+
+---
+
+## 🔄 The Dual-Process Model
+
+Historically, keeping a heavy Qt Graphical Engine running in the background just to feed OBS took around **380 MiB of RAM**. To optimize this, OSMV splits the application into two distinct processes executing from a single binary:
+
+1. **The Daemon (Persistent Service)**:
+   - Starts by default.
+   - Runs headlessly in the background, consuming only **~15 MiB of RAM**.
+   - Handles D-Bus/WinRT polling, Discord RPC, file exports, and system tray actions.
+2. **The Configuration GUI (`osmv --gui`)**:
+   - Launched dynamically when configuration is needed.
+   - Runs the full Qt 6 QML engine, consuming **~378 MiB of RAM**.
+   - Writing/saving configuration modifies `settings.json`, which the Daemon instantly hot-reloads.
+   - When you close the window or click the **Passer en Headless** button, the GUI process shuts down completely, freeing the 378 MiB instantly.
+
+---
+
+## 🛠️ Execution Flow
+
+- **Startup**: Running `osmv` checks if a daemon is already active:
+  - If **No**: Spawns the background daemon and opens the QML interface (`osmv --gui`).
+  - If **Yes**: Signals the existing daemon to spawn the QML interface.
+- **Headless mode**: Closing the configuration window kills the GUI process. Only the **~15 MiB** Rust daemon stays alive in the system tray.
+- **Quit**: Clicking "Quit" terminates both the GUI and background daemon processes.
+
+---
+
+## ⚡ IPC & Signaling
+
+The daemon and the configuration GUI communicate through two mechanisms:
+
+- **Config Hot-Reloading**: The daemon monitors `settings.json` every second. When settings are edited and saved by the GUI, the daemon reloads them automatically without needing a restart.
+- **Quit Lock (`osmv_quit.lock`)**: When the user clicks the "Quit" button in the GUI, the GUI creates a temporary file named `osmv_quit.lock` in the system temp directory. The daemon detects this file, deletes it, writes `null` to the active JSON to clean up the OBS overlay, and exits.
