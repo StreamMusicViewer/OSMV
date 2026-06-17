@@ -82,12 +82,20 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
                 if settings.client_id != current_client_id || client.is_none() {
                     if let Ok(id) = settings.client_id.parse::<u64>() {
                         if let Some(ref mut old) = client { let _ = old.clear_activity(); }
+                        println!("Connecting to Discord RPC with Client ID: {}...", id);
                         let mut c = Client::new(id);
+                        c.on_ready(|_ctx| {
+                            println!("Successfully connected to Discord Rich Presence!");
+                        }).persist();
+                        c.on_error(|err| {
+                            eprintln!("Discord RPC Error: {:?}", err);
+                        }).persist();
                         c.start();
                         thread::sleep(Duration::from_millis(400));
                         current_client_id = settings.client_id.clone();
                         client = Some(c);
                     } else {
+                        eprintln!("Failed to parse Client ID as u64: '{}'", settings.client_id);
                         continue;
                     }
                 }
@@ -167,7 +175,7 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
                 };
 
                 // ── Set activity ──────────────────────────────────────────────
-                let _ = c.set_activity(|a| {
+                if let Err(e) = c.set_activity(|a| {
                     let a = a.details(&details).state(&state);
                     a.assets(|assets| {
                         let assets = assets
@@ -179,7 +187,9 @@ fn run_discord_loop(rx: Receiver<RpcCommand>, _initial: DiscordSettings) {
                             assets
                         }
                     })
-                });
+                }) {
+                    eprintln!("Failed to set Discord activity: {:?}", e);
+                }
             }
         }
     }

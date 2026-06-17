@@ -1,0 +1,11 @@
+module io.osmv
+OsmvEngine 1.0 OsmvEngine
+Theme 1.0 Theme.qml
+OsmvLocale 1.0 OsmvLocale.qml
+OsmvTabButton 1.0 OsmvTabButton.qml
+NowPlayingView 1.0 NowPlayingView.qml
+DiscordView 1.0 DiscordView.qml
+OsmvSwitch 1.0 OsmvSwitch.qml
+OsmvTextField 1.0 OsmvTextField.qml
+OsmvSeparator 1.0 OsmvSeparator.qml
+DiscordSection 1.0 DiscordSection.qml
