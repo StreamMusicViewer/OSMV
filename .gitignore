@@ -46,3 +46,10 @@ osmv
 test/
 shared/dynamic_text/
 
+# ── Docs ──────────────────────────────────────────────────────────────────────
+/docs/node_modules/ 
+/docs/.next/ 
+/docs/out/ 
+/docs/public/sitemap.xml
+/docs/public/sitemap-*.xml
+/docs/public/_pagefind/ 

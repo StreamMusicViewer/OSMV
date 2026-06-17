@@ -5,6 +5,9 @@
   "type": "module",
   "private": true,
   "homepage": "https://StreamMusicViewer.github.io/OSMV",
+  "overrides": {
+    "zod": "4.3.6"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
