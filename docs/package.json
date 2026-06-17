@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "next-sitemap && pagefind --site .next/server/app --output-path public/_pagefind",
+    "postbuild": "next-sitemap && pagefind --site out --output-path out/_pagefind",
     "deploy": "next build && gh-pages -d out --nojekyll"
   },
   "dependencies": {
