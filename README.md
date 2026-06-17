@@ -4,7 +4,7 @@
 ![Platform Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
 ![Platform Linux](https://img.shields.io/badge/platform-Linux-orange)
 ![Rust](https://img.shields.io/badge/Language-Rust-brown)
-![egui](https://img.shields.io/badge/GUI-egui-lightgrey)
+![qml](https://img.shields.io/badge/GUI-QML-lightgrey)
 
 A modern, real-time **"Now Playing"** widget for OBS that displays currently playing music with album artwork and animated transitions. Completely rewritten in **Rust** with **egui** for a premium, lightweight, and portable experience.
 
