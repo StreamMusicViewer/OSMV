@@ -6,6 +6,7 @@
 ![Rust](https://img.shields.io/badge/Language-Rust-brown)
 ![Qt6](https://img.shields.io/badge/GUI-Qt%206%20QML-blueviolet)
 
+
 > **OSMV** est un widget "Now Playing" en temps réel et ultra-léger pour OBS qui affiche votre musique avec pochette d'album et transitions animées, couplé à une intégration Discord Rich Presence hautement personnalisable.
 
 ---
