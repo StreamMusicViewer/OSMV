@@ -26,6 +26,7 @@ void render_view_discord(GuiAppState& st) {
             if (st.snap.discord_status == "connected") { dot_col = c.success; st_txt = tr(lang, "dc_connected"); }
             else if (st.snap.discord_status == "connecting") { dot_col = c.warning; st_txt = tr(lang, "dc_connecting"); }
             else if (st.snap.discord_status == "invalid_id") { dot_col = c.danger; st_txt = tr(lang, "dc_invalid"); }
+            else if (st.snap.discord_status == "error") { dot_col = c.danger; st_txt = tr(lang, "dc_error"); }
             else { dot_col = c.warning; st_txt = tr(lang, "dc_waiting"); }
         }
         status_pill(c, st_txt, dot_col);

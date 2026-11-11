@@ -123,6 +123,7 @@ const std::unordered_map<std::string_view, LangPair>& dict() {
         {"dc_waiting", {"En attente de Discord...", "Waiting for Discord..."}},
         {"dc_connecting", {"Connexion...", "Connecting..."}},
         {"dc_invalid", {"Client ID invalide", "Invalid Client ID"}},
+        {"dc_error", {"Erreur SET_ACTIVITY (vérifiez les clés/assets)", "SET_ACTIVITY error (check keys/assets)"}},
         {"dc_client_id", {"Application Client ID", "Application Client ID"}},
         {"dc_dev_portal", {"Ouvrir Discord Developer Portal", "Open Discord Developer Portal"}},
         {"dc_use_music", {"Afficher la musique en cours automatiquement", "Automatically show currently playing song"}},

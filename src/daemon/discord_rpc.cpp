@@ -41,10 +41,25 @@ bool is_numeric_id(const std::string& s) {
     return true;
 }
 
+std::string truncate_utf8(const std::string& s, size_t max_bytes) {
+    if (s.size() <= max_bytes) return s;
+    size_t i = 0;
+    while (i < s.size()) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        size_t char_len = 1;
+        if ((c & 0x80) == 0) char_len = 1;
+        else if ((c & 0xE0) == 0xC0) char_len = 2;
+        else if ((c & 0xF0) == 0xE0) char_len = 3;
+        else if ((c & 0xF8) == 0xF0) char_len = 4;
+        if (i + char_len > max_bytes) break;
+        i += char_len;
+    }
+    return s.substr(0, i);
+}
+
 std::string pad_discord_text(std::string s) {
     if (s.size() == 1) s.push_back(' ');
-    if (s.size() > 128) s.resize(128);
-    return s;
+    return truncate_utf8(s, 128);
 }
 
 class DiscordIpcTransport {
@@ -59,6 +74,48 @@ public:
 #endif
     }
 
+    bool check_alive() {
+        if (!is_open()) return false;
+#ifdef _WIN32
+        DWORD avail = 0;
+        if (!PeekNamedPipe(pipe_, nullptr, 0, nullptr, &avail, nullptr)) {
+            close_conn();
+            return false;
+        }
+        if (avail >= 8) {
+            uint32_t op = 0;
+            std::string msg;
+            if (!read_frame(op, msg, 10) || op == 2) {
+                close_conn();
+                return false;
+            }
+        }
+        return true;
+#else
+        pollfd pfd{fd_, POLLIN, 0};
+        int rc = poll(&pfd, 1, 0);
+        if (rc < 0 || (pfd.revents & (POLLERR | POLLHUP | POLLNVAL))) {
+            close_conn();
+            return false;
+        }
+        if (pfd.revents & POLLIN) {
+            char peek_buf[1];
+            ssize_t n = recv(fd_, peek_buf, 1, MSG_PEEK | MSG_DONTWAIT);
+            if (n == 0) {
+                close_conn();
+                return false;
+            }
+            uint32_t op = 0;
+            std::string msg;
+            if (!read_frame(op, msg, 10) || op == 2) {
+                close_conn();
+                return false;
+            }
+        }
+        return true;
+#endif
+    }
+
     bool connect_and_handshake(const std::string& client_id) {
         close_conn();
         if (!open_any_pipe()) return false;
@@ -70,22 +127,44 @@ public:
         }
         uint32_t op = 0;
         std::string resp;
-        if (!read_frame(op, resp, 1500)) {
+        if (!read_frame(op, resp, 1500) || op == 2) {
             close_conn();
             return false;
         }
         return true;
     }
 
-    bool send_activity(const json& payload) {
-        if (!is_open()) return false;
-        if (!write_frame(1, payload.dump())) {
-            close_conn();
-            return false;
+    enum class SendResult { Ok, ApiError, PipeClosed };
+
+    SendResult send_activity(const json& payload) {
+        if (!is_open()) return SendResult::PipeClosed;
+        std::string serialized;
+        try {
+            serialized = payload.dump(-1, ' ', false, json::error_handler_t::replace);
+        } catch (...) {
+            return SendResult::ApiError;
         }
-        // Drain non-blocking reply if available so pipe buffer never fills
-        drain_pending();
-        return true;
+        if (!write_frame(1, serialized)) {
+            close_conn();
+            return SendResult::PipeClosed;
+        }
+
+        uint32_t op = 0;
+        std::string reply;
+        if (read_frame(op, reply, 600)) {
+            if (op == 2) {
+                close_conn();
+                return SendResult::PipeClosed;
+            }
+            try {
+                auto rj = json::parse(reply);
+                if (rj.contains("evt") && rj["evt"].is_string() && rj["evt"] == "ERROR") {
+                    return SendResult::ApiError;
+                }
+            } catch (...) {
+            }
+        }
+        return SendResult::Ok;
     }
 
     void close_conn() {
@@ -234,14 +313,6 @@ private:
         if (len > 256 * 1024) return false;
         out.resize(len);
         return len == 0 || read_exact(out.data(), len);
-    }
-
-    void drain_pending() {
-        for (int i = 0; i < 4; ++i) {
-            uint32_t op = 0;
-            std::string dummy;
-            if (!read_frame(op, dummy, 10)) break;
-        }
     }
 
 #ifdef _WIN32
@@ -408,7 +479,7 @@ void DiscordRpcManager::run_loop() {
             continue;
         }
 
-        if (s.client_id != current_client_id || !ipc.is_open()) {
+        if (s.client_id != current_client_id || !ipc.check_alive()) {
             auto now = std::chrono::steady_clock::now();
             if (s.client_id != current_client_id) {
                 ipc.close_conn();
@@ -462,6 +533,10 @@ void DiscordRpcManager::run_loop() {
         }
 
         json activity = json::object();
+        activity["type"] = music_active ? 2 : 0; // 2 = Listening to, 0 = Playing
+        if (music_active) {
+            activity["status_display_type"] = 1; // Show track title in status line
+        }
         if (!details.empty()) activity["details"] = pad_discord_text(details);
         if (!state.empty()) activity["state"] = pad_discord_text(state);
 
@@ -474,7 +549,7 @@ void DiscordRpcManager::run_loop() {
         }
         if (!assets.empty()) activity["assets"] = std::move(assets);
 
-        std::string activity_sig = activity.dump();
+        std::string activity_sig = activity.dump(-1, ' ', false, json::error_handler_t::replace);
         if (activity_sig == last_sent_json) {
             continue;
         }
@@ -488,13 +563,23 @@ void DiscordRpcManager::run_loop() {
             {"nonce", std::to_string(nonce_counter++)}
         };
 
-        if (ipc.send_activity(payload)) {
+        auto now_send = std::chrono::steady_clock::now();
+        if (now_send < next_reconnect) {
+            continue;
+        }
+
+        auto res = ipc.send_activity(payload);
+        if (res == DiscordIpcTransport::SendResult::Ok) {
             last_sent_json = std::move(activity_sig);
             set_status("connected");
+        } else if (res == DiscordIpcTransport::SendResult::ApiError) {
+            set_status("error");
+            last_sent_json.clear();
+            next_reconnect = now_send + std::chrono::seconds(5);
         } else {
             set_status("waiting_discord");
             last_sent_json.clear();
-            next_reconnect = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            next_reconnect = now_send + std::chrono::seconds(5);
         }
     }
 
