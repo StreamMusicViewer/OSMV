@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSMV Browser Preview</title>
+    <link rel="stylesheet" href="style.css">
+    <link id="osmv-gfont" rel="stylesheet" href="">
+    <style id="osmv-studio-css"></style>
+    <style id="osmv-custom-css"></style>
+</head>
+
+<body class="osmv-preview-page" data-osmv-preview="1">
+    <div class="preview-toolbar">
+        <strong>OSMV Live Preview</strong>
+        <button type="button" onclick="document.body.className='osmv-preview-page'">Checker</button>
+        <button type="button" onclick="document.body.className='osmv-preview-page bg-dark'">Dark</button>
+        <button type="button" onclick="document.body.className='osmv-preview-page bg-light'">Light</button>
+        <button type="button" id="btn-toggle-demo" onclick="window.__OSMV_WIDGET && window.__OSMV_WIDGET.toggleDemoState()">Demo / Idle</button>
+    </div>
+
+    <div id="obs-stack" class="obs-stack">
+        <div id="visualizer-top-wrapper" class="visualizer-wrapper visualizer-hidden">
+            <canvas id="visualizer-top" class="visualizer-canvas"></canvas>
+        </div>
+
+        <div id="now-playing-widget" class="widget-container layout-horizontal transition-fade">
+            <canvas id="visualizer-bg" class="visualizer-bg"></canvas>
+            <div id="content" class="content">
+                <div id="album-art-container" class="album-art-container">
+                    <img id="album-art" src="" alt="Album Art" class="album-art">
+                    <div id="album-placeholder" class="album-art-placeholder" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                        </svg>
+                    </div>
+                </div>
+                <div id="track-info" class="track-info">
+                    <div id="track-badge" class="track-badge" style="display:none;"></div>
+                    <div id="title" class="track-title"><span class="scroll-text">Nothing currently playing</span></div>
+                    <div id="artist" class="track-artist"><span class="scroll-text"></span></div>
+                    <div id="album" class="track-album" style="display:none;"><span class="scroll-text"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="visualizer-bottom-wrapper" class="visualizer-wrapper visualizer-hidden">
+            <canvas id="visualizer-bottom" class="visualizer-canvas"></canvas>
+        </div>
+    </div>
+
+    <canvas id="color-canvas" style="display:none;"></canvas>
+    <script src="widget_config.js"></script>
+    <script src="widget.js"></script>
+</body>
+
+</html>
+

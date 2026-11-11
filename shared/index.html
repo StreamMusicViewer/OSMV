@@ -1,458 +1,53 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Now Playing - Apple Music</title>
+    <title>OSMV - OBS Now Playing</title>
     <link rel="stylesheet" href="style.css">
+    <link id="osmv-gfont" rel="stylesheet" href="">
+    <style id="osmv-studio-css"></style>
+    <style id="osmv-custom-css"></style>
 </head>
 
 <body>
-    <!-- Flex container: visualizer + widget stacked -->
-    <div class="obs-stack">
-
-        <!-- Audio visualizer (pushed above the widget) -->
-        <div id="visualizer-wrapper" class="visualizer-wrapper visualizer-hidden">
-            <canvas id="visualizer"></canvas>
+    <div id="obs-stack" class="obs-stack">
+        <div id="visualizer-top-wrapper" class="visualizer-wrapper visualizer-hidden">
+            <canvas id="visualizer-top" class="visualizer-canvas"></canvas>
         </div>
 
-        <div id="now-playing-widget" class="widget-container">
+        <div id="now-playing-widget" class="widget-container layout-horizontal transition-fade">
+            <canvas id="visualizer-bg" class="visualizer-bg"></canvas>
             <div id="content" class="content">
-                <div class="album-art-container">
+                <div id="album-art-container" class="album-art-container">
                     <img id="album-art" src="" alt="Album Art" class="album-art">
-                    <div class="music-icon">🎵</div>
+                    <div id="album-placeholder" class="album-art-placeholder" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="track-info">
+                <div id="track-info" class="track-info">
+                    <div id="track-badge" class="track-badge" style="display:none;"></div>
                     <div id="title" class="track-title"><span class="scroll-text">Nothing currently playing</span></div>
                     <div id="artist" class="track-artist"><span class="scroll-text"></span></div>
+                    <div id="album" class="track-album" style="display:none;"><span class="scroll-text"></span></div>
                 </div>
             </div>
         </div>
 
-    </div><!-- /.obs-stack -->
+        <div id="visualizer-bottom-wrapper" class="visualizer-wrapper visualizer-hidden">
+            <canvas id="visualizer-bottom" class="visualizer-canvas"></canvas>
+        </div>
+    </div>
 
-    <!-- Hidden canvas for color extraction -->
     <canvas id="color-canvas" style="display:none;"></canvas>
-
-    <script>
-        // ═══════════════════════════════════════════════════════════════
-        //  AudioVisualizer — 20 bars read from the fft[] array in the JSON
-        //  The Rust app writes the values, we display them.
-        // ═══════════════════════════════════════════════════════════════
-        class AudioVisualizer {
-            constructor(canvasId, wrapperId) {
-                this.canvas = document.getElementById(canvasId);
-                this.wrapper = document.getElementById(wrapperId);
-                this.ctx = this.canvas.getContext('2d');
-                this.BAR_COUNT = 20;
-                this.hue = 260; // violet par défaut
-                this._enabled = false;
-                this._animFrame = null;
-
-                // Valeurs courantes interpolées (pour une animation fluide entre les frames JSON ~1s)
-                this._current = new Float32Array(this.BAR_COUNT).fill(0);
-                // Cible (générée aléatoirement)
-                this._target = new Float32Array(this.BAR_COUNT).fill(0);
-                this._updateTimer = null;
-
-                this._resizeObserver = new ResizeObserver(() => this._resize());
-                this._resizeObserver.observe(this.wrapper);
-                this._resize();
-            }
-
-            _resize() {
-                const w = this.wrapper.offsetWidth;
-                const h = this.wrapper.offsetHeight;
-                if (w > 0 && h > 0) {
-                    this.canvas.width = w;
-                    this.canvas.height = h;
-                }
-            }
-
-            enable() {
-                if (this._enabled) return;
-                this._enabled = true;
-                this.wrapper.classList.remove('visualizer-hidden');
-                this._startRandomUpdates();
-                this._draw();
-            }
-
-            disable() {
-                if (!this._enabled) return;
-                this._enabled = false;
-                this.wrapper.classList.add('visualizer-hidden');
-                if (this._animFrame) {
-                    cancelAnimationFrame(this._animFrame);
-                    this._animFrame = null;
-                }
-                if (this._updateTimer) {
-                    clearInterval(this._updateTimer);
-                    this._updateTimer = null;
-                }
-                this._current.fill(0);
-                this._target.fill(0);
-            }
-
-            _startRandomUpdates() {
-                if (this._updateTimer) clearInterval(this._updateTimer);
-
-                // Générer de nouvelles cibles aléatoires toutes les 150ms
-                this._updateTimer = setInterval(() => {
-                    if (!this._enabled) return;
-                    for (let i = 0; i < this.BAR_COUNT; i++) {
-                        // Bruit aléatoire pondéré pour faire "style musique"
-                        // Plus les barres sont au centre, plus elles peuvent sauter haut
-                        const distFromCenter = Math.abs(i - this.BAR_COUNT / 2) / (this.BAR_COUNT / 2);
-                        const maxH = 1.0 - (distFromCenter * 0.4); // Les bords sont un peu plus bas
-                        this._target[i] = Math.random() * Math.random() * maxH;
-                    }
-                }, 150);
-            }
-
-            /** Update hue (matches the widget dynamic background) */
-            setHue(h) { this.hue = h; }
-
-            _draw() {
-                if (!this._enabled) return;
-                this._animFrame = requestAnimationFrame(() => this._draw());
-
-                const { canvas, ctx, BAR_COUNT } = this;
-                const W = canvas.width;
-                const H = canvas.height;
-
-                ctx.clearRect(0, 0, W, H);
-
-                // Exponential interpolation (smooth visual between JSON frames)
-                const LERP = 0.15;
-                for (let i = 0; i < BAR_COUNT; i++)
-                    this._current[i] += (this._target[i] - this._current[i]) * LERP;
-
-                const GAP = 4;
-                const barWidth = (W - GAP * (BAR_COUNT - 1)) / BAR_COUNT;
-                const MIN_H = 3;
-                const h = this.hue;
-
-                for (let i = 0; i < BAR_COUNT; i++) {
-                    const amp = this._current[i];
-                    const barH = Math.max(MIN_H, amp * H);
-                    const x = i * (barWidth + GAP);
-                    const y = H - barH;
-
-                    // Vertical gradient
-                    const grad = ctx.createLinearGradient(0, y, 0, H);
-                    grad.addColorStop(0, `hsla(${h}, 85%, 72%, 0.85)`);
-                    grad.addColorStop(0.5, `hsla(${h}, 80%, 55%, 0.92)`);
-                    grad.addColorStop(1, `hsla(${h}, 75%, 40%, 1.00)`);
-
-                    // Bar rounded at the top
-                    const radius = Math.min(barWidth / 2, 4);
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.moveTo(x + radius, y);
-                    ctx.lineTo(x + barWidth - radius, y);
-                    ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
-                    ctx.lineTo(x + barWidth, H);
-                    ctx.lineTo(x, H);
-                    ctx.lineTo(x, y + radius);
-                    ctx.quadraticCurveTo(x, y, x + radius, y);
-                    ctx.closePath();
-                    ctx.fill();
-
-                    // Bright reflection on peak
-                    if (amp > 0.05) {
-                        ctx.fillStyle = `hsla(${h}, 100%, 90%, ${amp * 0.55})`;
-                        ctx.fillRect(x + 1, y, barWidth - 2, 2);
-                    }
-                }
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        //  NowPlayingWidget
-        // ═══════════════════════════════════════════════════════════════
-        class NowPlayingWidget {
-            constructor() {
-                this.currentSong = null;
-                this.updateInterval = 1000; // 1 seconde
-                this.autoReloadInterval = 10 * 60 * 1000;
-                this.jsonFile = 'current_song.json';
-
-                this.hideDelay = 10 * 1000;
-                this._hideTimer = null;
-                this._widgetVisible = true;
-
-                this._dynamicColorEnabled = false;
-                this._colorCanvas = document.getElementById('color-canvas');
-                this._colorCtx = this._colorCanvas.getContext('2d');
-                this._currentHue = 260;
-
-                this._audioVisualizerEnabled = false;
-                this._visualizer = new AudioVisualizer('visualizer', 'visualizer-wrapper');
-
-                this.elements = {
-                    container: document.getElementById('now-playing-widget'),
-                    content: document.getElementById('content'),
-                    albumArt: document.getElementById('album-art'),
-                    title: document.getElementById('title'),
-                    artist: document.getElementById('artist')
-                };
-
-                this.init();
-            }
-
-            init() {
-                console.log('🎵 Now Playing Widget initialized');
-                this.startPolling();
-            }
-
-            async fetchCurrentSong() {
-                try {
-                    const cacheBuster = `?t=${Date.now()}`;
-                    const response = await fetch(this.jsonFile + cacheBuster);
-                    if (!response.ok) throw new Error('JSON file not found');
-                    return await response.json();
-                } catch (error) {
-                    console.error('JSON Error:', error);
-                    return null;
-                }
-            }
-
-            hasSongChanged(newSong) {
-                if (!this.currentSong && newSong) return true;
-                if (this.currentSong && !newSong) return true;
-                if (!this.currentSong && !newSong) return false;
-                return (
-                    this.currentSong.title !== newSong.title ||
-                    this.currentSong.artist !== newSong.artist ||
-                    this.currentSong.thumbnail !== newSong.thumbnail
-                );
-            }
-
-            // ─── Dynamic color ──────────────────────────────────────────
-            extractDominantColor(base64) {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = () => {
-                        const SIZE = 80;
-                        this._colorCanvas.width = SIZE;
-                        this._colorCanvas.height = SIZE;
-                        this._colorCtx.drawImage(img, 0, 0, SIZE, SIZE);
-                        const data = this._colorCtx.getImageData(0, 0, SIZE, SIZE).data;
-
-                        const buckets = new Array(36).fill(0).map(() => ({ r: 0, g: 0, b: 0, count: 0 }));
-                        for (let i = 0; i < data.length; i += 4) {
-                            const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-                            if (a < 128) continue;
-                            const { h, s, l } = this.rgbToHsl(r, g, b);
-                            if (s < 0.15 || l < 0.1 || l > 0.9) continue;
-                            const bucket = Math.floor(h / 10);
-                            buckets[bucket].r += r; buckets[bucket].g += g;
-                            buckets[bucket].b += b; buckets[bucket].count++;
-                        }
-                        let best = buckets.reduce((a, b) => b.count > a.count ? b : a, buckets[0]);
-                        if (best.count === 0) { resolve(null); return; }
-                        resolve({
-                            r: Math.round(best.r / best.count),
-                            g: Math.round(best.g / best.count),
-                            b: Math.round(best.b / best.count)
-                        });
-                    };
-                    img.onerror = () => resolve(null);
-                    img.src = `data:image/jpeg;base64,${base64}`;
-                });
-            }
-
-            rgbToHsl(r, g, b) {
-                r /= 255; g /= 255; b /= 255;
-                const max = Math.max(r, g, b), min = Math.min(r, g, b);
-                let h, s, l = (max + min) / 2;
-                if (max === min) { h = s = 0; }
-                else {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-                        case g: h = ((b - r) / d + 2) / 6; break;
-                        case b: h = ((r - g) / d + 4) / 6; break;
-                    }
-                }
-                return { h: h * 360, s, l };
-            }
-
-            applyDynamicColor(color) {
-                const c = this.elements.container;
-                if (!color) { this.resetDynamicColor(); return; }
-                const { r, g, b } = color;
-                const { h } = this.rgbToHsl(r, g, b);
-                this._currentHue = h;
-                this._visualizer.setHue(h);
-
-                const bgCol = `hsl(${h.toFixed(0)}, 75%, 20%)`;
-                const brdCol = `hsl(${h.toFixed(0)}, 80%, 55%)`;
-                c.style.background = bgCol;
-                c.style.border = `1px solid hsl(${h.toFixed(0)}, 70%, 45%)`;
-                c.style.boxShadow =
-                    `0 8px 32px rgba(0,0,0,0.5),` +
-                    `0 0 0 1px ${brdCol} inset,` +
-                    `0 0 30px hsl(${h.toFixed(0)}, 80%, 35% / 0.4)`;
-            }
-
-            resetDynamicColor() {
-                const c = this.elements.container;
-                c.style.background = ''; c.style.borderColor = ''; c.style.boxShadow = '';
-                this._currentHue = 260;
-                this._visualizer.setHue(260);
-            }
-
-            // ─── Display ──────────────────────────────────────────────────
-            scheduleHide() {
-                if (this._hideTimer) return;
-                this._hideTimer = setTimeout(() => this.hideWidget(), this.hideDelay);
-            }
-
-            cancelHide() {
-                if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
-                if (!this._widgetVisible) this.showWidget();
-            }
-
-            hideWidget() {
-                this._widgetVisible = false; this._hideTimer = null;
-                this.elements.container.classList.add('widget-hidden');
-            }
-
-            showWidget() {
-                this._widgetVisible = true;
-                this.elements.container.classList.remove('widget-hidden');
-            }
-
-            async updateDisplay(songData) {
-                const isInactive = !songData ||
-                    songData.status === 'paused' || songData.status === 'closed' ||
-                    songData.status === 'stopped';
-
-                isInactive ? this.scheduleHide() : this.cancelHide();
-
-                // ── Dynamic Color ────────────────────────────────────────
-                const dynColorFromJson = songData && songData.dynamicColor === true;
-                if (dynColorFromJson !== this._dynamicColorEnabled) {
-                    this._dynamicColorEnabled = dynColorFromJson;
-                    if (!this._dynamicColorEnabled) this.resetDynamicColor();
-                }
-
-                // ── Visualiseur audio ────────────────────────────────────────
-                const vizFromJson = songData && songData.audioVisualizer === true;
-                if (vizFromJson !== this._audioVisualizerEnabled) {
-                    this._audioVisualizerEnabled = vizFromJson;
-                    if (this._audioVisualizerEnabled) {
-                        if (!isInactive) this._visualizer.enable();
-                        else this._visualizer.disable();
-                    }
-                    else this._visualizer.disable();
-                } else if (this._audioVisualizerEnabled) {
-                    // Stop animation if music is paused/stopped
-                    if (isInactive) this._visualizer.disable();
-                    else this._visualizer.enable();
-                }
-
-                // ── No song playing ───────────────────────────────────────────
-                if (!songData) {
-                    await this.fadeOut();
-                    this.setScrollText(this.elements.title, 'Nothing currently playing');
-                    this.setScrollText(this.elements.artist, '');
-                    this.elements.albumArt.style.display = 'none';
-                    this.resetDynamicColor();
-                    await this.fadeIn();
-                    return;
-                }
-
-                // ── Song changed ────────────────────────────────────
-                if (this.hasSongChanged(songData)) {
-                    console.log('🎵', songData.title, '-', songData.artist);
-                    await this.fadeOut();
-
-                    this.setScrollText(this.elements.title, songData.title);
-                    this.setScrollText(this.elements.artist, songData.artist);
-
-                    if (songData.thumbnail) {
-                        this.elements.albumArt.src = `data:image/jpeg;base64,${songData.thumbnail}`;
-                        this.elements.albumArt.style.display = 'block';
-                        if (this._dynamicColorEnabled) {
-                            const color = await this.extractDominantColor(songData.thumbnail);
-                            this.applyDynamicColor(color);
-                        }
-                    } else {
-                        this.elements.albumArt.style.display = 'none';
-                        this.resetDynamicColor();
-                    }
-
-                    await this.fadeIn();
-                    this.currentSong = songData;
-                }
-            }
-
-            setScrollText(container, text) {
-                const span = container.querySelector('.scroll-text');
-                if (span._scrollTimer) { clearTimeout(span._scrollTimer); span._scrollTimer = null; }
-                span.style.transition = 'none';
-                span.style.transform = 'translateX(0)';
-                span.textContent = text;
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    const overflow = span.scrollWidth - container.clientWidth;
-                    if (overflow > 0) this.startScrollCycle(span, overflow);
-                }));
-            }
-
-            startScrollCycle(span, overflow) {
-                const scrollDuration = Math.min(18000, Math.max(5000, (overflow / 50) * 1000));
-                const pause = 3000;
-                const doCycle = () => {
-                    span._scrollTimer = setTimeout(() => {
-                        span.style.transition = `transform ${scrollDuration}ms linear`;
-                        span.style.transform = `translateX(-${overflow}px)`;
-                        span._scrollTimer = setTimeout(() => {
-                            span._scrollTimer = setTimeout(() => {
-                                span.style.transition = `transform ${scrollDuration}ms linear`;
-                                span.style.transform = 'translateX(0)';
-                                span._scrollTimer = setTimeout(doCycle, scrollDuration);
-                            }, pause);
-                        }, scrollDuration);
-                    }, pause);
-                };
-                doCycle();
-            }
-
-            fadeOut() {
-                return new Promise(resolve => {
-                    this.elements.content.classList.remove('fade-in');
-                    this.elements.content.classList.add('fade-out');
-                    setTimeout(resolve, 300);
-                });
-            }
-
-            fadeIn() {
-                return new Promise(resolve => {
-                    this.elements.content.classList.remove('fade-out');
-                    this.elements.content.classList.add('fade-in');
-                    setTimeout(resolve, 300);
-                });
-            }
-
-            async poll() {
-                const songData = await this.fetchCurrentSong();
-                await this.updateDisplay(songData);
-            }
-
-            startPolling() {
-                this.poll();
-                setInterval(() => this.poll(), this.updateInterval);
-                setTimeout(() => location.reload(), this.autoReloadInterval);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => { new NowPlayingWidget(); });
-    </script>
+    <script src="widget_config.js"></script>
+    <script src="widget.js"></script>
 </body>
 
 </html>

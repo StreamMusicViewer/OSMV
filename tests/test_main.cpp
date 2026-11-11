@@ -1,4 +1,5 @@
 #include "common/formatter.hpp"
+#include "common/obs_widget.hpp"
 #include "common/settings.hpp"
 #include "common/types.hpp"
 
@@ -178,6 +179,67 @@ int main() {
         w.write_if_changed(tmp, "hello");
         w.remove_if_exists(tmp);
         CHECK(!std::filesystem::exists(tmp));
+    }
+
+    // 10. OBS Overlay Studio presets, tokens, colors, CSS generation, and settings roundtrip
+    {
+        CHECK(obs::preset_catalog().size() >= 7);
+        AppSettings s;
+        CHECK(obs::apply_preset(s.obs_widget, "vinyl"));
+        CHECK(s.obs_widget.preset == "vinyl");
+        CHECK(s.obs_widget.spin_artwork);
+        CHECK(s.obs_widget.viz_style == "mirrored");
+
+        uint8_t r = 0, g = 0, b = 0, a = 0;
+        CHECK(obs::parse_hex_rgba("#7C5CFF80", r, g, b, a));
+        CHECK(r == 0x7C && g == 0x5C && b == 0xFF && a == 0x80);
+        CHECK(obs::format_hex_rgba(r, g, b, a) == "#7C5CFF80");
+
+        std::string txt = obs::format_widget_text("$song_upper | $player ($status_upper)", "Midnight City", "M83", "Album", "Spotify", "playing");
+        CHECK(txt == "MIDNIGHT CITY | Spotify (PLAYING)");
+
+        s.obs_widget.custom_css_enabled = true;
+        s.obs_widget.custom_css = ".widget-container { opacity: 0.95; }";
+        std::string css = obs::generate_studio_css(s);
+        CHECK(css.find(".obs-stack") != std::string::npos);
+        CHECK(css.find(".widget-container") != std::string::npos);
+
+        std::string json_out = cfg::settings_to_json_string(s, false);
+        AppSettings loaded;
+        CHECK(cfg::settings_from_json_string(json_out, loaded));
+        CHECK(loaded.obs_widget.preset == "vinyl");
+        CHECK(loaded.obs_widget.spin_artwork);
+        CHECK(loaded.obs_widget.custom_css_enabled);
+        CHECK(loaded.obs_widget.custom_css == ".widget-container { opacity: 0.95; }");
+
+        // Multi-scene custom presets & reset to defaults
+        s.dynamic_color = true;
+        s.audio_visualizer = true;
+        CHECK(obs::upsert_custom_preset(s, "GamingScene"));
+        CHECK(s.obs_custom_presets.size() == 1);
+        obs::reset_widget_defaults(s);
+        CHECK(s.obs_widget.preset == "classic");
+        CHECK(!s.dynamic_color);
+        CHECK(!s.audio_visualizer);
+        CHECK(s.obs_custom_presets.size() == 1);
+        CHECK(obs::apply_custom_preset(s, "GamingScene"));
+        CHECK(s.obs_widget.preset == "user:GamingScene");
+        CHECK(s.dynamic_color);
+        CHECK(s.audio_visualizer);
+
+        std::string json_with_presets = cfg::settings_to_json_string(s, false);
+        AppSettings loaded_presets;
+        CHECK(cfg::settings_from_json_string(json_with_presets, loaded_presets));
+        CHECK(loaded_presets.obs_custom_presets.size() == 1);
+        CHECK(loaded_presets.obs_custom_presets[0].name == "GamingScene");
+        CHECK(obs::delete_custom_preset(loaded_presets, "GamingScene"));
+        CHECK(loaded_presets.obs_custom_presets.empty());
+
+        // Script-tag safe JSON assignment for file:/// OBS sources
+        std::string js_song = cfg::json_script_assignment("__OSMV_CURRENT_SONG", "{\"title\":\"a</script>b\"}");
+        CHECK(js_song == "window.__OSMV_CURRENT_SONG = {\"title\":\"a<\\/script>b\"};\n");
+        std::string js_null = cfg::json_script_assignment("__OSMV_CURRENT_SONG", "null");
+        CHECK(js_null == "window.__OSMV_CURRENT_SONG = null;\n");
     }
 
     std::cout << "All OSMV C++ unit tests passed!\n";

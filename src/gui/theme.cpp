@@ -6,6 +6,8 @@
 #include "imgui_stdlib.h"
 
 #include <algorithm>
+#include <cmath>
+#include <filesystem>
 #include <unordered_map>
 
 namespace osmv::gui {
@@ -48,7 +50,9 @@ const ImWchar* fa_icon_ranges() {
             ICON_FA_LINK, ICON_FA_KEY, ICON_FA_MAGNIFYING_GLASS, ICON_FA_FORWARD_STEP,
             ICON_FA_FLOPPY_DISK, ICON_FA_PALETTE, ICON_FA_LANGUAGE, ICON_FA_MEMORY,
             ICON_FA_NETWORK_WIRED, ICON_FA_COMPACT_DISC, ICON_FA_SHUFFLE, ICON_FA_SLIDERS,
-            ICON_FA_DESKTOP, ICON_FA_FILE_LINES, ICON_FA_HEADPHONES, ICON_FA_WAVE_SQUARE
+            ICON_FA_DESKTOP, ICON_FA_FILE_LINES, ICON_FA_HEADPHONES, ICON_FA_WAVE_SQUARE,
+            ICON_FA_ARROW_UP_RIGHT_FROM_SQUARE, ICON_FA_CODE, ICON_FA_BOOKMARK,
+            ICON_FA_LAYER_GROUP, ICON_FA_WAND_MAGIC_SPARKLES
         };
         for (const char* ic : icons) builder.AddText(ic);
         builder.BuildRanges(&ranges);
@@ -91,6 +95,41 @@ void load_fonts(float scale, UiContext& ui) {
     ui.font_regular = add_merged(base_px, base_px * 0.92f);
     ui.font_title = add_merged(title_px, title_px * 0.90f);
     ui.font_small = add_merged(small_px, small_px * 0.92f);
+
+    // Load monospace code font from OS font directory with built-in ProggyClean fallback
+    const float code_px = std::round(14.5f * scale);
+    ui.font_code = nullptr;
+    static constexpr const char* kMonoFontPaths[] = {
+#ifdef _WIN32
+        "C:\\Windows\\Fonts\\CascadiaMono.ttf",
+        "C:\\Windows\\Fonts\\consola.ttf",
+        "C:\\Windows\\Fonts\\lucon.ttf"
+#else
+        "/usr/share/fonts/TTF/JetBrainsMono-Regular.ttf",
+        "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        "/usr/share/fonts/TTF/DejaVuSansMono.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
+        "/usr/share/fonts/liberation-mono/LiberationMono-Regular.ttf"
+#endif
+    };
+    std::error_code ec;
+    for (const char* path : kMonoFontPaths) {
+        if (std::filesystem::exists(path, ec)) {
+            ImFontConfig mcfg;
+            mcfg.OversampleH = 2;
+            mcfg.OversampleV = 1;
+            mcfg.PixelSnapH = true;
+            ui.font_code = io.Fonts->AddFontFromFileTTF(path, code_px, &mcfg, latin_ranges());
+            if (ui.font_code) break;
+        }
+    }
+    if (!ui.font_code) {
+        ImFontConfig dcfg;
+        dcfg.SizePixels = std::round(13.0f * scale);
+        ui.font_code = io.Fonts->AddFontDefault(&dcfg);
+    }
+
     io.FontDefault = ui.font_regular;
     io.Fonts->Build();
 }

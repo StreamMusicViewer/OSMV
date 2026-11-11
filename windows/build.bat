@@ -24,8 +24,9 @@ echo Configuring OSMV C++20 (Release)...
 cmake -B windows\build -G Ninja -DCMAKE_BUILD_TYPE=Release
 if %ERRORLEVEL% NEQ 0 exit /b 1
 
+rem Force clean compile so localized MSVC /showIncludes never leaves stale .obj offsets when headers change
 echo Building OSMV...
-cmake --build windows\build -j
+cmake --build windows\build --clean-first -j
 if %ERRORLEVEL% NEQ 0 exit /b 1
 
 echo Running unit tests...

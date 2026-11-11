@@ -1,5 +1,6 @@
 #include "settings.hpp"
 #include "formatter.hpp"
+#include "obs_widget.hpp"
 #include "os_utils.hpp"
 
 #include <nlohmann/json.hpp>
@@ -40,6 +41,132 @@ std::string sanitize_filename(std::string name) {
     }
     return name;
 }
+
+json obs_widget_to_json(const ObsWidgetSettings& w) {
+    return {
+        {"preset", w.preset},
+        {"position", w.position},
+        {"layout", w.layout},
+        {"widthPx", w.width_px},
+        {"paddingPx", w.padding_px},
+        {"gapPx", w.gap_px},
+        {"borderRadiusPx", w.border_radius_px},
+        {"marginPx", w.margin_px},
+        {"showAlbumArt", w.show_album_art},
+        {"artSizePx", w.art_size_px},
+        {"artRadiusPx", w.art_radius_px},
+        {"spinArtwork", w.spin_artwork},
+        {"showTitle", w.show_title},
+        {"showArtist", w.show_artist},
+        {"showAlbum", w.show_album},
+        {"showStatusBadge", w.show_status_badge},
+        {"titleFormat", w.title_format},
+        {"artistFormat", w.artist_format},
+        {"albumFormat", w.album_format},
+        {"badgeFormat", w.badge_format},
+        {"idleText", w.idle_text},
+        {"marqueeScroll", w.marquee_scroll},
+        {"scrollSpeed", w.scroll_speed},
+        {"bgColor", w.bg_color},
+        {"useBgGradient", w.use_bg_gradient},
+        {"bgColor2", w.bg_color_2},
+        {"backdropBlurPx", w.backdrop_blur_px},
+        {"borderColor", w.border_color},
+        {"borderWidthPx", w.border_width_px},
+        {"accentColor", w.accent_color},
+        {"titleColor", w.title_color},
+        {"artistColor", w.artist_color},
+        {"albumColor", w.album_color},
+        {"shadowIntensity", w.shadow_intensity},
+        {"glowEnabled", w.glow_enabled},
+        {"dynamicColorMode", w.dynamic_color_mode},
+        {"fontFamily", w.font_family},
+        {"titleSizePx", w.title_size_px},
+        {"artistSizePx", w.artist_size_px},
+        {"albumSizePx", w.album_size_px},
+        {"titleWeight", w.title_weight},
+        {"textAlign", w.text_align},
+        {"textShadow", w.text_shadow},
+        {"loadGoogleFont", w.load_google_font},
+        {"vizPosition", w.viz_position},
+        {"vizStyle", w.viz_style},
+        {"vizBarCount", w.viz_bar_count},
+        {"vizHeightPx", w.viz_height_px},
+        {"vizGapPx", w.viz_gap_px},
+        {"vizColorMode", w.viz_color_mode},
+        {"vizColorTop", w.viz_color_top},
+        {"vizColorBottom", w.viz_color_bottom},
+        {"vizSpeed", w.viz_speed},
+        {"hideWhenIdle", w.hide_when_idle},
+        {"hideDelaySec", w.hide_delay_sec},
+        {"transitionStyle", w.transition_style},
+        {"customCssEnabled", w.custom_css_enabled},
+        {"customCssRawOverride", w.custom_css_raw_override},
+        {"customCss", w.custom_css}
+    };
+}
+
+void obs_widget_from_json(const json& ow, ObsWidgetSettings& w) {
+    read_opt(ow, "preset", w.preset);
+    read_opt(ow, "position", w.position);
+    read_opt(ow, "layout", w.layout);
+    read_opt(ow, "widthPx", w.width_px);
+    read_opt(ow, "paddingPx", w.padding_px);
+    read_opt(ow, "gapPx", w.gap_px);
+    read_opt(ow, "borderRadiusPx", w.border_radius_px);
+    read_opt(ow, "marginPx", w.margin_px);
+    read_opt(ow, "showAlbumArt", w.show_album_art);
+    read_opt(ow, "artSizePx", w.art_size_px);
+    read_opt(ow, "artRadiusPx", w.art_radius_px);
+    read_opt(ow, "spinArtwork", w.spin_artwork);
+    read_opt(ow, "showTitle", w.show_title);
+    read_opt(ow, "showArtist", w.show_artist);
+    read_opt(ow, "showAlbum", w.show_album);
+    read_opt(ow, "showStatusBadge", w.show_status_badge);
+    read_opt(ow, "titleFormat", w.title_format);
+    read_opt(ow, "artistFormat", w.artist_format);
+    read_opt(ow, "albumFormat", w.album_format);
+    read_opt(ow, "badgeFormat", w.badge_format);
+    read_opt(ow, "idleText", w.idle_text);
+    read_opt(ow, "marqueeScroll", w.marquee_scroll);
+    read_opt(ow, "scrollSpeed", w.scroll_speed);
+    read_opt(ow, "bgColor", w.bg_color);
+    read_opt(ow, "useBgGradient", w.use_bg_gradient);
+    read_opt(ow, "bgColor2", w.bg_color_2);
+    read_opt(ow, "backdropBlurPx", w.backdrop_blur_px);
+    read_opt(ow, "borderColor", w.border_color);
+    read_opt(ow, "borderWidthPx", w.border_width_px);
+    read_opt(ow, "accentColor", w.accent_color);
+    read_opt(ow, "titleColor", w.title_color);
+    read_opt(ow, "artistColor", w.artist_color);
+    read_opt(ow, "albumColor", w.album_color);
+    read_opt(ow, "shadowIntensity", w.shadow_intensity);
+    read_opt(ow, "glowEnabled", w.glow_enabled);
+    read_opt(ow, "dynamicColorMode", w.dynamic_color_mode);
+    read_opt(ow, "fontFamily", w.font_family);
+    read_opt(ow, "titleSizePx", w.title_size_px);
+    read_opt(ow, "artistSizePx", w.artist_size_px);
+    read_opt(ow, "albumSizePx", w.album_size_px);
+    read_opt(ow, "titleWeight", w.title_weight);
+    read_opt(ow, "textAlign", w.text_align);
+    read_opt(ow, "textShadow", w.text_shadow);
+    read_opt(ow, "loadGoogleFont", w.load_google_font);
+    read_opt(ow, "vizPosition", w.viz_position);
+    read_opt(ow, "vizStyle", w.viz_style);
+    read_opt(ow, "vizBarCount", w.viz_bar_count);
+    read_opt(ow, "vizHeightPx", w.viz_height_px);
+    read_opt(ow, "vizGapPx", w.viz_gap_px);
+    read_opt(ow, "vizColorMode", w.viz_color_mode);
+    read_opt(ow, "vizColorTop", w.viz_color_top);
+    read_opt(ow, "vizColorBottom", w.viz_color_bottom);
+    read_opt(ow, "vizSpeed", w.viz_speed);
+    read_opt(ow, "hideWhenIdle", w.hide_when_idle);
+    read_opt(ow, "hideDelaySec", w.hide_delay_sec);
+    read_opt(ow, "transitionStyle", w.transition_style);
+    read_opt(ow, "customCssEnabled", w.custom_css_enabled);
+    read_opt(ow, "customCssRawOverride", w.custom_css_raw_override);
+    read_opt(ow, "customCss", w.custom_css);
+}
 } // namespace
 
 std::filesystem::path shared_dir() {
@@ -70,8 +197,24 @@ std::filesystem::path current_song_path() {
     return shared_dir() / "current_song.json";
 }
 
+std::filesystem::path current_song_js_path() {
+    return shared_dir() / "current_song.js";
+}
+
 std::filesystem::path obs_widget_html_path() {
     return shared_dir() / "index.html";
+}
+
+std::filesystem::path obs_widget_preview_html_path() {
+    return shared_dir() / "preview.html";
+}
+
+std::filesystem::path obs_widget_config_path() {
+    return shared_dir() / "widget_config.json";
+}
+
+std::filesystem::path obs_widget_config_js_path() {
+    return shared_dir() / "widget_config.js";
 }
 
 std::filesystem::path games_custom_json_path() {
@@ -161,17 +304,29 @@ void CachedTextWriter::clear_cache() {
     cache_.clear();
 }
 
+std::string json_script_assignment(const char* global_name, const std::string& compact_json) {
+    std::string escaped = compact_json;
+    // Prevent accidental </script> termination when loaded via <script src="...js">
+    for (size_t pos = 0; (pos = escaped.find("</", pos)) != std::string::npos;) {
+        escaped.replace(pos, 2, "<\\/");
+        pos += 3;
+    }
+    return std::string("window.") + global_name + " = " + escaped + ";\n";
+}
+
 void write_current_song_json(const std::string& title,
                              const std::string& artist,
                              const std::string& album,
                              const std::string& status,
                              const std::string& thumbnail_b64,
                              bool dynamic_color,
-                             bool audio_visualizer) {
+                             bool audio_visualizer,
+                             const std::string& player_name) {
     json j = {
         {"title", title},
         {"artist", artist},
         {"album", album},
+        {"player", player_name},
         {"thumbnail", thumbnail_b64},
         {"status", status},
         {"dynamicColor", dynamic_color},
@@ -179,10 +334,13 @@ void write_current_song_json(const std::string& title,
         {"timestamp", fmt::format_iso8601_utc()}
     };
     write_file_text(current_song_path(), j.dump(2));
+    // Also mirror to JS assignment so file:/// OBS Browser URLs (e.g. ?preset=...) bypass CORS
+    write_file_text(current_song_js_path(), json_script_assignment("__OSMV_CURRENT_SONG", j.dump()));
 }
 
 void write_null_song_json() {
     write_file_text(current_song_path(), "null\n");
+    write_file_text(current_song_js_path(), json_script_assignment("__OSMV_CURRENT_SONG", "null"));
 }
 
 void write_snaz_track_info_json(const std::filesystem::path& dir,
@@ -215,6 +373,17 @@ std::string settings_to_json_string(const AppSettings& s, bool pretty) {
         {"clearWhenInactive", s.now_playing.clear_when_inactive},
         {"fallbackText", s.now_playing.fallback_text}
     };
+    j["obsWidget"] = obs_widget_to_json(s.obs_widget);
+    json custom_presets_json = json::array();
+    for (const auto& cp : s.obs_custom_presets) {
+        custom_presets_json.push_back({
+            {"name", cp.name},
+            {"dynamicColor", cp.dynamic_color},
+            {"audioVisualizer", cp.audio_visualizer},
+            {"widget", obs_widget_to_json(cp.widget)}
+        });
+    }
+    j["obsCustomPresets"] = std::move(custom_presets_json);
 
     j["discord"] = {
         {"enabled", s.discord.enabled},
@@ -351,6 +520,24 @@ bool settings_from_json_string(const std::string& json_str, AppSettings& out) {
             read_opt(np, "exportSnazJson", out.now_playing.export_snaz_json);
             read_opt(np, "clearWhenInactive", out.now_playing.clear_when_inactive);
             read_opt(np, "fallbackText", out.now_playing.fallback_text);
+        }
+        if (j.contains("obsWidget") && j["obsWidget"].is_object()) {
+            obs_widget_from_json(j["obsWidget"], out.obs_widget);
+        }
+        if (j.contains("obsCustomPresets") && j["obsCustomPresets"].is_array()) {
+            for (const auto& cpj : j["obsCustomPresets"]) {
+                if (!cpj.is_object()) continue;
+                ObsCustomPreset cp;
+                read_opt(cpj, "name", cp.name);
+                if (cp.name.empty()) continue;
+                read_opt(cpj, "dynamicColor", cp.dynamic_color);
+                read_opt(cpj, "audioVisualizer", cp.audio_visualizer);
+                if (cpj.contains("widget") && cpj["widget"].is_object()) {
+                    obs_widget_from_json(cpj["widget"], cp.widget);
+                }
+                cp.widget.preset = "user:" + cp.name;
+                out.obs_custom_presets.push_back(std::move(cp));
+            }
         }
 
         if (j.contains("discord") && j["discord"].is_object()) {
@@ -533,8 +720,45 @@ AppSettings load_settings() {
     return s;
 }
 
+namespace {
+json build_widget_payload(const ObsWidgetSettings& w, bool enabled, bool dyn_color, bool audio_viz) {
+    json j = obs_widget_to_json(w);
+    j["nowPlayingEnabled"] = enabled;
+    j["dynamicColor"] = dyn_color;
+    j["audioVisualizer"] = audio_viz;
+    j["generatedStudioCss"] = obs::generate_studio_css_for_widget(w);
+    j["vizColorTopCss"] = obs::hex_to_css_rgba(w.viz_color_top);
+    j["vizColorBottomCss"] = obs::hex_to_css_rgba(w.viz_color_bottom);
+    j["accentColorCss"] = obs::hex_to_css_rgba(w.accent_color);
+    return j;
+}
+} // namespace
+
+bool write_widget_config_files(const AppSettings& s) {
+    json j = build_widget_payload(s.obs_widget, s.now_playing_enabled, s.dynamic_color, s.audio_visualizer);
+
+    json presets_map = json::object();
+    for (const auto& pi : obs::preset_catalog()) {
+        ObsWidgetSettings pw;
+        obs::apply_preset(pw, pi.id);
+        presets_map[pi.id] = build_widget_payload(pw, s.now_playing_enabled, s.dynamic_color, s.audio_visualizer);
+    }
+    for (const auto& cp : s.obs_custom_presets) {
+        if (!cp.name.empty()) {
+            presets_map[cp.name] = build_widget_payload(cp.widget, s.now_playing_enabled, cp.dynamic_color, cp.audio_visualizer);
+        }
+    }
+    j["presets"] = std::move(presets_map);
+
+    bool ok1 = write_file_text(obs_widget_config_path(), j.dump(2));
+    bool ok2 = write_file_text(obs_widget_config_js_path(), json_script_assignment("__OSMV_WIDGET_CONFIG", j.dump()));
+    return ok1 && ok2;
+}
+
 bool save_settings(const AppSettings& s) {
-    return write_file_text(settings_path(), settings_to_json_string(s, true));
+    bool ok = write_file_text(settings_path(), settings_to_json_string(s, true));
+    write_widget_config_files(s);
+    return ok;
 }
 
 std::string snapshot_to_json_string(const DaemonStateSnapshot& snap) {
@@ -552,6 +776,7 @@ std::string snapshot_to_json_string(const DaemonStateSnapshot& snap) {
         {"title", snap.title},
         {"artist", snap.artist},
         {"album", snap.album},
+        {"playerName", snap.player_name},
         {"status", snap.status},
         {"thumbnailFilePath", snap.thumbnail_file_path},
         {"playingNowPreview", snap.playing_now_preview},
@@ -603,6 +828,7 @@ bool snapshot_from_json_string(const std::string& json_str, DaemonStateSnapshot&
         read_opt(j, "title", out.title);
         read_opt(j, "artist", out.artist);
         read_opt(j, "album", out.album);
+        read_opt(j, "playerName", out.player_name);
         read_opt(j, "status", out.status);
         read_opt(j, "thumbnailFilePath", out.thumbnail_file_path);
         read_opt(j, "playingNowPreview", out.playing_now_preview);

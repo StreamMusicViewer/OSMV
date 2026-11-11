@@ -31,8 +31,19 @@ struct GuiAppState {
 
     NavPage current_page = NavPage::NowPlaying;
     ImTextureID album_tex = 0;
+    ImTextureID demo_album_tex = 0;
+    bool has_album_color = false;
+    float album_hue = 260.0f;
     std::string loaded_thumb_path;
     ImTextureID logo_tex = 0;
+
+    // OBS Overlay Studio UI state
+    int obs_studio_tab = 0;       // 0=Style, 1=Layout & Content, 2=Visualizer, 3=Custom CSS, 4=Snaz
+    bool obs_preview_demo = false;
+    int obs_preview_backdrop = 0; // 0=Checker, 1=Dark, 2=Light
+    std::string obs_new_preset_name;
+    std::string obs_studio_feedback;
+    double obs_studio_feedback_until = 0.0;
 
     bool settings_dirty = false;
     double dirty_since = 0.0;
@@ -64,6 +75,8 @@ struct GuiAppState {
 };
 
 void render_view_now_playing(GuiAppState& st);
+void render_obs_widget_preview(GuiAppState& st);
+bool render_css_code_editor(UiContext& ui, const char* id, std::string& css, const char* lang);
 void render_view_time_date(GuiAppState& st);
 void render_view_timers(GuiAppState& st);
 void render_view_sysinfo(GuiAppState& st);

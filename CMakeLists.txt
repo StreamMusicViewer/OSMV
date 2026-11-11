@@ -12,6 +12,7 @@ set(OSMV_COMMON_SOURCES
     src/common/formatter.cpp
     src/common/http_common.cpp
     src/common/ipc.cpp
+    src/common/obs_widget.cpp
     src/common/os_utils.cpp
     src/common/settings.cpp
 )
@@ -72,8 +73,10 @@ set(OSMV_IMGUI_SOURCES
 set(OSMV_GUI_SOURCES
     src/common/embedded_fonts.cpp
     src/common/embedded_logo.cpp
+    src/gui/css_editor.cpp
     src/gui/gui_main.cpp
     src/gui/locale.cpp
+    src/gui/obs_preview.cpp
     src/gui/theme.cpp
     src/gui/twitch_oauth.cpp
     src/gui/view_discord.cpp

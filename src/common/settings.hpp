@@ -10,12 +10,17 @@ namespace osmv::cfg {
 std::filesystem::path shared_dir();
 std::filesystem::path settings_path();
 std::filesystem::path current_song_path();
+std::filesystem::path current_song_js_path();
 std::filesystem::path dynamic_text_dir(const AppSettings& s);
 std::filesystem::path obs_widget_html_path();
+std::filesystem::path obs_widget_preview_html_path();
+std::filesystem::path obs_widget_config_path();
+std::filesystem::path obs_widget_config_js_path();
 std::filesystem::path games_custom_json_path();
 
 AppSettings load_settings();
 bool save_settings(const AppSettings& s);
+bool write_widget_config_files(const AppSettings& s);
 
 // Atomic file write (writes .tmp then replaces target, falling back cleanly if locked)
 bool write_file_bytes(const std::filesystem::path& path, const void* data, size_t size);
@@ -32,13 +37,17 @@ private:
     std::unordered_map<std::string, std::string> cache_;
 };
 
+// Formats `window.<global_name> = <json>;\n` while escaping closing script tags
+std::string json_script_assignment(const char* global_name, const std::string& compact_json);
+
 void write_current_song_json(const std::string& title,
                              const std::string& artist,
                              const std::string& album,
                              const std::string& status,
                              const std::string& thumbnail_b64,
                              bool dynamic_color,
-                             bool audio_visualizer);
+                             bool audio_visualizer,
+                             const std::string& player_name = "");
 void write_null_song_json();
 void write_snaz_track_info_json(const std::filesystem::path& dir,
                                  const std::string& player_name,

@@ -140,6 +140,7 @@ public:
         {
             std::lock_guard<std::mutex> lock(state_mutex_);
             settings_ = cfg::load_settings();
+            cfg::write_widget_config_files(settings_);
             reset_chrono_down_locked();
             reset_chrono_up_locked();
             timers_.last_tick = std::chrono::steady_clock::now();
@@ -235,6 +236,7 @@ private:
             }
             if (cmd == "reload_settings") {
                 AppSettings new_s = cfg::load_settings();
+                cfg::write_widget_config_files(new_s);
                 {
                     std::lock_guard<std::mutex> lock(state_mutex_);
                     int64_t new_cd_ms = chrono_down_initial_ms(new_s.chrono_down);
@@ -432,6 +434,7 @@ private:
                 if (json_exists_or_written) {
                     std::error_code ec;
                     std::filesystem::remove(cfg::current_song_path(), ec);
+                    std::filesystem::remove(cfg::current_song_js_path(), ec);
                     json_exists_or_written = false;
                 }
                 last_song_key.clear();
@@ -483,14 +486,15 @@ private:
                     thumb_file = update_gui_thumb_file(key, cached_thumb_b64, prev_thumb_path_);
                 }
 
-                std::string json_sig = key + "|" + song.album + "|" + song.status + "|" +
+                std::string json_sig = key + "|" + song.album + "|" + last_polled_media.player_name + "|" +
+                                       song.status + "|" +
                                        (cfg_copy.dynamic_color ? "1" : "0") + "|" +
                                        (cfg_copy.audio_visualizer ? "1" : "0") + "|" +
                                        std::to_string(cached_thumb_b64.size());
                 if (json_sig != last_json_sig) {
                     cfg::write_current_song_json(
                         song.title, song.artist, song.album, song.status, cached_thumb_b64,
-                        cfg_copy.dynamic_color, cfg_copy.audio_visualizer);
+                        cfg_copy.dynamic_color, cfg_copy.audio_visualizer, last_polled_media.player_name);
                     last_json_sig = std::move(json_sig);
                     json_exists_or_written = true;
                 }
@@ -623,6 +627,7 @@ private:
                 snapshot_.title = song.title;
                 snapshot_.artist = song.artist;
                 snapshot_.album = song.album;
+                snapshot_.player_name = last_polled_media.player_name;
                 snapshot_.status = song.status;
                 snapshot_.thumbnail_file_path = thumb_file;
                 snapshot_.playing_now_preview = np_preview;

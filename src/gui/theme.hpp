@@ -32,6 +32,7 @@ struct UiContext {
     ImFont* font_regular = nullptr;
     ImFont* font_title = nullptr;
     ImFont* font_small = nullptr;
+    ImFont* font_code = nullptr;
 };
 
 void load_fonts(float scale, UiContext& ui);

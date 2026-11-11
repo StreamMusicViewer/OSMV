@@ -15,7 +15,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <algorithm>
+#include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -65,6 +68,98 @@ void ensure_daemon_running() {
     }
 }
 
+bool compute_dominant_hue(const uint8_t* rgba, int w, int h, float& out_hue) {
+    if (!rgba || w <= 0 || h <= 0) return false;
+    struct Bucket { uint64_t r = 0, g = 0, b = 0, count = 0; };
+    std::array<Bucket, 36> buckets{};
+    const int step_x = std::max(1, w / 80);
+    const int step_y = std::max(1, h / 80);
+
+    for (int y = 0; y < h; y += step_y) {
+        for (int x = 0; x < w; x += step_x) {
+            const uint8_t* p = rgba + (static_cast<size_t>(y) * w + x) * 4;
+            if (p[3] < 128) continue;
+            float r = p[0] / 255.0f;
+            float g = p[1] / 255.0f;
+            float b = p[2] / 255.0f;
+            float mx = std::max({r, g, b});
+            float mn = std::min({r, g, b});
+            float l = (mx + mn) * 0.5f;
+            if (mx == mn || l < 0.1f || l > 0.9f) continue;
+            float d = mx - mn;
+            float s = (l > 0.5f) ? d / (2.0f - mx - mn) : d / (mx + mn);
+            if (s < 0.15f) continue;
+
+            float hue = 0.0f;
+            if (mx == r) hue = ((g - b) / d + (g < b ? 6.0f : 0.0f)) / 6.0f;
+            else if (mx == g) hue = ((b - r) / d + 2.0f) / 6.0f;
+            else hue = ((r - g) / d + 4.0f) / 6.0f;
+            int idx = std::clamp(static_cast<int>(hue * 36.0f), 0, 35);
+            buckets[idx].r += p[0];
+            buckets[idx].g += p[1];
+            buckets[idx].b += p[2];
+            buckets[idx].count++;
+        }
+    }
+
+    const Bucket* best = &buckets[0];
+    for (const auto& bk : buckets) {
+        if (bk.count > best->count) best = &bk;
+    }
+    if (best->count == 0) return false;
+
+    float r = static_cast<float>(best->r / best->count) / 255.0f;
+    float g = static_cast<float>(best->g / best->count) / 255.0f;
+    float b = static_cast<float>(best->b / best->count) / 255.0f;
+    float mx = std::max({r, g, b});
+    float mn = std::min({r, g, b});
+    if (mx == mn) {
+        out_hue = 260.0f;
+        return true;
+    }
+    float d = mx - mn;
+    float hue = 0.0f;
+    if (mx == r) hue = ((g - b) / d + (g < b ? 6.0f : 0.0f)) / 6.0f;
+    else if (mx == g) hue = ((b - r) / d + 2.0f) / 6.0f;
+    else hue = ((r - g) / d + 4.0f) / 6.0f;
+    out_hue = hue * 360.0f;
+    return true;
+}
+
+ImTextureID make_demo_album_texture(GuiBackend& backend) {
+    constexpr int S = 96;
+    std::vector<uint8_t> rgba(static_cast<size_t>(S) * S * 4);
+    for (int y = 0; y < S; ++y) {
+        for (int x = 0; x < S; ++x) {
+            float u = static_cast<float>(x) / (S - 1);
+            float v = static_cast<float>(y) / (S - 1);
+            float t = (u + v) * 0.5f;
+            float r = (t < 0.5f) ? (255.0f * (1.0f - t) + 124.0f * t) : (124.0f * (1.0f - (t - 0.5f) * 2.0f));
+            float g = 60.0f + 150.0f * v;
+            float b = 140.0f + 115.0f * u;
+
+            float dx = u - 0.5f;
+            float dy = v - 0.5f;
+            float dist = std::sqrt(dx * dx + dy * dy);
+            if (std::abs(dist - 0.28f) < 0.025f) {
+                r = std::min(255.0f, r + 55.0f);
+                g = std::min(255.0f, g + 55.0f);
+                b = std::min(255.0f, b + 55.0f);
+            } else if (dist < 0.09f) {
+                r = 18.0f;
+                g = 20.0f;
+                b = 30.0f;
+            }
+            size_t i = (static_cast<size_t>(y) * S + x) * 4;
+            rgba[i + 0] = static_cast<uint8_t>(std::clamp(r, 0.0f, 255.0f));
+            rgba[i + 1] = static_cast<uint8_t>(std::clamp(g, 0.0f, 255.0f));
+            rgba[i + 2] = static_cast<uint8_t>(std::clamp(b, 0.0f, 255.0f));
+            rgba[i + 3] = 255;
+        }
+    }
+    return backend.create_rgba_texture(S, S, rgba.data());
+}
+
 ImTextureID load_texture_from_png_mem(GuiBackend& backend, const uint8_t* data, size_t len) {
     int w = 0, h = 0, ch = 0;
     uint8_t* rgba = stbi_load_from_memory(data, static_cast<int>(len), &w, &h, &ch, 4);
@@ -74,25 +169,28 @@ ImTextureID load_texture_from_png_mem(GuiBackend& backend, const uint8_t* data, 
     return tex;
 }
 
-ImTextureID load_texture_from_file(GuiBackend& backend, const std::string& utf8_path) {
-    if (utf8_path.empty()) return 0;
-    std::ifstream f(os::path_from_utf8(utf8_path), std::ios::binary);
-    if (!f) return 0;
-    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    if (bytes.empty()) return 0;
-    return load_texture_from_png_mem(backend, bytes.data(), bytes.size());
-}
-
 void sync_album_texture(GuiAppState& st) {
     if (st.snap.thumbnail_file_path == st.loaded_thumb_path) return;
     if (st.album_tex) {
         st.backend->destroy_texture(st.album_tex);
         st.album_tex = 0;
     }
+    st.has_album_color = false;
+    st.album_hue = 260.0f;
     st.loaded_thumb_path = st.snap.thumbnail_file_path;
-    if (!st.loaded_thumb_path.empty()) {
-        st.album_tex = load_texture_from_file(*st.backend, st.loaded_thumb_path);
-    }
+    if (st.loaded_thumb_path.empty()) return;
+
+    std::ifstream f(os::path_from_utf8(st.loaded_thumb_path), std::ios::binary);
+    if (!f) return;
+    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    if (bytes.empty()) return;
+
+    int w = 0, h = 0, ch = 0;
+    uint8_t* rgba = stbi_load_from_memory(bytes.data(), static_cast<int>(bytes.size()), &w, &h, &ch, 4);
+    if (!rgba) return;
+    st.has_album_color = compute_dominant_hue(rgba, w, h, st.album_hue);
+    st.album_tex = st.backend->create_rgba_texture(w, h, rgba);
+    stbi_image_free(rgba);
 }
 
 void render_sidebar(GuiAppState& st, float sidebar_w) {
@@ -243,6 +341,7 @@ int run_gui() {
     st.ui.colors = make_theme_colors(st.settings.general.theme, st.settings.general.accent);
     apply_imgui_style(st.ui.colors);
     st.logo_tex = load_texture_from_png_mem(*backend, assets::kLogoPng, assets::kLogoPngSize);
+    st.demo_album_tex = make_demo_album_texture(*backend);
 
     fetch_daemon_state(st);
     sync_album_texture(st);
@@ -342,6 +441,7 @@ int run_gui() {
     }
 
     if (st.album_tex) backend->destroy_texture(st.album_tex);
+    if (st.demo_album_tex) backend->destroy_texture(st.demo_album_tex);
     if (st.logo_tex) backend->destroy_texture(st.logo_tex);
     backend->shutdown();
     return 0;

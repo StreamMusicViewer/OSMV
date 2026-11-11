@@ -1,11 +1,20 @@
-/* Reset and base styles */
+/* Base reset */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* ─── Conteneur principal (visualiseur + widget empilés) ───────────── */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: transparent !important;
+    overflow: hidden;
+}
+
+/* Main stack: visualizer + widget card */
 .obs-stack {
     position: fixed;
     bottom: 20px;
@@ -15,69 +24,97 @@
     flex-direction: column;
     gap: 8px;
     align-items: stretch;
+    z-index: 10;
 }
 
-/* ─── Visualiseur audio ──────────────────────────────────────────── */
+/* Visualizer wrappers (top / bottom) */
 .visualizer-wrapper {
     width: 100%;
-    height: 64px;
+    height: 56px;
     opacity: 1;
-    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+    transition: opacity 0.45s ease, transform 0.45s ease, height 0.45s ease, margin 0.45s ease;
     pointer-events: none;
+    overflow: hidden;
 }
 
 .visualizer-wrapper.visualizer-hidden {
     opacity: 0;
-    transform: translateY(8px);
-    /* Collapse height so the widget doesn't jump when hidden */
-    height: 0;
-    margin: 0;
-    overflow: hidden;
-    transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out,
-        height 0.6s ease-in-out, margin 0.6s ease-in-out;
+    transform: translateY(6px);
+    height: 0 !important;
+    margin: 0 !important;
 }
 
-#visualizer {
+.visualizer-canvas {
     width: 100%;
-    height: 64px;
+    height: 100%;
     display: block;
 }
 
-html,
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: transparent !important;
-    overflow: hidden;
-}
-
-/* Container principal du widget */
+/* Main card container */
 .widget-container {
-    max-width: 450px;
+    position: relative;
+    width: 100%;
     padding: 20px;
     background: rgba(15, 15, 15, 0.88);
     border-radius: 16px;
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
     opacity: 1;
-    transition: opacity 0.8s ease-in-out;
+    transform: translate3d(0, 0, 0) scale(1);
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
     pointer-events: auto;
 }
 
-/* Widget caché après 10s d'inactivité */
+/* Idle hide transitions */
 .widget-container.widget-hidden {
     opacity: 0;
     pointer-events: none;
 }
 
-/* Contenu avec animation */
+.widget-container.transition-slide-up.widget-hidden {
+    transform: translate3d(0, 18px, 0);
+}
+
+.widget-container.transition-slide-left.widget-hidden {
+    transform: translate3d(24px, 0, 0);
+}
+
+.widget-container.transition-zoom.widget-hidden {
+    transform: scale(0.92);
+}
+
+.widget-container.transition-none,
+.widget-container.transition-none.widget-hidden {
+    transition: none;
+}
+
+/* Optional background visualizer inside card */
+.visualizer-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.28;
+    pointer-events: none;
+    z-index: 0;
+    display: none;
+}
+
+.visualizer-bg.visualizer-bg-active {
+    display: block;
+}
+
+/* Card content layout */
 .content {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 16px;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.28s ease-in-out;
 }
 
 .content.fade-in {
@@ -88,10 +125,30 @@ body {
     opacity: 0;
 }
 
-/* Container de la pochette d'album */
+.widget-container.layout-horizontal .content {
+    flex-direction: row;
+}
+
+.widget-container.layout-horizontal-right .content {
+    flex-direction: row-reverse;
+}
+
+.widget-container.layout-vertical .content {
+    flex-direction: column;
+    text-align: center;
+}
+
+.widget-container.layout-compact .content {
+    flex-direction: row;
+}
+
+/* Album art */
 .album-art-container {
     position: relative;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .album-art {
@@ -99,46 +156,93 @@ body {
     height: 80px;
     border-radius: 8px;
     object-fit: cover;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     display: none;
-    /* Caché par défaut, affiché seulement si disponible */
 }
 
-/* Icône musicale de fallback */
-.music-icon {
+.album-art-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.album-art-placeholder svg {
+    width: 44%;
+    height: 44%;
+    animation: osmv-pulse 2s ease-in-out infinite;
+}
+
+@keyframes osmv-pulse {
+    0%, 100% { opacity: 0.45; transform: scale(1); }
+    50% { opacity: 0.75; transform: scale(1.06); }
+}
+
+@keyframes osmv-vinyl-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.album-art.is-spinning {
+    animation: osmv-vinyl-spin 6s linear infinite;
+}
+
+.album-art.is-spinning.spin-paused {
+    animation-play-state: paused;
+}
+
+.album-art-container.is-vinyl::after {
+    content: "";
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 48px;
-    opacity: 0.3;
+    width: 18%;
+    height: 18%;
+    border-radius: 50%;
+    background: #141418;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
     pointer-events: none;
 }
 
-.album-art[style*="display: block"]~.music-icon {
-    display: none;
-}
-
-/* Informations du morceau */
+/* Track text block */
 .track-info {
     flex: 1;
     min-width: 0;
-    /* Permet le text-overflow */
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+}
+
+.track-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .track-title {
+    width: 100%;
     font-size: 18px;
     font-weight: 600;
     color: #ffffff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     white-space: nowrap;
 }
 
 .track-artist {
+    width: 100%;
     font-size: 14px;
     font-weight: 400;
     color: #b3b3b3;
@@ -146,61 +250,84 @@ body {
     white-space: nowrap;
 }
 
-/* Défilement style Spotify */
-.track-title .scroll-text,
-.track-artist .scroll-text {
+.track-album {
+    width: 100%;
+    font-size: 12px;
+    font-weight: 400;
+    color: #8a9bbf;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.scroll-text {
     display: inline-block;
     white-space: nowrap;
     will-change: transform;
 }
 
-/* Animation de pulsation subtile pour l'icône musicale */
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 0.3;
-        transform: translate(-50%, -50%) scale(1);
-    }
-
-    50% {
-        opacity: 0.5;
-        transform: translate(-50%, -50%) scale(1.05);
-    }
+.no-marquee {
+    text-overflow: ellipsis;
 }
 
-.music-icon {
-    animation: pulse 2s ease-in-out infinite;
+.no-marquee .scroll-text {
+    display: inline;
 }
 
-/* Effet de survol (optionnel) */
-.widget-container:hover {
-    box-shadow:
-        0 12px 48px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.15) inset;
-    transform: translateY(-2px);
-    transition: all 0.3s ease;
+/* Preview page chrome (used only by preview.html) */
+body.osmv-preview-page {
+    background-color: #161822 !important;
+    background-image:
+        linear-gradient(45deg, #1f2230 25%, transparent 25%),
+        linear-gradient(-45deg, #1f2230 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1f2230 75%),
+        linear-gradient(-45deg, transparent 75%, #1f2230 75%) !important;
+    background-size: 28px 28px !important;
+    background-position: 0 0, 0 14px, 14px -14px, -14px 0 !important;
 }
 
-/* Responsive pour petits écrans */
-@media (max-width: 600px) {
-    .widget-container {
-        bottom: 10px;
-        right: 10px;
-        max-width: 320px;
-        padding: 16px;
-    }
+body.osmv-preview-page.bg-dark {
+    background: #0d1018 !important;
+}
 
-    .album-art {
-        width: 60px;
-        height: 60px;
-    }
+body.osmv-preview-page.bg-light {
+    background: #e5e9f2 !important;
+}
 
-    .track-title {
-        font-size: 16px;
-    }
+.preview-toolbar {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 9999;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(15, 18, 28, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    color: #eef2ff;
+    font-size: 13px;
+    backdrop-filter: blur(10px);
+}
 
-    .track-artist {
-        font-size: 13px;
-    }
+.preview-toolbar strong {
+    margin-right: 6px;
+    color: #ffffff;
+}
+
+.preview-toolbar button {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    color: #eef2ff;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.preview-toolbar button:hover {
+    background: rgba(124, 92, 255, 0.35);
+    border-color: rgba(124, 92, 255, 0.7);
 }

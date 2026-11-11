@@ -7,6 +7,10 @@ current_song.json
 **/current_song.json
 settings.json
 **/settings.json
+widget_config.json
+**/widget_config.json
+widget_config.js
+**/widget_config.js
 .osmv.lock
 *quit.lock
 debugomatic.log
