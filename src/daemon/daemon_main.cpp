@@ -417,12 +417,12 @@ private:
             // 3. Discord RPC update
             if (cfg_copy.discord.enabled) {
                 if (!is_inactive) {
-                    discord_.post_update(cfg_copy.discord, song.title, song.artist, song.art_url, song.status);
+                    discord_.post_update(cfg_copy.discord, song.title, song.artist, song.album, song.art_url, song.status);
                 } else {
-                    discord_.post_update(cfg_copy.discord, std::nullopt, std::nullopt, std::nullopt, "idle");
+                    discord_.post_update(cfg_copy.discord, std::nullopt, std::nullopt, std::nullopt, std::nullopt, "idle");
                 }
             } else {
-                discord_.post_update(cfg_copy.discord, std::nullopt, std::nullopt, std::nullopt, "disabled");
+                discord_.post_update(cfg_copy.discord, std::nullopt, std::nullopt, std::nullopt, std::nullopt, "disabled");
             }
 
             // 4. Now Playing JSON + Snaz text files + GUI thumbnail

@@ -47,7 +47,7 @@ HttpResponse request(const std::string& method,
     path.resize(uc.dwUrlPathLength);
     if (path.empty()) path = L"/";
 
-    HINTERNET session = WinHttpOpen(L"OSMV/3.0",
+    HINTERNET session = WinHttpOpen(L"OSMV/5.0.0",
                                     WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
                                     WINHTTP_NO_PROXY_NAME,
                                     WINHTTP_NO_PROXY_BYPASS,

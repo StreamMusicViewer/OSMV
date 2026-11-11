@@ -119,10 +119,10 @@ void render_sidebar(GuiAppState& st, float sidebar_w) {
             ImGui::PushFont(st.ui.font_small);
             if (st.snap.daemon_ram_kb > 0) {
                 char rbuf[48];
-                std::snprintf(rbuf, sizeof(rbuf), "v3.0  |  %.1f MB", st.snap.daemon_ram_kb / 1024.0);
+                std::snprintf(rbuf, sizeof(rbuf), "v5.0.0  |  %.1f MB", st.snap.daemon_ram_kb / 1024.0);
                 ImGui::TextColored(c.text_dim, "%s", rbuf);
             } else {
-                ImGui::TextColored(c.text_dim, "v3.0 C++");
+                ImGui::TextColored(c.text_dim, "v5.0.0 C++");
             }
             ImGui::PopFont();
         }

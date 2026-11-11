@@ -6,7 +6,7 @@
 ![C++20](https://img.shields.io/badge/Language-C%2B%2B20-00599C)
 ![GUI](https://img.shields.io/badge/GUI-Dear%20ImGui-blueviolet)
 
-> **OSMV v3.0** est un outil natif C++20 ultra-léger pour OBS Studio (Now Playing, Discord Rich Presence, et modules Snaz complets : Heure, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files et Twitch Helix).
+> **OSMV v5.0.0** est un outil natif C++20 ultra-léger pour OBS Studio (Now Playing, Discord Rich Presence, et modules Snaz complets : Heure, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files et Twitch Helix).
 
 ---
 

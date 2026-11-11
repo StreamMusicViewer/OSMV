@@ -26,6 +26,7 @@ public:
     void post_update(const DiscordSettings& settings,
                      const std::optional<std::string>& title,
                      const std::optional<std::string>& artist,
+                     const std::optional<std::string>& album,
                      const std::optional<std::string>& art_url,
                      const std::string& status);
 
@@ -36,6 +37,7 @@ private:
         DiscordSettings settings;
         std::optional<std::string> title;
         std::optional<std::string> artist;
+        std::optional<std::string> album;
         std::optional<std::string> art_url;
         std::string status;
     };

@@ -330,8 +330,24 @@ uint32_t current_pid() {
 #endif
 }
 
+std::string to_lower_ascii(std::string s) {
+    for (char& c : s) {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    return s;
+}
+
+std::string strip_topic_suffix(std::string artist) {
+    constexpr const char* kTopic = " - Topic";
+    if (artist.size() > 8 && artist.compare(artist.size() - 8, 8, kTopic) == 0) {
+        artist.resize(artist.size() - 8);
+    }
+    return artist;
+}
+
 std::string fetch_itunes_cover(const std::string& title, const std::string& artist) {
-    std::string raw = title + " " + artist;
+    std::string clean_artist = strip_topic_suffix(artist);
+    std::string raw = title + " " + clean_artist;
     std::string clean;
     clean.reserve(raw.size());
     bool last_space = true;
@@ -355,6 +371,14 @@ std::string fetch_itunes_cover(const std::string& title, const std::string& arti
         json j = json::parse(resp.body);
         if (j.contains("results") && j["results"].is_array() && !j["results"].empty()) {
             const auto& first = j["results"][0];
+            if (!clean_artist.empty() && clean_artist != "Unknown Artist" &&
+                first.contains("artistName") && first["artistName"].is_string()) {
+                std::string a_low = to_lower_ascii(clean_artist);
+                std::string r_low = to_lower_ascii(first["artistName"].get<std::string>());
+                if (r_low.find(a_low) == std::string::npos && a_low.find(r_low) == std::string::npos) {
+                    return {};
+                }
+            }
             if (first.contains("artworkUrl100") && first["artworkUrl100"].is_string()) {
                 return fmt::replace_all(first["artworkUrl100"].get<std::string>(), "100x100bb", "500x500bb");
             }
@@ -383,11 +407,12 @@ void DiscordRpcManager::stop() {
 void DiscordRpcManager::post_update(const DiscordSettings& settings,
                                     const std::optional<std::string>& title,
                                     const std::optional<std::string>& artist,
+                                    const std::optional<std::string>& album,
                                     const std::optional<std::string>& art_url,
                                     const std::string& status) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        pending_ = Command{settings, title, artist, art_url, status};
+        pending_ = Command{settings, title, artist, album, art_url, status};
         has_pending_ = true;
     }
     cv_.notify_one();
@@ -501,14 +526,27 @@ void DiscordRpcManager::run_loop() {
         }
 
         const bool music_active = cmd.title.has_value() && s.use_music_when_playing;
+        std::string artist_str = cmd.artist.value_or("");
+        std::string album_str = cmd.album.value_or("");
         std::string details = music_active ? *cmd.title : s.custom_details;
-        std::string state = music_active ? ("by " + cmd.artist.value_or("")) : s.custom_state;
+        std::string state;
+        if (music_active) {
+            if (!artist_str.empty() && artist_str != "Unknown Artist") {
+                state = "by " + artist_str;
+            }
+        } else {
+            state = s.custom_state;
+        }
 
         std::string large_image;
         std::string large_text;
         if (music_active) {
-            large_image = resolve_cover_url(*cmd.title, cmd.artist.value_or(""), cmd.art_url, s.large_image_key);
-            large_text = cmd.artist.value_or("");
+            large_image = resolve_cover_url(*cmd.title, artist_str, cmd.art_url, s.large_image_key);
+            // In Discord type=2 (Listening), large_text is rendered as line 3 under state.
+            // Only populate it with the album name (never repeat artist/title).
+            if (!album_str.empty() && album_str != artist_str && album_str != *cmd.title) {
+                large_text = album_str;
+            }
         } else {
             large_image = s.large_image_key.empty() ? "osmv_logo" : s.large_image_key;
             large_text = s.large_image_text;
