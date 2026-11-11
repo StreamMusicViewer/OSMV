@@ -5,12 +5,19 @@ target/
 # ── Fichiers générés lors de l'exécution ──────────────────────────────────────
 current_song.json
 **/current_song.json
+current_song.js
+**/current_song.js
 settings.json
 **/settings.json
 widget_config.json
 **/widget_config.json
 widget_config.js
 **/widget_config.js
+games-custom.json
+**/games-custom.json
+track-info.json
+**/track-info.json
+osmv_thumb_*.img
 .osmv.lock
 *quit.lock
 debugomatic.log
@@ -29,6 +36,14 @@ desktop.ini
 *~
 .qmlls.ini
 .gemini/
+.cache/
+imgui.ini
+
+# ── Builds CMake / C++ génériques ─────────────────────────────────────────────
+build/
+cmake-build-*/
+osmv_tests
+osmv_tests.exe
 
 # ── Fichiers de compilation Windows ───────────────────────────────────────────
 windows/build/
