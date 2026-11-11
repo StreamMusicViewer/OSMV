@@ -46,6 +46,7 @@ osmv-gui
 # ── Divers ────────────────────────────────────────────────────────────────────
 *.zip
 test/
+release/
 shared/dynamic_text/
 snaz-master/
 
