@@ -40,11 +40,14 @@ linux/dist/
 linux/build/
 linux/.venv/
 osmv
+osmv-gui
+*.tmp
 
 # ── Divers ────────────────────────────────────────────────────────────────────
 *.zip
 test/
 shared/dynamic_text/
+snaz-master/
 
 # ── Docs ──────────────────────────────────────────────────────────────────────
 /docs/node_modules/ 

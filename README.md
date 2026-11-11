@@ -1,70 +1,69 @@
-# OSMV (OBS Stream Music Viewer) 🎵
+# OSMV (OBS Stream Music Viewer)
 
 ![Status](https://img.shields.io/badge/status-working-success)
 ![Platform Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)
 ![Platform Linux](https://img.shields.io/badge/platform-Linux-orange)
-![Rust](https://img.shields.io/badge/Language-Rust-brown)
-![Qt6](https://img.shields.io/badge/GUI-Qt%206%20QML-blueviolet)
+![C++20](https://img.shields.io/badge/Language-C%2B%2B20-00599C)
+![GUI](https://img.shields.io/badge/GUI-Dear%20ImGui-blueviolet)
 
-
-> **OSMV** est un widget "Now Playing" en temps réel et ultra-léger pour OBS qui affiche votre musique avec pochette d'album et transitions animées, couplé à une intégration Discord Rich Presence hautement personnalisable.
-
----
-
-## 🚀 Nouvelle Architecture Ultra-Légère ⚡
-
-Afin de garantir un impact minimal sur les performances en stream, OSMV est maintenant divisé en deux rôles distincts au sein d'un seul exécutable :
-
-1. **Le Daemon d'Arrière-plan (~15 Mo RAM)** : 
-   - Rôle principal. Il tourne en arrière-plan, gère l'écoute des lecteurs média (via WinRT sur Windows et MPRIS sur Linux), met à jour le fichier `current_song.json` en temps réel, met à jour Discord Rich Presence et gère l'icône de la barre des tâches (System Tray).
-2. **L'Interface de Configuration QML (~378 Mo RAM)** :
-   - Lancé via `osmv --gui` (ou automatiquement au premier démarrage). C'est une interface moderne en **Qt 6 QML** avec des effets de glassmorphism.
-   - Elle vous permet de configurer l'application. Dès que vous la fermez (via le bouton **Passer en Headless** dans l'application ou l'icône de fermeture standard), **le processus d'interface se coupe complètement, libérant instantanément les 378 Mo de RAM**. Le Daemon léger continue de tourner de façon transparente.
-   - Pour réafficher l'interface, faites un clic droit sur l'icône de la barre des tâches ➔ **Afficher Configuration**.
+> **OSMV v3.0** est un outil natif C++20 ultra-léger pour OBS Studio (Now Playing, Discord Rich Presence, et modules Snaz complets : Heure, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files et Twitch Helix).
 
 ---
 
-## 📖 Documentation Complète (GitHub Pages)
+## Architecture Ultra-Légère en C++20
 
-Retrouvez toute la documentation interactive sur [streammusicviewer.github.io/OSMV](https://streammusicviewer.github.io/OSMV/) :
+OSMV sépare le service d'arrière-plan de l'interface graphique pour consommer le strict minimum de RAM en stream :
 
-- ⚙️ **[Installation & Dépendances](https://streammusicviewer.github.io/OSMV/docs/installation/)** — Installer Qt6, Clang, D-Bus, GTK3 et compiler.
-- 📐 **[Architecture & Performance](https://streammusicviewer.github.io/OSMV/docs/architecture/)** — Fonctionnement interne du daemon et du GUI.
-- 🛠️ **[Configuration OBS & Discord](https://streammusicviewer.github.io/OSMV/docs/obs/)** — Configurer les widgets OBS et l'intégration Discord RPC.
-- ❓ **[Foire Aux Questions (FAQ)](https://streammusicviewer.github.io/OSMV/docs/faq/)** — Résolution des problèmes d'icônes, d'autostart, etc.
+1. **Daemon d'arrière-plan (~4.7 Mo RAM privée sous Windows / zéro dépendance X11/OpenGL/GTK sous Linux)** :
+   - Surveille les lecteurs média (WinRT SMTC sous Windows, D-Bus MPRIS sous Linux), met à jour `shared/current_song.json` et les fichiers texte OBS uniquement lorsqu'un contenu change, gère Discord Rich Presence via IPC natif et affiche l'icône de barre des tâches (Win32 Tray / D-Bus StatusNotifierItem).
+2. **Interface graphique Dear ImGui (DX11 sous Windows, GLFW + OpenGL3 sous Linux)** :
+   - Rendu événementiel (~0 % CPU au repos), thèmes Sombre/Clair, 5 couleurs d'accentuation, bilingue FR/EN, et libère 100 % de sa RAM dès que vous passez en **Mode Headless** ou fermez la fenêtre `[X]`.
 
 ---
 
-## 🛠️ Dépendances de Développement en Bref
+## Fonctionnalités
 
-Pour coder sur le projet ou le compiler vous-même, vous avez besoin des dépendances suivantes :
+- **Now Playing** : widget OBS `shared/index.html` (pochette, couleur dynamique, visualiseur audio) + exports texte style Snaz (`TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt`, `track-info.json`).
+- **Temps & Date** : `Time.txt` (`$h`, `$m`, `$s`, `$tt`) et `Date.txt` (`$dd-MM-yy`, `$dd-MM-yyyy`, `$dd MMMM yyyy`, `$dddd dd MMMM yyyy`, `$date`).
+- **Minuteurs & Chronos** : `Countdown.txt` (date cible), `ChronoDown.txt` (minuteur avec Start/Pause/Reset), `ChronoUp.txt` (chronomètre avec `$totalminutes`).
+- **System Info** : `SystemInfo.txt` (`$CPU_USAGE`, `$RAM_MB_AVAIL`, `$RAM_%_IN_USE`, `$RAM_%_AVAIL`, `$AMOUNT_PROCESSES`, `$UPLOAD`, `$DOWNLOAD`) via APIs natives / `/proc`.
+- **Textline Changer & Dynamic Files** : rotation de messages dans un `.txt` et récupération HTTP/HTTPS périodique de fichiers texte ou image.
+- **Discord Rich Presence** : pochettes automatiques via iTunes Search API + badges de statut et mode idle personnalisable.
+- **Twitch (API Helix)** : compteur de viewers (`TwitchViewers.txt`) et mise à jour titre / catégorie avec jeux favoris.
 
-### Linux (ex: Arch Linux)
-```bash
-sudo pacman -S rust clang qt6-declarative qt6-languageserver gtk3 dbus pkgconf
+---
+
+## Compilation
+
+### Windows (aucune DLL externe requise)
+- **Visual Studio 2022/2026 Build Tools** (C++ x64 + SDK Windows 10/11)
+- **CMake 3.20+** et **Ninja**
+
+```bat
+windows\build.bat
 ```
+Produit `OSMV.exe` à la racine du projet (~2 Mo, autonome).
 
-### Windows
-- **Rustup** (compilateur stable-x86_64-pc-windows-msvc)
-- **Visual Studio Build Tools** (avec le SDK C++)
-- **Qt 6.6+** (configuré dans le PATH)
+### Linux
+```bash
+# Arch Linux
+sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw-x11 libgl
 
-Pour lancer le build :
-- **Linux** : `./linux/build_rust.sh`
-- **Windows** : `windows\compile_rust.bat`
+# Ubuntu / Debian
+sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev
 
----
-
-## 📺 Utilisation OBS
-
-1. Ajoutez une source **Navigateur** (Browser Source) dans OBS.
-2. Cochez **Fichier local** et sélectionnez `shared/index.html`.
-3. Définissez la taille sur **Largeur : 500**, **Hauteur : 140**.
+./linux/build.sh
+```
+Produit `./osmv` (daemon sans dépendance graphique) et `./osmv-gui` à la racine du projet.
 
 ---
 
-## 📄 Licence
+## Utilisation OBS
+
+1. **Widget Musique** : Source **Navigateur** ➔ Fichier local `shared/index.html` (Largeur `500`, Hauteur `140`).
+2. **Textes Dynamiques** : Source **Texte (GDI+)** / **Texte (FreeType 2)** ➔ *Lire depuis un fichier* ➔ sélectionnez les fichiers générés dans `shared/dynamic_text/`.
+
+---
+
+## Licence
 Licence MIT — Libre d'utilisation personnelle et commerciale.
-
-## 👤 Auteur
-[Ulyxx3](https://github.com/Ulyxx3)

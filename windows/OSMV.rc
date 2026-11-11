@@ -1,3 +1,4 @@
 // Windows resource file — embeds the application icon
 // Referenced in CMakeLists.txt via windows/OSMV.rc
+#define IDI_ICON1 101
 IDI_ICON1 ICON "OSMV_logo.ico"
