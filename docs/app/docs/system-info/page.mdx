@@ -1,0 +1,32 @@
+# System Info Module
+
+The **System Info** module samples CPU, RAM, running process count, and network bandwidth using lightweight native OS APIs (with zero WMI/PDH/subprocess overhead) and writes the result to `shared/dynamic_text/SystemInfo.txt`.
+
+---
+
+## Native Sampling Backends
+
+- **Windows**: `GetSystemTimes` (CPU %), `GlobalMemoryStatusEx` (RAM), `EnumProcesses` (process count), `GetIfTable2` (hardware network adapter RX/TX throughput).
+- **Linux**: `/proc/stat`, `/proc/meminfo`, `/proc/<pid>`, and `/proc/net/dev`.
+
+The update interval is configurable from **1 to 30 seconds**.
+
+---
+
+## Available Format Codes
+
+| Code | Output | Example |
+| :--- | :--- | :--- |
+| `$CPU_USAGE` | Total CPU utilization (%) | `14 %` |
+| `$RAM_MB_AVAIL` | Available physical memory (MB) | `8192 MB` |
+| `$RAM_%_IN_USE` | Physical memory in use (%) | `48 %` |
+| `$RAM_%_AVAIL` | Physical memory available (%) | `52 %` |
+| `$AMOUNT_PROCESSES` | Number of active OS processes | `245` |
+| `$UPLOAD` | Network upload rate (auto Kbps / Mbps) | `124.5 Kbps` |
+| `$DOWNLOAD` | Network download rate (auto Kbps / Mbps) | `12.4 Mbps` |
+
+### Example Template
+```text
+CPU: $CPU_USAGE | RAM: $RAM_%_IN_USE | Down: $DOWNLOAD
+```
+

@@ -5,8 +5,12 @@ export default {
     title: 'Modules',
   },
   'playing-now': 'Now Playing',
-  time: 'Time Module',
+  time: 'Time & Date',
+  timers: 'Timers & Chronos',
+  'system-info': 'System Info',
+  'text-files': 'Textline & Dynamic Files',
   'discord-rpc': 'Discord RPC',
+  twitch: 'Twitch Helix',
   '---guides': {
     type: 'separator',
     title: 'Guides',

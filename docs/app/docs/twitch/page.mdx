@@ -1,0 +1,31 @@
+# Twitch Helix Integration
+
+The **Twitch** tab uses the modern **Twitch Helix API** (replacing Snaz's legacy v3/Kraken integration) to export live viewer counts and update your stream title and category directly from OSMV.
+
+---
+
+## Authentication Setup
+
+1. Create or open an application in the [Twitch Developer Console](https://dev.twitch.tv/console/apps) with an OAuth Redirect URL of `http://localhost`.
+2. Enter your **Twitch Client ID** and **Channel username** in the **Twitch** tab.
+3. Click **Get OAuth Token** to open Twitch authorization in your browser (requests the `channel:manage:broadcast` scope).
+4. Paste the resulting **OAuth Access Token** into OSMV.
+
+---
+
+## Live Viewer Count (`TwitchViewers.txt`)
+
+Polls `GET /helix/streams` on the configurable interval (minimum 15 seconds, default 60 seconds) and writes `shared/dynamic_text/TwitchViewers.txt`.
+
+- `$viewers`: Current live viewer count
+- **Offline text**: Custom message written when the channel is offline (default: `Offline`)
+- Example format: `Viewers: $viewers` -> `Viewers: 1423`
+
+---
+
+## Stream Title, Game Search & Favorites
+
+- Search live Twitch categories via `GET /helix/search/categories`.
+- Select a category and save it to your **Favorite Games (Presets)** for one-click switching (existing Snaz `games-custom.json` files in `shared/` are also imported automatically if presets are empty).
+- Click **Update Stream** to apply your title and selected game immediately via `PATCH /helix/channels`.
+

@@ -1,0 +1,32 @@
+# Textline Changer & Dynamic Files
+
+The **Text & Files** tab brings Snaz's **Textline Changer** and **Dynamic Files** modules into OSMV, allowing you to rotate announcements or pull live data from HTTP/HTTPS endpoints directly into OBS-readable files.
+
+---
+
+## Textline Changer
+
+Cycles through a multi-line list of messages and writes the active line to `shared/dynamic_text/TextlineChanger.txt` (or a custom filename).
+
+### Options
+- **Output filename**: Target `.txt` file created in your output folder.
+- **Interval (s)**: Rotation interval (`1` to `3600` seconds).
+- **Random order**: Picks a random message instead of sequential order (avoids repeating the same line consecutively when multiple lines exist).
+- **Skip empty lines**: Ignores blank lines in the editor.
+- **Next line**: Advances immediately to the next message via IPC.
+
+---
+
+## Dynamic Files
+
+Fetches remote HTTP/HTTPS endpoints on a configurable schedule (`5` to `86400` seconds) on a background network worker thread so local timers never stutter.
+
+### Rule Fields
+- **Enabled**: Toggle individual rules without deleting them.
+- **Output filename**: Filename inside `shared/dynamic_text/` (e.g., `Followers.txt`, `Avatar.png`).
+- **Type**:
+  - **Text**: Writes the HTTP response body directly to disk.
+  - **Image**: If the server returns an `image/*` content type, saves the image bytes directly; if the server returns an `http://` or `https://` image URL as plain text, downloads that URL and writes the image file (compatible with Snaz image endpoints).
+- **HTTP Headers (optional)**: Newline-separated `Key: Value` headers (e.g., `Authorization: Bearer ...` or `Client-Id: ...`).
+- **Status badge**: Displays HTTP status (`OK (200)`, KB written, or error details) in real time.
+

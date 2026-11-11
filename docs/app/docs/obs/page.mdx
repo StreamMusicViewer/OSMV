@@ -1,42 +1,52 @@
 import { Highlight } from '@/components/content'
 
-# OBS Studio Integration 📺
+# OBS Studio Integration
 
-OSMV integrates seamlessly with OBS Studio to display both the animated music overlay widget and the dynamic clock text.
+OSMV integrates with OBS Studio using a Browser Source for the animated music card and standard Text/Image sources for all Snaz-style live files.
 
 ---
 
-## 🎨 Adding the Music Widget (Browser Source)
+## Adding the Music Widget (Browser Source)
 
-The music widget uses a local HTML file to display the current track's album cover, title, artist, and status with beautiful CSS animations.
+The music widget uses `shared/index.html` and `shared/style.css` to render cover art, scrolling track title/artist, dynamic background color extraction, and the optional audio visualizer.
 
 ### Step-by-step Setup:
 
 1. Click the <Highlight>+</Highlight> icon in the **Sources** box of OBS Studio.
-2. Select <Highlight>Browser</Highlight> (Navigateur).
-3. Name the source (e.g., "OSMV Music").
+2. Select <Highlight>Browser</Highlight>.
+3. Name the source (e.g., `OSMV Music`).
 4. In the properties window:
-   - Check the **Local file** (Fichier local) box.
+   - Check **Local file**.
    - Click **Browse** and select `shared/index.html` from your OSMV folder.
-   - Set **Width** (Largeur) to `500`.
-   - Set **Height** (Hauteur) to `140`.
+   - Set **Width** to `500` and **Height** to `140`.
 5. Click **OK**.
 
 ---
 
-## ⏰ Adding the Clock (Text Source)
+## Adding Dynamic Text Sources
 
-If you have the **Time Module** enabled, OSMV writes the formatted local time to a text file.
+All enabled text modules write to `shared/dynamic_text/` (or your custom output directory configured in **Settings**):
+
+- **Time & Date**: `Time.txt`, `Date.txt`
+- **Timers & Chronos**: `Countdown.txt`, `ChronoDown.txt`, `ChronoUp.txt`
+- **System Info**: `SystemInfo.txt`
+- **Textline Changer**: `TextlineChanger.txt` (or custom filename)
+- **Now Playing Text**: `TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt`
+- **Twitch**: `TwitchViewers.txt`
+- **Dynamic Files (Text)**: `<rule_filename>.txt`
 
 ### Step-by-step Setup:
 
-1. Click the <Highlight>+</Highlight> icon in the **Sources** box of OBS Studio.
-2. Select <Highlight>Text (GDI+)</Highlight> on Windows or <Highlight>Text (FreeType 2)</Highlight> on Linux.
-3. Name the source (e.g., "OSMV Clock").
-4. In the properties window:
-   - Check the **Read from file** (Lire depuis un fichier) box.
-   - Click **Browse** and choose `shared/dynamic_text/Time.txt` from your OSMV folder.
-5. Click **OK**.
+1. Click <Highlight>+</Highlight> in **Sources** and choose <Highlight>Text (GDI+)</Highlight> on Windows or <Highlight>Text (FreeType 2)</Highlight> on Linux.
+2. Check **Read from file**.
+3. Click **Browse** (or use the **Copy** button in OSMV) and select the `.txt` file inside `shared/dynamic_text/`.
+4. Click **OK**.
 
 > [!TIP]
-> For best text quality, configure a large font size (e.g., 72pt) in the source properties, and then resize the source bounds directly on the OBS preview screen to fit your scene.
+> For crisp text scaling in OBS, choose a large font size (such as `72pt`) inside the text source properties and scale down the bounding box in your scene.
+
+---
+
+## Adding Dynamic Image Sources
+
+If you configure a **Dynamic Files** rule with **Type = Image**, add an **Image** source in OBS Studio pointing to the generated image path inside `shared/dynamic_text/`.

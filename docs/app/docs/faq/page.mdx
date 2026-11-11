@@ -1,33 +1,39 @@
-# FAQ ❓
+# FAQ
 
-Frequently Asked Questions and troubleshooting quick tips for OSMV.
-
----
-
-## 🖥️ How do I bring back the configuration window?
-
-If you closed the window using the **Passer en Headless** (🌙) button, the heavy GUI process is killed to save RAM, but the daemon is still running in the background.
-
-To open the configuration window again:
-- Right-click the **OSMV Tray Icon** in your system tray (notification area).
-- Select **Afficher Configuration** (Show Configuration).
-- Alternatively, you can just run the `osmv` executable again; it will automatically notice the daemon is already running and spawn the GUI instead of starting a new instance.
+Frequently Asked Questions and troubleshooting tips for OSMV v5.0.0.
 
 ---
 
-## 🐧 Why is my System Tray Icon invisible on Linux?
+## How do I bring back the configuration window?
 
-Wayland compositors (like Hyprland) and desktop environments like GNOME do not support classic system trays out of the box.
+Closing the window `[X]` or clicking **Minimize to Tray** / **Mode Headless** terminates the GUI process so it consumes 0 MB of RAM while the background daemon stays active.
 
-- **On Hyprland / Waybar**: Make sure the `"tray"` module is active in your Waybar config.
-- **On GNOME**: Install the [AppIndicator and KStatusNotifierItem Support](https://extensions.gnome.org/extension/615/appindicator-support/) extension.
-- Make sure package dependency `libappindicator-gtk3` or `libayatana-appindicator3` is installed on your Linux system.
+To reopen the GUI:
+- Click or right-click the **OSMV Tray Icon** in your notification area and choose **Show Configuration** (**Afficher la configuration**).
+- Or launch `OSMV.exe` (Windows) / `./osmv` (Linux) again: it detects the running daemon over IPC and opens the GUI window.
 
 ---
 
-## ⚡ Can I make OSMV launch automatically on startup?
+## Why is my System Tray Icon invisible on Linux?
 
-Yes!
-- **On Linux (Hyprland)**: Add `exec-once = /path/to/osmv` in your `hyprland.conf`.
-- **On Windows**: Create a shortcut of `OSMV.exe`, press `Win + R`, type `shell:startup`, and paste the shortcut into the folder.
-- *Note: Startup launch is extremely lightweight (~15MB of RAM) because it starts headlessly in the background, only spawning the GUI when manually requested.*
+OSMV implements `org.kde.StatusNotifierItem` and `com.canonical.dbusmenu` directly over `libdbus-1` (no GTK dependency required).
+
+- **Hyprland / Sway / Waybar**: Ensure the `"tray"` module is enabled in your Waybar configuration.
+- **GNOME**: Install and enable the [AppIndicator and KStatusNotifierItem Support](https://extensions.gnome.org/extension/615/appindicator-support/) extension.
+- **Fallback**: You can always open the interface manually by running `./osmv --gui` or `./osmv-gui`.
+
+---
+
+## Can I make OSMV launch automatically on startup?
+
+Yes. Open **Settings** in OSMV and toggle **Start OSMV with system (in background)**:
+- **Windows**: Registers `OSMV.exe --silent` under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run\OSMV`.
+- **Linux**: Writes `~/.config/autostart/osmv.desktop` executing `./osmv --silent`.
+
+Using `--silent` starts only the lightweight background daemon without opening the GUI window until you request it.
+
+---
+
+## Can I change where `.txt` files are generated?
+
+Yes. In **Settings -> Dynamic text files directory**, enter any custom path (or click **Reset Default** to revert to `shared/dynamic_text/`). All **Copy** buttons across the interface update automatically to match your chosen directory.

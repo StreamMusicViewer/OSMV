@@ -1,36 +1,47 @@
-# Time Module ⏰
+# Time & Date Modules
 
-The **Time Module** writes the current system time to a plain text file, allowing you to easily add a dynamic clock overlay to your stream scene.
-
----
-
-## 📂 File Output
-
-The time is written in real-time (every second) to:
-`shared/dynamic_text/Time.txt`
-
-In OBS Studio, you can display this by adding a **Text (GDI+)** source on Windows or a **Text (FreeType 2)** source on Linux, checking **Read from file**, and choosing this file.
+The **Time & Date** tab generates real-time formatted clock and calendar text files (`Time.txt` and `Date.txt`) inside `shared/dynamic_text/` (or your custom output directory) for OBS Text sources.
 
 ---
 
-## ⚙️ Available Format Codes
+## Time Module (`Time.txt`)
 
-You can fully customize the output format in the QML settings panel using these tags:
+### Available Format Codes
 
 | Code | Output | Example |
 | :--- | :--- | :--- |
-| `$h` | Hours (12-hour or 24-hour style) | `14` or `02` |
+| `$h` | Hours (24h or 12h with AM/PM enabled) | `14` or `02` |
 | `$m` | Minutes | `45` |
 | `$s` | Seconds | `08` |
-| `$tt`| AM / PM indicator | `PM` (Requires 12-hour format checked) |
+| `$tt` | AM / PM indicator (requires 12-hour option) | `PM` |
 
----
-
-## 📝 Format Examples
+### Format Examples
 
 | Format String | Resulting Output |
 | :--- | :--- |
-| `$h:$m:$s` | `14:45:08` |
-| `$h:$m` | `14:45` |
-| `$h:$m:$s $tt` | `02:45:08 PM` |
-| `$h hours, $m mins` | `14 hours, 45 mins` |
+| `$h:$m:$s` | `16:15:35` |
+| `$h:$m` | `16:15` |
+| `$h:$m:$s $tt` | `04:15:35 PM` |
+| `$h hours, $m mins` | `16 hours, 15 mins` |
+
+---
+
+## Date Module (`Date.txt`)
+
+The **Date** module formats the current local date using localized day and month names matching your selected UI language (`fr` or `en`).
+
+### Date Presets (`$date`)
+
+| Preset | Output (English) | Output (French) |
+| :--- | :--- | :--- |
+| `$dd-MM-yy` | `11-11-26` | `11-11-26` |
+| `$dd-MM-yyyy` | `11-11-2026` | `11-11-2026` |
+| `$dd MMMM yyyy` | `11 November 2026` | `11 novembre 2026` |
+| `$dddd dd MMMM yyyy` | `Wednesday 11 November 2026` | `mercredi 11 novembre 2026` |
+
+### Output Template Examples
+
+| Template | Resulting Output |
+| :--- | :--- |
+| `$date` | `Wednesday 11 November 2026` |
+| `Today: $date` | `Today: Wednesday 11 November 2026` |

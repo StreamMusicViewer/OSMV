@@ -1,0 +1,45 @@
+# Timers & Chronos
+
+Inspired by Snaz, the **Timers** tab includes three independent time trackers that continue running accurately inside the headless background daemon even after the GUI is closed.
+
+---
+
+## 1. Countdown (`Countdown.txt`)
+
+Counts down live to a specific target **Year / Month / Day** and **Hour / Minute / Second** (with quick preset buttons for `+15 min`, `+1 hour`, and `Today 20:00`).
+
+### Format Codes
+- `$d`: Days remaining (if `$d` is omitted, total remaining hours are placed in `$h`)
+- `$h`: Hours
+- `$m`: Minutes
+- `$s`: Seconds
+- **Zero-pad option**: Toggle between `01:05:09` and `1:5:9`.
+- **Text when finished**: Message written once the target date/time is reached (e.g., `Stream is live!`).
+
+---
+
+## 2. Chrono Down (`ChronoDown.txt`)
+
+A break or event countdown timer starting from a configurable **Hours / Minutes / Seconds** duration, controlled directly via **Start**, **Pause**, and **Reset** buttons over IPC.
+
+- Format codes: `$h`, `$m`, `$s` (plus `$d` if greater than 24 hours).
+- Automatically stops at `0` and displays your **Text when finished** message.
+
+---
+
+## 3. Chrono Up (`ChronoUp.txt`)
+
+A stopwatch counting upward from `00:00:00` or a configurable starting offset (**Start / Pause / Reset**).
+
+### Format Codes
+- `$d`: Days
+- `$h`: Hours
+- `$m`: Minutes
+- `$s`: Seconds
+- `$totalminutes`: Total elapsed minutes (for example, `1:15:35` outputs `75` for `$totalminutes`)
+
+### Example Formats
+- `$h:$m:$s` -> `01:15:35`
+- `$totalminutes:$s` -> `75:35`
+- `$d days and $h:$m:$s` -> `2 days and 10:15:35`
+

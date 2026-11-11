@@ -1,38 +1,41 @@
-# Architecture & Performance 📐
+# Architecture & Performance
 
-OSMV features a highly optimized bi-process (dual-process) architecture designed to minimize memory and CPU overhead while streaming.
-
----
-
-## 🔄 The Dual-Process Model
-
-Historically, keeping a heavy Qt Graphical Engine running in the background just to feed OBS took around **380 MiB of RAM**. To optimize this, OSMV splits the application into two distinct processes executing from a single binary:
-
-1. **The Daemon (Persistent Service)**:
-   - Starts by default.
-   - Runs headlessly in the background, consuming only **~15 MiB of RAM**.
-   - Handles D-Bus/WinRT polling, Discord RPC, file exports, and system tray actions.
-2. **The Configuration GUI (`osmv --gui`)**:
-   - Launched dynamically when configuration is needed.
-   - Runs the full Qt 6 QML engine, consuming **~378 MiB of RAM**.
-   - Writing/saving configuration modifies `settings.json`, which the Daemon instantly hot-reloads.
-   - When you close the window or click the **Passer en Headless** button, the GUI process shuts down completely, freeing the 378 MiB instantly.
+OSMV v5.0.0 is written in native **C++20** using a dual-process architecture engineered for minimal RAM and near-zero idle CPU usage while streaming.
 
 ---
 
-## 🛠️ Execution Flow
+## The Dual-Process Model
 
-- **Startup**: Running `osmv` checks if a daemon is already active:
-  - If **No**: Spawns the background daemon and opens the QML interface (`osmv --gui`).
-  - If **Yes**: Signals the existing daemon to spawn the QML interface.
-- **Headless mode**: Closing the configuration window kills the GUI process. Only the **~15 MiB** Rust daemon stays alive in the system tray.
-- **Quit**: Clicking "Quit" terminates both the GUI and background daemon processes.
+Keeping a graphical context and GPU driver buffers open in the background consumes unnecessary memory during a stream. OSMV isolates background polling from the UI:
+
+1. **The Background Daemon**:
+   - **Windows (`OSMV.exe`)**: Single portable executable (~1.94 MB, no external DLLs). DirectX 11, DXGI, and DWM DLLs are marked `/DELAYLOAD` so the daemon never maps GPU libraries into memory, consuming only **~4.5 to 6 MB of private RAM**.
+   - **Linux (`osmv`)**: Built as a standalone daemon binary that links only `libdbus-1`, `libcurl`, and `pthreads`—zero X11, Wayland, OpenGL, or GTK dependencies.
+   - Handles media polling (WinRT SMTC / D-Bus MPRIS), Discord IPC, Time/Date/Timers, native System Info sampling, Textline Changer, and a dedicated network worker thread for Dynamic Files and Twitch Helix so HTTP calls never stall local 1-second timers.
+2. **The Configuration GUI (`--gui` / `osmv-gui`)**:
+   - Uses **Dear ImGui** (Win32 + DirectX 11 on Windows; GLFW + OpenGL 3 on Linux) with event-driven frame pacing (`0.25s` when idle, `0.016s` during animations or user input).
+   - Uses **~51 to 58 MB of private RAM** on Windows while open.
+   - Closing the window `[X]` or clicking **Mode Headless** / **Minimize to Tray** terminates the GUI process and releases 100% of its graphics memory back to the OS immediately.
 
 ---
 
-## ⚡ IPC & Signaling
+## Execution Flow
 
-The daemon and the configuration GUI communicate through two mechanisms:
+- **Startup**: Running `OSMV.exe` (or `./osmv`) acquires a single-instance lock (`Local\osmv-daemon-instance-v3` on Windows, `flock` in `$XDG_RUNTIME_DIR` on Linux).
+  - If no daemon is running: starts the background daemon, initializes the system tray icon (`Shell_NotifyIconW` on Windows; D-Bus `StatusNotifierItem` + `com.canonical.dbusmenu` on Linux), and launches the GUI unless `--silent` is passed or *Open GUI on launch* is disabled.
+  - If a daemon is already running: sends a `show_gui` IPC message to wake/open the GUI and exits.
+- **Headless Mode**: Closing the GUI window keeps the daemon running unobtrusively in the system tray.
+- **Quit**: Clicking **Quit OSMV** in the GUI or tray menu signals the daemon to shut down cleanly and resets `shared/current_song.json` to `null`.
 
-- **Config Hot-Reloading**: The daemon monitors `settings.json` every second. When settings are edited and saved by the GUI, the daemon reloads them automatically without needing a restart.
-- **Quit Lock (`osmv_quit.lock`)**: When the user clicks the "Quit" button in the GUI, the GUI creates a temporary file named `osmv_quit.lock` in the system temp directory. The daemon detects this file, deletes it, writes `null` to the active JSON to clean up the OBS overlay, and exits.
+---
+
+## Local IPC & Disk Optimization
+
+The daemon and GUI communicate over a length-prefixed JSON local IPC channel:
+- **Windows**: Named Pipe `\\.\pipe\osmv-ipc-v3`
+- **Linux**: Unix Domain Socket `$XDG_RUNTIME_DIR/osmv-ipc-v3.sock` (fallback `/tmp/osmv-ipc-v3-<uid>.sock`)
+
+Key performance optimizations:
+- **Instant IPC Control**: The GUI polls `get_state` every `500 ms` only while open and sends `reload_settings`, `chrono_down`, `chrono_up`, `textline_next`, `twitch_search_games`, `twitch_update_channel`, and `quit` commands without duplicating WinRT/MPRIS polling in the GUI process.
+- **Change-Cached Atomic Writes**: Text files are tracked in memory (`CachedTextWriter`) and written atomically via `.tmp` + rename only when their formatted output actually changes.
+- **Track-Change Artwork Caching**: Album artwork streams from WinRT/MPRIS are read and Base64-encoded only when the track changes, eliminating per-second image allocations.
