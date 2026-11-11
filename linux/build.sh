@@ -19,6 +19,7 @@ chmod +x ./osmv ./osmv-gui
 echo ""
 echo "Done! ./osmv (daemon) and ./osmv-gui are ready."
 echo "Required system packages (Arch / Ubuntu):"
-echo "  Arch:   sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw-x11 (or glfw-wayland) libgl"
+echo "  Arch:   sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl"
 echo "  Ubuntu: sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev"
+echo "  Ubuntu 24.04 Wayland app_id deps (to auto-build GLFW 3.4): sudo apt install libwayland-dev libwayland-bin libxkbcommon-dev"
 

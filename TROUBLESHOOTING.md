@@ -15,15 +15,25 @@ Ce guide répertorie les problèmes les plus courants lors de la compilation ou 
 ### 2. Linux : Dépendances système manquantes (`dbus-1`, `libcurl`, `glfw3`, `OpenGL`)
 - **Description** : CMake échoue lors de la recherche d'un paquet requis pour `./linux/build.sh`.
 - **Solutions** :
-  - **Arch Linux** : `sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw-x11 libgl`
-  - **Ubuntu / Debian** : `sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev`
+  - **Arch Linux** : `sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl`
+  - **Ubuntu / Debian** : `sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev` (sur Ubuntu 24.04 ou Debian 12 où `libglfw3-dev` est en 3.3, ajoutez `libwayland-dev libwayland-bin libxkbcommon-dev` pour que CMake récupère GLFW 3.4 avec support natif Wayland `app_id`)
   - **Fedora** : `sudo dnf install cmake ninja-build gcc-c++ pkgconf-pkg-config dbus-devel libcurl-devel glfw-devel mesa-libGL-devel`
 
 ---
 
 ## Problèmes sous Linux
 
-### 1. L'icône de la barre des tâches (Tray Icon) n'apparaît pas
+### 1. Règles de workspace / fenêtre (Sway, Hyprland, i3)
+- **Identifiants exposés par `osmv-gui`** :
+  - **Wayland (`xdg_shell`, GLFW 3.4+)** : `app_id="io.github.streammusicviewer.OSMV"`
+  - **X11 / XWayland (`WM_CLASS`)** : `instance="osmv"`, `class="OSMV"`
+- **Exemple Sway** :
+  ```sway
+  assign [app_id="io.github.streammusicviewer.OSMV"] workspace number 9
+  ```
+- Si `swaymsg -t get_tree` n'affiche pas `app_id`, vérifiez qu'OSMV est compilé avec **GLFW 3.4+** et non GLFW 3.3 (voir la section dépendances Linux ci-dessus).
+
+### 2. L'icône de la barre des tâches (Tray Icon) n'apparaît pas
 - **Description** : Le daemon `./osmv` tourne mais aucune icône n'est visible dans votre panneau.
 - **Solutions** :
   - OSMV implémente directement `org.kde.StatusNotifierItem` et `com.canonical.dbusmenu` via `libdbus-1` (sans GTK).
@@ -31,7 +41,7 @@ Ce guide répertorie les problèmes les plus courants lors de la compilation ou 
   - **GNOME** : Installez et activez l'extension *AppIndicator and KStatusNotifierItem Support*.
   - Vous pouvez toujours rouvrir l'interface à tout moment en lançant `./osmv --gui` ou `./osmv-gui`.
 
-### 2. Le lecteur de musique n'est pas détecté (MPRIS)
+### 3. Le lecteur de musique n'est pas détecté (MPRIS)
 - **Description** : L'interface reste sur *En attente de musique...* alors qu'un média est en cours de lecture.
 - **Solutions** :
   - Vérifiez que votre lecteur (Spotify, VLC, Audacious, etc.) expose une interface D-Bus `org.mpris.MediaPlayer2.*`.

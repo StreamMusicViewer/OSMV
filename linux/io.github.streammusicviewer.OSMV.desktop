@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OSMV
+GenericName=OBS Stream Music Viewer
+Comment=Lightweight Now Playing, Discord Rich Presence, and OBS text/timers tool
+Exec=osmv-gui
+Icon=io.github.streammusicviewer.OSMV
+Terminal=false
+Categories=AudioVideo;Audio;Utility;
+StartupNotify=true
+StartupWMClass=OSMV
+

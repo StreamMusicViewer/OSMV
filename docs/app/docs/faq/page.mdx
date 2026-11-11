@@ -34,6 +34,21 @@ Using `--silent` starts only the lightweight background daemon without opening t
 
 ---
 
+## How do I assign OSMV to a workspace in Sway / Hyprland / i3?
+
+`osmv-gui` explicitly sets desktop window identifiers at startup:
+- **Wayland (`xdg_shell`, GLFW 3.4+)**: `app_id="io.github.streammusicviewer.OSMV"`
+- **X11 / XWayland (`WM_CLASS`)**: `instance="osmv"`, `class="OSMV"`
+
+Example for `~/.config/sway/config`:
+```sway
+assign [app_id="io.github.streammusicviewer.OSMV"] workspace number 9
+```
+
+Make sure you build against **GLFW 3.4+** on Wayland (`glfw` on Arch, `glfw-devel` on Fedora, or `libwayland-dev libwayland-bin libxkbcommon-dev` on Ubuntu 24.04 so CMake builds GLFW 3.4 automatically).
+
+---
+
 ## Can I change where `.txt` files are generated?
 
 Yes. In **Settings -> Dynamic text files directory**, enter any custom path (or click **Reset Default** to revert to `shared/dynamic_text/`). All **Copy** buttons across the interface update automatically to match your chosen directory.

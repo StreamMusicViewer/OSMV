@@ -52,15 +52,15 @@ Compile en Release, exécute les tests unitaires (`osmv_unit_tests`) et copie `O
 
 ### Linux
 ```bash
-# Arch Linux
-sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw-x11 libgl
+# Arch Linux (GLFW 3.4+ Wayland + X11)
+sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl
 
-# Ubuntu / Debian
+# Ubuntu / Debian (ajoutez libwayland-dev libwayland-bin libxkbcommon-dev sur Ubuntu <= 24.04 pour Wayland app_id / GLFW 3.4)
 sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev
 
 ./linux/build.sh
 ```
-Compile et copie `./osmv` (daemon) et `./osmv-gui` (interface) à la racine du projet.
+Compile et copie `./osmv` (daemon) et `./osmv-gui` (interface) à la racine du projet. Sous Wayland/Sway, la fenêtre expose `app_id="io.github.streammusicviewer.OSMV"`, et sous X11/XWayland `WM_CLASS` (`instance="osmv"`, `class="OSMV"`). Un fichier `.desktop` et son icône sont également fournis dans `linux/` (installés via `cmake --install linux/build`).
 
 ---
 

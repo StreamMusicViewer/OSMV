@@ -18,13 +18,15 @@ OSMV requires **CMake (3.20+)**, **Ninja**, a **C++20 compiler** (`g++` or `clan
 
 #### Arch Linux:
 ```bash
-sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw-x11 libgl
+sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl
 ```
 
 #### Ubuntu / Debian:
 ```bash
 sudo apt update
 sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev
+# On Ubuntu 24.04 / Debian 12 (where libglfw3-dev is 3.3), also install Wayland dev headers so CMake builds GLFW 3.4 for native Wayland app_id:
+# sudo apt install libwayland-dev libwayland-bin libxkbcommon-dev
 ```
 
 #### Fedora:

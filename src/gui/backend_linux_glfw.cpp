@@ -14,6 +14,10 @@
 namespace osmv::gui {
 
 namespace {
+[[maybe_unused]] constexpr const char* kWaylandAppId = "io.github.streammusicviewer.OSMV";
+[[maybe_unused]] constexpr const char* kX11InstanceName = "osmv";
+[[maybe_unused]] constexpr const char* kX11ClassName = "OSMV";
+
 class LinuxGlfwBackend final : public GuiBackend {
 public:
     ~LinuxGlfwBackend() override { shutdown(); }
@@ -24,6 +28,15 @@ public:
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#ifdef GLFW_WAYLAND_APP_ID
+        glfwWindowHintString(GLFW_WAYLAND_APP_ID, kWaylandAppId);
+#endif
+#ifdef GLFW_X11_INSTANCE_NAME
+        glfwWindowHintString(GLFW_X11_INSTANCE_NAME, kX11InstanceName);
+#endif
+#ifdef GLFW_X11_CLASS_NAME
+        glfwWindowHintString(GLFW_X11_CLASS_NAME, kX11ClassName);
+#endif
 
         window_ = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!window_) {
@@ -32,14 +45,22 @@ public:
         }
         glfwSetWindowSizeLimits(window_, 740, 480, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
-        // Set window icon from embedded PNG
-        int iw = 0, ih = 0, ich = 0;
-        uint8_t* pixels = stbi_load_from_memory(
-            assets::kLogoPng, static_cast<int>(assets::kLogoPngSize), &iw, &ih, &ich, 4);
-        if (pixels) {
-            GLFWimage img{iw, ih, pixels};
-            glfwSetWindowIcon(window_, 1, &img);
-            stbi_image_free(pixels);
+        // Set window icon from embedded PNG (Wayland derives icons from .desktop via app_id;
+        // calling glfwSetWindowIcon on Wayland triggers GLFW_PLATFORM_ERROR).
+        bool allow_window_icon = true;
+#if defined(GLFW_PLATFORM_WAYLAND) && defined(GLFW_VERSION_MINOR) && \
+    (GLFW_VERSION_MAJOR > 3 || (GLFW_VERSION_MAJOR == 3 && GLFW_VERSION_MINOR >= 4))
+        allow_window_icon = (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND);
+#endif
+        if (allow_window_icon) {
+            int iw = 0, ih = 0, ich = 0;
+            uint8_t* pixels = stbi_load_from_memory(
+                assets::kLogoPng, static_cast<int>(assets::kLogoPngSize), &iw, &ih, &ich, 4);
+            if (pixels) {
+                GLFWimage img{iw, ih, pixels};
+                glfwSetWindowIcon(window_, 1, &img);
+                stbi_image_free(pixels);
+            }
         }
 
         glfwMakeContextCurrent(window_);
