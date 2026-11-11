@@ -1,7 +1,7 @@
 {
   "name": "osmv-docs",
   "author": "Ulyxx3",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "type": "module",
   "private": true,
   "homepage": "https://StreamMusicViewer.github.io/OSMV",

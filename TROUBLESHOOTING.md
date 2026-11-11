@@ -1,91 +1,91 @@
-# Guide de Dépannage (Troubleshooting)
+# Troubleshooting Guide
 
-Ce guide répertorie les problèmes les plus courants lors de la compilation ou de l'utilisation d'OSMV v5.0.0 sous Windows et Linux.
-
----
-
-## Problèmes de Compilation
-
-### 1. Windows : Compilateur MSVC ou Windows SDK introuvable
-- **Description** : `windows\build.bat` signale que Visual Studio C++ Build Tools est absent ou échoue sur les en-têtes `winrt/Windows.Media.Control.h`.
-- **Solutions** :
-  - Installez **Visual Studio Build Tools** avec la charge de travail *Développement Desktop en C++* (Desktop development with C++) et le **SDK Windows 10/11**.
-  - Vérifiez que `cmake` (3.20+) et `ninja` sont disponibles dans le `PATH`.
-
-### 2. Linux : Dépendances système manquantes (`dbus-1`, `libcurl`, `glfw3`, `OpenGL`)
-- **Description** : CMake échoue lors de la recherche d'un paquet requis pour `./linux/build.sh`.
-- **Solutions** :
-  - **Arch Linux** : `sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl`
-  - **Ubuntu / Debian** : `sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev` (sur Ubuntu 24.04 ou Debian 12 où `libglfw3-dev` est en 3.3, ajoutez `libwayland-dev libwayland-bin libxkbcommon-dev` pour que CMake récupère GLFW 3.4 avec support natif Wayland `app_id`)
-  - **Fedora** : `sudo dnf install cmake ninja-build gcc-c++ pkgconf-pkg-config dbus-devel libcurl-devel glfw-devel mesa-libGL-devel`
+This guide covers the most common issues when compiling or running OSMV v5.0.0 on Windows and Linux.
 
 ---
 
-## Problèmes sous Linux
+## Build Issues
 
-### 1. Règles de workspace / fenêtre (Sway, Hyprland, i3)
-- **Identifiants exposés par `osmv-gui`** :
-  - **Wayland (`xdg_shell`, GLFW 3.4+)** : `app_id="io.github.streammusicviewer.OSMV"`
-  - **X11 / XWayland (`WM_CLASS`)** : `instance="osmv"`, `class="OSMV"`
-- **Exemple Sway** :
+### 1. Windows: MSVC compiler or Windows SDK not found
+- **Description**: `windows\build.bat` reports missing Visual Studio C++ Build Tools or fails on `winrt/Windows.Media.Control.h` headers.
+- **Solutions**:
+  - Install **Visual Studio Build Tools** with the **Desktop development with C++** workload and the **Windows 10/11 SDK**.
+  - Verify that `cmake` (3.20+) and `ninja` are available in your `PATH`.
+
+### 2. Linux: Missing system dependencies (`dbus-1`, `libcurl`, `glfw3`, `OpenGL`)
+- **Description**: CMake fails while locating a required package for `./linux/build.sh`.
+- **Solutions**:
+  - **Arch Linux**: `sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl`
+  - **Ubuntu / Debian**: `sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev` (on Ubuntu 24.04 or Debian 12 where `libglfw3-dev` is 3.3, also install `libwayland-dev libwayland-bin libxkbcommon-dev` so CMake can fetch GLFW 3.4 with native Wayland `app_id` support)
+  - **Fedora**: `sudo dnf install cmake ninja-build gcc-c++ pkgconf-pkg-config dbus-devel libcurl-devel glfw-devel mesa-libGL-devel`
+
+---
+
+## Linux Issues
+
+### 1. Workspace / Window Rules (Sway, Hyprland, i3)
+- **Identifiers exposed by `osmv-gui`**:
+  - **Wayland (`xdg_shell`, GLFW 3.4+)**: `app_id="io.github.streammusicviewer.OSMV"`
+  - **X11 / XWayland (`WM_CLASS`)**: `instance="osmv"`, `class="OSMV"`
+- **Sway example**:
   ```sway
   assign [app_id="io.github.streammusicviewer.OSMV"] workspace number 9
   ```
-- Si `swaymsg -t get_tree` n'affiche pas `app_id`, vérifiez qu'OSMV est compilé avec **GLFW 3.4+** et non GLFW 3.3 (voir la section dépendances Linux ci-dessus).
+- If `swaymsg -t get_tree` does not show `app_id`, verify OSMV was compiled against **GLFW 3.4+** rather than GLFW 3.3 (see the Linux dependencies section above).
 
-### 2. L'icône de la barre des tâches (Tray Icon) n'apparaît pas
-- **Description** : Le daemon `./osmv` tourne mais aucune icône n'est visible dans votre panneau.
-- **Solutions** :
-  - OSMV implémente directement `org.kde.StatusNotifierItem` et `com.canonical.dbusmenu` via `libdbus-1` (sans GTK).
-  - **Hyprland / Sway / Waybar** : Ajoutez le module `"tray"` dans la configuration de votre barre.
-  - **GNOME** : Installez et activez l'extension *AppIndicator and KStatusNotifierItem Support*.
-  - Vous pouvez toujours rouvrir l'interface à tout moment en lançant `./osmv --gui` ou `./osmv-gui`.
+### 2. System Tray Icon Is Invisible
+- **Description**: The `./osmv` daemon is running, but no icon appears in your bar/panel.
+- **Solutions**:
+  - OSMV implements `org.kde.StatusNotifierItem` and `com.canonical.dbusmenu` directly over `libdbus-1` (no GTK dependency required).
+  - **Hyprland / Sway / Waybar**: Add the `"tray"` module to your Waybar configuration.
+  - **GNOME**: Install and enable the *AppIndicator and KStatusNotifierItem Support* extension.
+  - You can always reopen the GUI manually by running `./osmv --gui` or `./osmv-gui`.
 
-### 3. Le lecteur de musique n'est pas détecté (MPRIS)
-- **Description** : L'interface reste sur *En attente de musique...* alors qu'un média est en cours de lecture.
-- **Solutions** :
-  - Vérifiez que votre lecteur (Spotify, VLC, Audacious, etc.) expose une interface D-Bus `org.mpris.MediaPlayer2.*`.
-  - Si vous utilisez plusieurs lecteurs ou un navigateur (Firefox, Chrome), vérifiez que les contrôles média globaux sont activés ou utilisez `playerctld`.
+### 3. Music Player Is Not Detected (MPRIS)
+- **Description**: The interface stays on *Waiting for music...* while a track is playing.
+- **Solutions**:
+  - Make sure your player (Spotify, VLC, Audacious, etc.) exposes a D-Bus `org.mpris.MediaPlayer2.*` interface.
+  - If using multiple players or a web browser (Firefox, Chrome), ensure global media controls are enabled or use `playerctld`.
 
 ---
 
-## Problèmes sous Windows
+## Windows Issues
 
-### 1. L'application est en arrière-plan et aucune fenêtre n'est visible
-- **Description** : OSMV fonctionne en mode daemon headless (ou a été lancé avec `--silent` au démarrage du système).
-- **Solutions** :
-  - Cliquez ou double-cliquez sur l'icône OSMV dans la zone de notification (System Tray), ou faites un clic droit -> **Afficher la configuration**.
-  - Vous pouvez aussi relancer `OSMV.exe` : l'instance existante détectera l'appel via IPC et ouvrira l'interface automatiquement.
+### 1. The Application Is Running in the Background With No Visible Window
+- **Description**: OSMV is running in headless daemon mode (or was started with `--silent` at login).
+- **Solutions**:
+  - Click or double-click the OSMV icon in the Windows notification area (System Tray), or right-click -> **Show Configuration**.
+  - You can also launch `OSMV.exe` again: the running instance detects it over IPC and opens the GUI automatically.
 
-### 2. Impossible d'écraser `OSMV.exe` lors d'une recompilation
-- **Description** : `windows\build.bat` échoue à la copie de `OSMV.exe` car le daemon tourne encore.
-- **Solutions** :
-  - Faites un clic droit sur l'icône tray -> **Quitter OSMV** (ou cliquez sur **Quitter OSMV** dans l'interface) avant de relancer `windows\build.bat`.
+### 2. Cannot Overwrite `OSMV.exe` When Recompiling
+- **Description**: `windows\build.bat` fails to copy `OSMV.exe` because the daemon is still running.
+- **Solutions**:
+  - Right-click the tray icon -> **Quit OSMV** (or click **Quit OSMV** in the GUI) before running `windows\build.bat`.
 
 ---
 
 ## Discord Rich Presence
 
-### 1. Le statut affiche « Connecté à Discord » mais rien n'apparaît sur le profil
-- **Solutions** :
-  - Vérifiez que votre statut Discord n'est **pas en Invisible** (en mode Invisible, Discord masque toute Rich Presence).
-  - Dans Discord -> **Paramètres utilisateur** -> **Confidentialité des activités**, activez **Partager mes activités détectées avec les autres** ainsi que le partage sur le serveur concerné.
-  - Cliquez sur votre avatar en bas à gauche dans Discord pour afficher la carte d'activité complète.
+### 1. Status Shows "Connected to Discord" but Nothing Appears on Your Profile
+- **Solutions**:
+  - Make sure your Discord status is **not Invisible** (Discord hides all Rich Presence while Invisible).
+  - In Discord -> **User Settings** -> **Activity Privacy**, enable sharing detected activity and per-server activity sharing.
+  - Click your avatar at the bottom-left of Discord to inspect the full activity card.
 
-### 2. Le badge affiche « Erreur SET_ACTIVITY » ou « Client ID invalide »
-- **Solutions** :
-  - Vérifiez que le **Client ID** saisi est bien l'ID numérique de votre application sur `discord.com/developers/applications`.
-  - Vérifiez les noms des clés d'images dans **Rich Presence -> Art Assets** (`playing`, `paused`, `stopped` et votre clé de secours).
+### 2. Status Badge Shows "SET_ACTIVITY error (check keys/assets)" or "Invalid Client ID"
+- **Solutions**:
+  - Verify that **Application Client ID** matches the numeric Application ID from `discord.com/developers/applications`.
+  - Check your asset key names under **Rich Presence -> Art Assets** (`playing`, `paused`, `stopped`, and your fallback image key).
 
 ---
 
 ## Twitch Helix & Dynamic Files
 
-### 1. Twitch affiche « Invalid/Expired OAuth Token (401) »
-- **Solutions** :
-  - Utilisez le bouton **Générer un Token** dans l'onglet Twitch (qui demande le scope `channel:manage:broadcast`) après avoir renseigné votre **Twitch Client ID**, puis collez le nouveau token et sauvegardez.
+### 1. Twitch Shows "Invalid/Expired OAuth Token (401)"
+- **Solutions**:
+  - Enter your **Twitch Client ID** and click **Get OAuth Token** in the Twitch tab (requests the `channel:manage:broadcast` scope). OSMV captures the localhost redirect automatically; if port 80 is busy or restricted, paste the full redirect URL into the Token field and save.
 
-### 2. Dynamic Files ou les fichiers texte OBS ne se mettent pas à jour
-- **Solutions** :
-  - Vérifiez le statut affiché sur la règle concernée (code HTTP, URL valide en `http://` ou `https://`, en-têtes `Clé: Valeur`).
-  - Assurez-vous qu'OSMV dispose des droits d'écriture sur `shared/dynamic_text/` (évitez d'installer le dossier dans `C:\Program Files`).
+### 2. Dynamic Files or OBS Text Files Are Not Updating
+- **Solutions**:
+  - Check the status badge on the rule (HTTP status code, valid `http://` or `https://` URL, `Key: Value` headers).
+  - Ensure OSMV has write permission to `shared/dynamic_text/` (avoid placing the portable folder inside `C:\Program Files`).

@@ -6,75 +6,75 @@
 ![C++20](https://img.shields.io/badge/Language-C%2B%2B20-00599C)
 ![GUI](https://img.shields.io/badge/GUI-Dear%20ImGui-blueviolet)
 
-> **OSMV v5.0.0** est un outil natif C++20 ultra-léger pour OBS Studio (Now Playing, Discord Rich Presence, et modules inspirés de Snaz : Heure, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files et Twitch Helix).
+> **OSMV v5.0.0** is an ultra-lightweight native C++20 companion tool for OBS Studio (Now Playing, Discord Rich Presence, and Snaz-inspired modules: Time, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files, and Twitch Helix).
 
 ---
 
-## Architecture Ultra-Légère en C++20
+## Ultra-Lightweight C++20 Architecture
 
-OSMV sépare le service d'arrière-plan de l'interface graphique afin de limiter au maximum l'empreinte mémoire et CPU pendant un stream :
+OSMV splits the background service from the graphical user interface to keep memory and CPU usage to a minimum while streaming:
 
-1. **Daemon d'arrière-plan (~4,5 à 6 Mo de RAM privée sous Windows / zéro dépendance X11, Wayland, OpenGL ou GTK sous Linux)** :
-   - Surveille les lecteurs média via WinRT SMTC (Windows) ou D-Bus MPRIS (Linux), avec mise en cache de la pochette uniquement lors d'un changement de piste.
-   - Met à jour `shared/current_song.json` et les fichiers texte OBS uniquement lorsque leur contenu change (écritures atomiques).
-   - Exécute Discord Rich Presence (IPC natif), les requêtes HTTP (Dynamic Files / Twitch sur un thread réseau dédié) et l'icône de barre des tâches (`Shell_NotifyIconW` sous Windows, D-Bus `StatusNotifierItem` + `dbusmenu` sous Linux).
-   - Expose un serveur IPC local (`\\.\pipe\osmv-ipc-v3` sous Windows, `$XDG_RUNTIME_DIR/osmv-ipc-v3.sock` sous Linux) pour communiquer avec l'interface.
-2. **Interface graphique Dear ImGui (DirectX 11 sous Windows, GLFW + OpenGL 3 sous Linux)** :
-   - Rendu événementiel (~0 % CPU au repos), thèmes Sombre/Clair, 5 couleurs d'accentuation, bilingue FR/EN, puces d'insertion de codes et copie rapide des chemins OBS.
-   - Sous Windows, les DLL graphiques (`d3d11.dll`, `dxgi.dll`, `dwmapi.dll`) sont chargées en `/DELAYLOAD` uniquement en mode GUI.
-   - Fermer la fenêtre `[X]` ou cliquer sur **Mode Headless** coupe le processus GUI et libère toute sa RAM (~51 à 58 Mo sous Windows) tout en laissant le daemon actif.
-
----
-
-## Fonctionnalités
-
-- **Now Playing** : widget OBS `shared/index.html` (pochette, couleur dynamique, visualiseur audio) + exports texte/JSON façon Snaz (`TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt` avec `$artist`, `$song`, `$album`, `*_upper`, et `track-info.json`).
-- **Temps & Date** : `Time.txt` (`$h`, `$m`, `$s`, `$tt`, 12h/24h) et `Date.txt` (`$dd-MM-yy`, `$dd-MM-yyyy`, `$dd MMMM yyyy`, `$dddd dd MMMM yyyy`, `$date` localisé FR/EN).
-- **Minuteurs & Chronos** : `Countdown.txt` vers une date/heure cible (`$d`, `$h`, `$m`, `$s`), `ChronoDown.txt` (minuteur avec Start/Pause/Reset) et `ChronoUp.txt` (chronomètre avec `$totalminutes`).
-- **System Info** : `SystemInfo.txt` (`$CPU_USAGE`, `$RAM_MB_AVAIL`, `$RAM_%_IN_USE`, `$RAM_%_AVAIL`, `$AMOUNT_PROCESSES`, `$UPLOAD`, `$DOWNLOAD`) via les APIs natives Windows et `/proc` sous Linux.
-- **Textline Changer & Dynamic Files** : rotation séquentielle ou aléatoire de messages (`TextlineChanger.txt`) et récupération HTTP/HTTPS périodique de fichiers texte ou image avec en-têtes personnalisés.
-- **Discord Rich Presence** : mode « Écoute » (`type: 2`, affichage de l'album sans répétition d'artiste), recherche automatique de pochettes iTunes (avec nettoyage du suffixe `- Topic` et cache borné), détection d'erreurs `SET_ACTIVITY` et reconnexion automatique.
-- **Twitch (API Helix)** : compteur de viewers (`TwitchViewers.txt` via `$viewers`), recherche de catégories et mise à jour titre/jeu avec jeux favoris.
-- **Paramètres & Télémétrie** : dossier de sortie personnalisable, lancement automatique au démarrage (`--silent`), et mesure RAM en direct du daemon et de l'interface.
+1. **Background Daemon (~4.5 to 6 MB private RAM on Windows / zero X11, Wayland, OpenGL, or GTK dependencies on Linux)**:
+   - Monitors media players via WinRT SMTC (Windows) or D-Bus MPRIS (Linux), caching cover art only when the track changes.
+   - Updates `shared/current_song.json` and OBS text files only when their content changes (atomic writes).
+   - Handles Discord Rich Presence (native IPC), HTTP requests (Dynamic Files / Twitch on a dedicated network thread), and the system tray icon (`Shell_NotifyIconW` on Windows, D-Bus `StatusNotifierItem` + `dbusmenu` on Linux).
+   - Exposes a local IPC server (`\\.\pipe\osmv-ipc-v3` on Windows, `$XDG_RUNTIME_DIR/osmv-ipc-v3.sock` on Linux) to communicate with the GUI.
+2. **Dear ImGui Interface (DirectX 11 on Windows, GLFW + OpenGL 3 on Linux)**:
+   - Event-driven rendering (~0% idle CPU), Dark/Light themes, 5 accent colors, EN/FR bilingual UI, placeholder insertion chips, and one-click OBS path copy buttons.
+   - On Windows, graphics DLLs (`d3d11.dll`, `dxgi.dll`, `dwmapi.dll`) are `/DELAYLOAD`-linked and loaded only when the GUI opens.
+   - Closing the window `[X]` or clicking **Minimize to Tray** terminates the GUI process and frees all of its RAM (~51 to 58 MB on Windows) while leaving the daemon active.
 
 ---
 
-## Compilation
+## Features
 
-### Windows (aucune DLL externe requise)
-- **Visual Studio 2022/2026 Build Tools** (C++ x64 + SDK Windows 10/11)
-- **CMake 3.20+** et **Ninja**
+- **Now Playing**: OBS Browser widget `shared/index.html` (cover art, dynamic color, audio visualizer) + Snaz-compatible text/JSON exports (`TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt` with `$artist`, `$song`, `$album`, `*_upper`, and `track-info.json`).
+- **Time & Date**: `Time.txt` (`$h`, `$m`, `$s`, `$tt`, 12h/24h) and `Date.txt` (`$dd-MM-yy`, `$dd-MM-yyyy`, `$dd MMMM yyyy`, `$dddd dd MMMM yyyy`, localized EN/FR `$date`).
+- **Timers & Chronos**: `Countdown.txt` toward a target date/time (`$d`, `$h`, `$m`, `$s`), `ChronoDown.txt` (countdown timer with Start/Pause/Reset), and `ChronoUp.txt` (stopwatch with `$totalminutes`).
+- **System Info**: `SystemInfo.txt` (`$CPU_USAGE`, `$RAM_MB_AVAIL`, `$RAM_%_IN_USE`, `$RAM_%_AVAIL`, `$AMOUNT_PROCESSES`, `$UPLOAD`, `$DOWNLOAD`) via native Windows APIs and Linux `/proc`.
+- **Textline Changer & Dynamic Files**: sequential or random message rotation (`TextlineChanger.txt`) and periodic HTTP/HTTPS fetching of remote text or image files with custom headers.
+- **Discord Rich Presence**: Listening mode (`type: 2`, album shown without repeating the artist), automatic iTunes cover lookup (`- Topic` suffix cleanup and bounded cache), `SET_ACTIVITY` error detection, and automatic reconnection.
+- **Twitch (Helix API)**: live viewer counter (`TwitchViewers.txt` via `$viewers`), category search, and stream title/game updates with favorite presets.
+- **Settings & Telemetry**: customizable output directory, launch on system startup (`--silent`), and live RAM monitoring for both daemon and GUI.
+
+---
+
+## Building from Source
+
+### Windows (no external DLLs required)
+- **Visual Studio 2022/2026 Build Tools** (C++ x64 + Windows 10/11 SDK)
+- **CMake 3.20+** and **Ninja**
 
 ```bat
 windows\build.bat
 ```
-Compile en Release, exécute les tests unitaires (`osmv_unit_tests`) et copie `OSMV.exe` (~1,94 Mo, autonome) à la racine du projet.
+Builds in Release mode, runs unit tests (`osmv_unit_tests`), and copies standalone `OSMV.exe` (~1.94 MB) to the project root.
 
 ### Linux
 ```bash
 # Arch Linux (GLFW 3.4+ Wayland + X11)
 sudo pacman -S cmake ninja gcc pkgconf dbus curl glfw libgl
 
-# Ubuntu / Debian (ajoutez libwayland-dev libwayland-bin libxkbcommon-dev sur Ubuntu <= 24.04 pour Wayland app_id / GLFW 3.4)
+# Ubuntu / Debian (add libwayland-dev libwayland-bin libxkbcommon-dev on Ubuntu <= 24.04 for Wayland app_id / GLFW 3.4)
 sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev
 
 ./linux/build.sh
 ```
-Compile et copie `./osmv` (daemon) et `./osmv-gui` (interface) à la racine du projet. Sous Wayland/Sway, la fenêtre expose `app_id="io.github.streammusicviewer.OSMV"`, et sous X11/XWayland `WM_CLASS` (`instance="osmv"`, `class="OSMV"`). Un fichier `.desktop` et son icône sont également fournis dans `linux/` (installés via `cmake --install linux/build`).
+Compiles and copies `./osmv` (daemon) and `./osmv-gui` (GUI) to the project root. On Wayland/Sway, the window exposes `app_id="io.github.streammusicviewer.OSMV"`, and on X11/XWayland `WM_CLASS` (`instance="osmv"`, `class="OSMV"`). A `.desktop` entry and icon are also provided in `linux/` (installed via `cmake --install linux/build`).
 
 ---
 
-## Utilisation OBS
+## OBS Usage
 
-1. **Widget Musique** : Source **Navigateur** -> Fichier local `shared/index.html` (Largeur `500`, Hauteur `140`).
-2. **Textes Dynamiques** : Source **Texte (GDI+)** / **Texte (FreeType 2)** -> *Lire depuis un fichier* -> sélectionnez les fichiers générés dans `shared/dynamic_text/` (ou votre dossier personnalisé).
-3. **Images Dynamiques** : Source **Image** -> sélectionnez le fichier image généré par **Dynamic Files**.
+1. **Music Widget**: **Browser** source -> Local file `shared/index.html` (Width `500`, Height `140`).
+2. **Dynamic Text**: **Text (GDI+)** / **Text (FreeType 2)** source -> *Read from file* -> select the generated files in `shared/dynamic_text/` (or your custom directory).
+3. **Dynamic Images**: **Image** source -> select the image file saved by **Dynamic Files**.
 
 ---
 
 ## Documentation
 
-Retrouvez la documentation complète dans `docs/` et sur [streammusicviewer.github.io/OSMV](https://streammusicviewer.github.io/OSMV/). En cas de problème, consultez [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+Read the full documentation in `docs/` or at [streammusicviewer.github.io/OSMV](https://streammusicviewer.github.io/OSMV/). If you run into issues, check [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
-## Licence
-Licence MIT — Libre d'utilisation personnelle et commerciale.
+## License
+GNU General Public License v3.0 (GPL-3.0) — See [LICENSE](LICENSE) for details.
