@@ -394,6 +394,24 @@ std::string url_decode(const std::string& s) {
     return out;
 }
 
+std::string extract_twitch_token(const std::string& raw) {
+    size_t a = raw.find_first_not_of(" \t\r\n");
+    if (a == std::string::npos) return {};
+    size_t b = raw.find_last_not_of(" \t\r\n");
+    std::string s = raw.substr(a, b - a + 1);
+
+    auto pos = s.find("access_token=");
+    if (pos != std::string::npos) {
+        size_t start = pos + 13;
+        size_t end = s.find_first_of("&# \t\r\n", start);
+        s = (end == std::string::npos) ? s.substr(start) : s.substr(start, end - start);
+    }
+    if (s.rfind("oauth:", 0) == 0) {
+        s = s.substr(6);
+    }
+    return s;
+}
+
 std::string format_iso8601_utc(std::time_t t) {
     if (t == 0) t = std::time(nullptr);
     std::tm utc{};

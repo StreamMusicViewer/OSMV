@@ -10,19 +10,12 @@ namespace osmv::daemon {
 
 namespace {
 using json = nlohmann::json;
-
-std::string strip_oauth_prefix(std::string tok) {
-    if (tok.rfind("oauth:", 0) == 0) {
-        tok = tok.substr(6);
-    }
-    return tok;
-}
 } // namespace
 
 std::vector<std::pair<std::string, std::string>> TwitchClient::auth_headers(const TwitchSettings& settings) const {
     return {
         {"Client-Id", settings.client_id},
-        {"Authorization", "Bearer " + strip_oauth_prefix(settings.oauth_token)},
+        {"Authorization", "Bearer " + fmt::extract_twitch_token(settings.oauth_token)},
         {"Content-Type", "application/json"}
     };
 }

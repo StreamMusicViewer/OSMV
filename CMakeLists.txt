@@ -75,6 +75,7 @@ set(OSMV_GUI_SOURCES
     src/gui/gui_main.cpp
     src/gui/locale.cpp
     src/gui/theme.cpp
+    src/gui/twitch_oauth.cpp
     src/gui/view_discord.cpp
     src/gui/view_now_playing.cpp
     src/gui/view_settings_help.cpp

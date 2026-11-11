@@ -260,6 +260,21 @@ int run_gui() {
             sync_album_texture(st);
         }
 
+        if (st.twitch_oauth) {
+            std::string tok, err;
+            if (st.twitch_oauth->poll_result(tok, err)) {
+                if (!tok.empty()) {
+                    st.settings.twitch.oauth_token = tok;
+                    st.twitch_oauth_ok = true;
+                    st.twitch_oauth_msg = tr(st.settings.general.language, "tw_oauth_ok");
+                    st.mark_changed_immediate();
+                } else {
+                    st.twitch_oauth_ok = false;
+                    st.twitch_oauth_msg = err.empty() ? tr(st.settings.general.language, "tw_oauth_err") : err;
+                }
+            }
+        }
+
         if (st.settings_dirty && (ImGui::GetTime() - st.dirty_since) >= 0.35) {
             save_and_notify_daemon(st);
         }

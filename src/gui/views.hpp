@@ -2,8 +2,10 @@
 
 #include "gui_backend.hpp"
 #include "theme.hpp"
+#include "twitch_oauth.hpp"
 #include "common/types.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -53,6 +55,9 @@ struct GuiAppState {
     std::string twitch_feedback;
     bool twitch_feedback_ok = true;
     bool twitch_title_synced = false;
+    std::unique_ptr<TwitchOAuthListener> twitch_oauth;
+    std::string twitch_oauth_msg;
+    bool twitch_oauth_ok = true;
 
     void mark_changed_immediate();
     void mark_changed_debounced();

@@ -65,6 +65,7 @@ std::string base64_encode(const std::vector<uint8_t>& data);
 std::vector<uint8_t> base64_decode(const std::string& b64);
 std::string url_encode(const std::string& s);
 std::string url_decode(const std::string& s);
+std::string extract_twitch_token(const std::string& raw);
 std::string format_iso8601_utc(std::time_t t = 0);
 std::tm local_tm_now();
 

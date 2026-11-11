@@ -110,10 +110,13 @@ int main() {
         CHECK(out == "12 % | 8192 MB | 48 % | 52 % | 195 | 12.8 Kbps | 2.0 Mbps");
     }
 
-    // 6. Twitch viewers
+    // 6. Twitch viewers & token extraction
     {
         CHECK(fmt::format_twitch_viewers(1423, true, "Viewers: $viewers", "Offline") == "Viewers: 1423");
         CHECK(fmt::format_twitch_viewers(1423, false, "Viewers: $viewers", "Hors ligne") == "Hors ligne");
+        CHECK(fmt::extract_twitch_token("http://localhost/#access_token=abc123xyz&scope=channel%3Amanage%3Abroadcast&token_type=bearer") == "abc123xyz");
+        CHECK(fmt::extract_twitch_token("  oauth:tok999  ") == "tok999");
+        CHECK(fmt::extract_twitch_token("rawtoken42") == "rawtoken42");
     }
 
     // 7. Base64 & URL encoding

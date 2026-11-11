@@ -79,6 +79,10 @@ void render_view_twitch(GuiAppState& st) {
         ImGui::SetNextItemWidth(std::max(120.0f, avail - 215.0f));
         ImGuiInputTextFlags tok_flags = st.show_twitch_token ? 0 : ImGuiInputTextFlags_Password;
         if (ImGui::InputText("##tw_tok", &tw.oauth_token, tok_flags)) {
+            if (tw.oauth_token.find("access_token=") != std::string::npos ||
+                tw.oauth_token.rfind("oauth:", 0) == 0) {
+                tw.oauth_token = fmt::extract_twitch_token(tw.oauth_token);
+            }
             st.mark_changed_debounced();
         }
         ImGui::SameLine(0, 6);
@@ -89,6 +93,16 @@ void render_view_twitch(GuiAppState& st) {
         std::string gtok = std::string(ICON_FA_KEY " ") + tr(lang, "tw_get_token");
         if (subtle_button(c, gtok.c_str(), ImVec2(166, 0))) {
             if (!tw.client_id.empty()) {
+                if (!st.twitch_oauth) {
+                    st.twitch_oauth = std::make_unique<TwitchOAuthListener>();
+                }
+                if (st.twitch_oauth->start(lang)) {
+                    st.twitch_oauth_ok = true;
+                    st.twitch_oauth_msg = tr(lang, "tw_oauth_wait");
+                } else {
+                    st.twitch_oauth_ok = false;
+                    st.twitch_oauth_msg = tr(lang, "tw_oauth_fallback");
+                }
                 std::string url = "https://id.twitch.tv/oauth2/authorize?response_type=token"
                                   "&client_id=" + fmt::url_encode(tw.client_id) +
                                   "&redirect_uri=http://localhost&scope=channel:manage:broadcast";
@@ -96,6 +110,11 @@ void render_view_twitch(GuiAppState& st) {
             } else {
                 os::open_url_in_browser("https://dev.twitch.tv/console/apps");
             }
+        }
+        if (!st.twitch_oauth_msg.empty()) {
+            ImGui::PushFont(ui.font_small);
+            ImGui::TextColored(st.twitch_oauth_ok ? c.success : c.warning, "%s", st.twitch_oauth_msg.c_str());
+            ImGui::PopFont();
         }
     }
     end_card();
