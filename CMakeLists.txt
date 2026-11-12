@@ -227,6 +227,7 @@ else()
         third_party/imgui/backends/imgui_impl_glfw.cpp
         third_party/imgui/backends/imgui_impl_opengl3.cpp
     )
+    list(APPEND OSMV_GUI_SOURCES src/gui/backend_linux_glfw.cpp)
     add_executable(osmv-gui
         src/gui/linux_gui_entry.cpp
         ${OSMV_GUI_SOURCES}
