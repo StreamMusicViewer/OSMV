@@ -56,6 +56,11 @@ void DynamicFilesRunner::sync_rules(const DynamicFilesSettings& settings,
 void DynamicFilesRunner::tick(const DynamicFilesSettings& settings,
                               const std::filesystem::path& out_dir) {
     sync_rules(settings, out_dir);
+    for (const auto& r : settings.rules) {
+        if (r.type != "image" && !r.filename.empty() && (!settings.enabled || !r.enabled)) {
+            clear_writer_.clear_if_exists(out_dir / r.filename);
+        }
+    }
     if (!settings.enabled) return;
 
     auto now = std::chrono::steady_clock::now();
@@ -116,6 +121,7 @@ void DynamicFilesRunner::tick(const DynamicFilesSettings& settings,
             }
         } else {
             if (cfg::write_file_text(target, resp.body)) {
+                clear_writer_.clear_cache();
                 rt.status.ok = true;
                 rt.status.status = "OK (" + std::to_string(resp.status_code) + ")";
                 std::string prev = trim_copy(resp.body);

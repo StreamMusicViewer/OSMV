@@ -25,6 +25,7 @@ All notable changes to OSMV are documented below.
 - **Desktop Entry & Icon**: Added `linux/io.github.streammusicviewer.OSMV.desktop` and `linux/io.github.streammusicviewer.OSMV.png` with CMake install targets.
 
 ### Build, Versioning & Licensing
+- **OBS-Safe Dynamic `.txt` Clearing**: Disabling any module or text export now empties existing `.txt` files (`TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt`, `Time.txt`, `Date.txt`, `Countdown.txt`, `ChronoDown.txt`, `ChronoUp.txt`, `SystemInfo.txt`, `TextlineChanger.txt`, `TwitchViewers.txt`, and disabled Dynamic Files text targets) instead of deleting them, keeping OBS Text sources intact.
 - **Single-Source Versioning & Windows Metadata**: Propagated `PROJECT_VERSION` (`5.1.0`) via generated `common/version.hpp` into HTTP User-Agent, GUI sidebar/About card, and `VS_VERSION_INFO` inside Windows `OSMV.exe`.
 - **Clean Windows Builds**: Updated `windows/build.bat` to pass `--clean-first` under Ninja/MSVC.
 - **GPL-3.0 License & English Docs**: Switched project licensing to **GNU General Public License v3.0 (`GPL-3.0`)** and translated `README.md` and `TROUBLESHOOTING.md` to English.

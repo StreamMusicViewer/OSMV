@@ -291,6 +291,25 @@ void CachedTextWriter::write_if_changed(const std::filesystem::path& path, const
     }
 }
 
+void CachedTextWriter::clear_if_exists(const std::filesystem::path& path) {
+    std::string key = os::path_to_utf8(path);
+    std::error_code ec;
+    if (!std::filesystem::exists(path, ec)) {
+        cache_.erase(key);
+        return;
+    }
+    auto it = cache_.find(key);
+    if (it != cache_.end() && it->second.empty()) {
+        std::error_code sz_ec;
+        if (std::filesystem::file_size(path, sz_ec) == 0 && !sz_ec) {
+            return;
+        }
+    }
+    if (write_file_text(path, "")) {
+        cache_[std::move(key)] = "";
+    }
+}
+
 void CachedTextWriter::remove_if_exists(const std::filesystem::path& path) {
     std::string key = os::path_to_utf8(path);
     cache_.erase(key);

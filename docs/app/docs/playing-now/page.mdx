@@ -16,7 +16,7 @@ Album artwork is only read, downloaded (`file://` / `http(s)://`), and Base64-en
 
 ## OBS Overlay Studio & Previews
 
-- **Enable this module (`nowPlayingEnabled`)**: When turned off, deletes `shared/current_song.json` and `shared/current_song.js` along with `PlayingNow.txt`, `Track*.txt`, and `track-info.json` so overlays hide cleanly.
+- **Enable this module (`nowPlayingEnabled`)**: When turned off, deletes `shared/current_song.json`, `shared/current_song.js`, and `track-info.json` so browser overlays hide cleanly, while **emptying** `PlayingNow.txt` and `Track*.txt` without deleting them so OBS Text sources stay bound.
 - **Live Previews**: View updates live inside the embedded **Live OBS Stage Preview** in **Now Playing** (`OBS Checker` / `Dark` / `Light` stage and `Live Track` / `Demo Track`), or click **Browser Preview** (`shared/preview.html`) for a browser test page (`Checker` / `Dark` / `Light` and `Demo / Idle`).
 - **Presets & Style**:
   - Includes 7 built-in presets (`classic` Classic Dark, `glass` Frosted Glass, `neon` Neon Cyber, `compact` Compact Pill, `vinyl` Vinyl Studio, `minimal` Minimal Clean, `banner` Lower-Third) plus **Reset to Defaults**.

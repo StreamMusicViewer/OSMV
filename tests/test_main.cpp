@@ -172,12 +172,22 @@ int main() {
     // 9. CachedTextWriter
     {
         auto tmp = std::filesystem::temp_directory_path() / "osmv_test_writer.txt";
+        auto missing = std::filesystem::temp_directory_path() / "osmv_test_missing.txt";
         std::error_code ec;
         std::filesystem::remove(tmp, ec);
+        std::filesystem::remove(missing, ec);
         cfg::CachedTextWriter w;
         w.write_if_changed(tmp, "hello");
         CHECK(std::filesystem::exists(tmp));
         w.write_if_changed(tmp, "hello");
+        w.clear_if_exists(tmp);
+        CHECK(std::filesystem::exists(tmp));
+        CHECK(std::filesystem::file_size(tmp) == 0);
+        w.clear_if_exists(tmp);
+        CHECK(std::filesystem::exists(tmp));
+        CHECK(std::filesystem::file_size(tmp) == 0);
+        w.clear_if_exists(missing);
+        CHECK(!std::filesystem::exists(missing));
         w.remove_if_exists(tmp);
         CHECK(!std::filesystem::exists(tmp));
     }

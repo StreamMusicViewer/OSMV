@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/settings.hpp"
 #include "common/types.hpp"
 #include <chrono>
 #include <filesystem>
@@ -21,6 +22,7 @@ private:
     };
     std::vector<RuleRuntime> runtimes_;
     std::string last_config_sig_;
+    cfg::CachedTextWriter clear_writer_;
 };
 
 } // namespace osmv::daemon

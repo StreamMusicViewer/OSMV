@@ -66,6 +66,7 @@ void TwitchClient::tick(const TwitchSettings& settings, const std::filesystem::p
     if (!settings.enabled) {
         status_ = TwitchStatus{};
         status_.status_text = "Disabled";
+        text_writer_.clear_if_exists(out_dir / "TwitchViewers.txt");
         return;
     }
 
@@ -127,7 +128,7 @@ void TwitchClient::tick(const TwitchSettings& settings, const std::filesystem::p
 
     std::string out_str = fmt::format_twitch_viewers(
         status_.viewers, status_.is_live, settings.viewers_format, settings.offline_text);
-    cfg::write_file_text(out_dir / "TwitchViewers.txt", out_str);
+    text_writer_.write_if_changed(out_dir / "TwitchViewers.txt", out_str);
 }
 
 std::vector<TwitchCustomGame> TwitchClient::search_categories(const TwitchSettings& settings,

@@ -441,10 +441,10 @@ private:
                 cached_thumb_b64.clear();
                 last_json_sig.clear();
                 thumb_file = update_gui_thumb_file("", "", prev_thumb_path_);
-                text_writer.remove_if_exists(dyn_dir / "TrackArtist.txt");
-                text_writer.remove_if_exists(dyn_dir / "TrackSong.txt");
-                text_writer.remove_if_exists(dyn_dir / "TrackAlbum.txt");
-                text_writer.remove_if_exists(dyn_dir / "PlayingNow.txt");
+                text_writer.clear_if_exists(dyn_dir / "TrackArtist.txt");
+                text_writer.clear_if_exists(dyn_dir / "TrackSong.txt");
+                text_writer.clear_if_exists(dyn_dir / "TrackAlbum.txt");
+                text_writer.clear_if_exists(dyn_dir / "PlayingNow.txt");
                 text_writer.remove_if_exists(dyn_dir / "track-info.json");
             } else if (is_inactive) {
                 if (last_json_sig != "null") {
@@ -460,15 +460,15 @@ private:
                     text_writer.write_if_changed(dyn_dir / "TrackSong.txt", fb);
                     text_writer.write_if_changed(dyn_dir / "TrackAlbum.txt", fb);
                 } else {
-                    text_writer.remove_if_exists(dyn_dir / "TrackArtist.txt");
-                    text_writer.remove_if_exists(dyn_dir / "TrackSong.txt");
-                    text_writer.remove_if_exists(dyn_dir / "TrackAlbum.txt");
+                    text_writer.clear_if_exists(dyn_dir / "TrackArtist.txt");
+                    text_writer.clear_if_exists(dyn_dir / "TrackSong.txt");
+                    text_writer.clear_if_exists(dyn_dir / "TrackAlbum.txt");
                 }
                 if (cfg_copy.now_playing.export_formatted_file) {
                     np_preview = cfg_copy.now_playing.clear_when_inactive ? "" : cfg_copy.now_playing.fallback_text;
                     text_writer.write_if_changed(dyn_dir / "PlayingNow.txt", np_preview);
                 } else {
-                    text_writer.remove_if_exists(dyn_dir / "PlayingNow.txt");
+                    text_writer.clear_if_exists(dyn_dir / "PlayingNow.txt");
                 }
             } else {
                 std::string key = song.title + "|" + song.artist + "|" + song.art_url;
@@ -504,16 +504,16 @@ private:
                     text_writer.write_if_changed(dyn_dir / "TrackSong.txt", song.title);
                     text_writer.write_if_changed(dyn_dir / "TrackAlbum.txt", song.album);
                 } else {
-                    text_writer.remove_if_exists(dyn_dir / "TrackArtist.txt");
-                    text_writer.remove_if_exists(dyn_dir / "TrackSong.txt");
-                    text_writer.remove_if_exists(dyn_dir / "TrackAlbum.txt");
+                    text_writer.clear_if_exists(dyn_dir / "TrackArtist.txt");
+                    text_writer.clear_if_exists(dyn_dir / "TrackSong.txt");
+                    text_writer.clear_if_exists(dyn_dir / "TrackAlbum.txt");
                 }
 
                 np_preview = fmt::format_now_playing(song.title, song.artist, song.album, cfg_copy.now_playing.custom_format);
                 if (cfg_copy.now_playing.export_formatted_file) {
                     text_writer.write_if_changed(dyn_dir / "PlayingNow.txt", np_preview);
                 } else {
-                    text_writer.remove_if_exists(dyn_dir / "PlayingNow.txt");
+                    text_writer.clear_if_exists(dyn_dir / "PlayingNow.txt");
                 }
 
                 if (cfg_copy.now_playing.export_snaz_json) {
@@ -534,7 +534,7 @@ private:
             if (cfg_copy.time.enabled) {
                 text_writer.write_if_changed(dyn_dir / "Time.txt", time_out);
             } else {
-                text_writer.remove_if_exists(dyn_dir / "Time.txt");
+                text_writer.clear_if_exists(dyn_dir / "Time.txt");
             }
 
             std::string date_out = fmt::format_date_string(
@@ -542,7 +542,7 @@ private:
             if (cfg_copy.date.enabled) {
                 text_writer.write_if_changed(dyn_dir / "Date.txt", date_out);
             } else {
-                text_writer.remove_if_exists(dyn_dir / "Date.txt");
+                text_writer.clear_if_exists(dyn_dir / "Date.txt");
             }
 
             // 6. Countdown, Chrono Down, Chrono Up
@@ -553,7 +553,7 @@ private:
             if (cfg_copy.countdown.enabled) {
                 text_writer.write_if_changed(dyn_dir / "Countdown.txt", cd_res.output);
             } else {
-                text_writer.remove_if_exists(dyn_dir / "Countdown.txt");
+                text_writer.clear_if_exists(dyn_dir / "Countdown.txt");
             }
 
             std::string cdown_out = fmt::format_chrono_down(
@@ -561,7 +561,7 @@ private:
             if (cfg_copy.chrono_down.enabled) {
                 text_writer.write_if_changed(dyn_dir / "ChronoDown.txt", cdown_out);
             } else {
-                text_writer.remove_if_exists(dyn_dir / "ChronoDown.txt");
+                text_writer.clear_if_exists(dyn_dir / "ChronoDown.txt");
             }
 
             std::string cup_out = fmt::format_chrono_up(
@@ -569,7 +569,7 @@ private:
             if (cfg_copy.chrono_up.enabled) {
                 text_writer.write_if_changed(dyn_dir / "ChronoUp.txt", cup_out);
             } else {
-                text_writer.remove_if_exists(dyn_dir / "ChronoUp.txt");
+                text_writer.clear_if_exists(dyn_dir / "ChronoUp.txt");
             }
 
             // 7. System Info
@@ -584,11 +584,13 @@ private:
             if (cfg_copy.system_info.enabled) {
                 text_writer.write_if_changed(dyn_dir / "SystemInfo.txt", sys_out);
             } else {
-                text_writer.remove_if_exists(dyn_dir / "SystemInfo.txt");
+                text_writer.clear_if_exists(dyn_dir / "SystemInfo.txt");
             }
 
             // 8. Textline Changer
             std::string tl_out;
+            const std::string tl_fname = cfg_copy.textline.filename.empty() ? "TextlineChanger.txt" : cfg_copy.textline.filename;
+            bool tl_written = false;
             if (cfg_copy.textline.enabled && !cfg_copy.textline.lines.empty()) {
                 std::vector<std::string> valid_lines;
                 valid_lines.reserve(cfg_copy.textline.lines.size());
@@ -614,11 +616,12 @@ private:
                     }
                     if (textline_idx >= static_cast<int>(valid_lines.size())) textline_idx = 0;
                     tl_out = valid_lines[static_cast<size_t>(textline_idx)];
-                    std::string fname = cfg_copy.textline.filename.empty() ? "TextlineChanger.txt" : cfg_copy.textline.filename;
-                    text_writer.write_if_changed(dyn_dir / fname, tl_out);
+                    text_writer.write_if_changed(dyn_dir / tl_fname, tl_out);
+                    tl_written = true;
                 }
-            } else if (!cfg_copy.textline.filename.empty()) {
-                text_writer.remove_if_exists(dyn_dir / cfg_copy.textline.filename);
+            }
+            if (!tl_written) {
+                text_writer.clear_if_exists(dyn_dir / tl_fname);
             }
 
             // 9. Update snapshot for GUI IPC

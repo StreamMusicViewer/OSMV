@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/settings.hpp"
 #include "common/types.hpp"
 #include <chrono>
 #include <filesystem>
@@ -26,6 +27,7 @@ private:
     std::vector<std::pair<std::string, std::string>> auth_headers(const TwitchSettings& settings) const;
 
     TwitchStatus status_;
+    cfg::CachedTextWriter text_writer_;
     std::string cached_channel_;
     std::string cached_client_id_;
     std::string cached_token_;

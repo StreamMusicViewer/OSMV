@@ -30,6 +30,7 @@ bool write_file_text(const std::filesystem::path& path, const std::string& conte
 class CachedTextWriter {
 public:
     void write_if_changed(const std::filesystem::path& path, const std::string& content);
+    void clear_if_exists(const std::filesystem::path& path);
     void remove_if_exists(const std::filesystem::path& path);
     void clear_cache();
 
