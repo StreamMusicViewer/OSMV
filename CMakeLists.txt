@@ -4,6 +4,7 @@ project(OSMV VERSION 5.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(CTest)
 
@@ -45,6 +46,39 @@ else()
     target_link_libraries(osmv_common PUBLIC CURL::libcurl Threads::Threads)
 endif()
 
+# ── Embedded Resources (generated from assets/ at build time) ─────────────────
+set(OSMV_EMBEDDED_FONTS_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/embedded_fonts.cpp)
+add_custom_command(
+    OUTPUT ${OSMV_EMBEDDED_FONTS_CPP}
+    COMMAND ${CMAKE_COMMAND}
+        -DINTER_TTF=${CMAKE_CURRENT_SOURCE_DIR}/assets/Inter.ttf
+        -DFA_TTF=${CMAKE_CURRENT_SOURCE_DIR}/assets/fa-solid-900.ttf
+        -DOUT_CPP=${OSMV_EMBEDDED_FONTS_CPP}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_fonts.cmake
+    DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets/Inter.ttf
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets/fa-solid-900.ttf
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_fonts.cmake
+    COMMENT "Generating embedded_fonts.cpp from TTF assets"
+    VERBATIM
+)
+
+set(OSMV_EMBEDDED_LOGO_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/embedded_logo.cpp)
+add_custom_command(
+    OUTPUT ${OSMV_EMBEDDED_LOGO_CPP}
+    COMMAND ${CMAKE_COMMAND}
+        -DLOGO_PNG=${CMAKE_CURRENT_SOURCE_DIR}/assets/logo.png
+        -DTRAY_ARGB=${CMAKE_CURRENT_SOURCE_DIR}/assets/tray_icon_32.argb
+        -DOUT_CPP=${OSMV_EMBEDDED_LOGO_CPP}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_logo.cmake
+    DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets/logo.png
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets/tray_icon_32.argb
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_logo.cmake
+    COMMENT "Generating embedded_logo.cpp from logo assets"
+    VERBATIM
+)
+
 # ── Shared Daemon Sources ─────────────────────────────────────────────────────
 set(OSMV_DAEMON_SOURCES
     src/daemon/daemon_main.cpp
@@ -64,7 +98,7 @@ else()
         src/daemon/media_linux.cpp
         src/daemon/sysinfo_linux.cpp
         src/daemon/tray_linux.cpp
-        src/common/embedded_logo.cpp
+        ${OSMV_EMBEDDED_LOGO_CPP}
     )
 endif()
 
@@ -78,8 +112,8 @@ set(OSMV_IMGUI_SOURCES
 )
 
 set(OSMV_GUI_SOURCES
-    src/common/embedded_fonts.cpp
-    src/common/embedded_logo.cpp
+    ${OSMV_EMBEDDED_FONTS_CPP}
+    ${OSMV_EMBEDDED_LOGO_CPP}
     src/gui/css_editor.cpp
     src/gui/gui_main.cpp
     src/gui/locale.cpp

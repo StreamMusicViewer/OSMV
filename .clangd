@@ -1,0 +1,19 @@
+If:
+  PathMatch:
+    - third_party/.*
+    - release/.*
+    - windows/build/.*
+    - linux/build/.*
+    - snaz-master/.*
+    - target/.*
+Diagnostics:
+  Suppress: "*"
+---
+If:
+  PathMatch:
+    - src/.*\.(hpp|cpp)
+    - tests/.*\.cpp
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+

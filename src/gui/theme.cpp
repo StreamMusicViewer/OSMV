@@ -75,9 +75,9 @@ void load_fonts(float scale, UiContext& ui) {
         cfg.OversampleH = 2;
         cfg.OversampleV = 1;
         cfg.PixelSnapH = true;
-        ImFont* f = io.Fonts->AddFontFromMemoryCompressedTTF(
-            assets::InterFont_compressed_data,
-            static_cast<int>(assets::InterFont_compressed_size),
+        ImFont* f = io.Fonts->AddFontFromMemoryTTF(
+            const_cast<unsigned char*>(assets::kInterFontTtf),
+            static_cast<int>(assets::kInterFontTtfSize),
             px, &cfg, latin_ranges());
 
         ImFontConfig icfg;
@@ -85,9 +85,9 @@ void load_fonts(float scale, UiContext& ui) {
         icfg.MergeMode = true;
         icfg.PixelSnapH = true;
         icfg.GlyphMinAdvanceX = icon_px;
-        io.Fonts->AddFontFromMemoryCompressedTTF(
-            assets::FaSolid_compressed_data,
-            static_cast<int>(assets::FaSolid_compressed_size),
+        io.Fonts->AddFontFromMemoryTTF(
+            const_cast<unsigned char*>(assets::kFaSolidTtf),
+            static_cast<int>(assets::kFaSolidTtfSize),
             icon_px, &icfg, fa_icon_ranges());
         return f;
     };
