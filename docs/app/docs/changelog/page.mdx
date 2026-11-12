@@ -1,0 +1,37 @@
+# Changelog
+
+All notable changes to OSMV are documented below.
+
+---
+
+## v5.1.0 — OBS Overlay Studio, Automatic Twitch OAuth & Linux Wayland `app_id`
+
+### OBS Overlay Studio & Previews
+- **OBS Overlay Studio (`Now Playing`)**: Replaced basic dynamic color / visualizer toggles with a 5-tab overlay customizer (**Presets & Style**, **Layout & Content**, **Visualizer**, **Custom CSS**, **Snaz Exports**).
+- **Live Stage & Browser Previews**: Added an embedded **Live OBS Stage Preview** (`OBS Checker` / `Dark` / `Light`, `Live Track` / `Demo Track`) and standalone `shared/preview.html` (**Browser Preview** with `Checker` / `Dark` / `Light` and `Demo / Idle`).
+- **Visual Presets & Multi-Scene OBS**: Added 7 built-in presets (`classic`, `glass`, `neon`, `compact`, `vinyl`, `minimal`, `banner`), **Reset to Defaults**, and **Saved Presets (Multi-Scene OBS)** with **Save Preset**, **Update**, **Delete**, and **Scene URL** (`?preset=<Name>`).
+- **Layout, Typography & Motion**: Added 5 canvas anchors, 4 layout directions (`horizontal`, `horizontal-right`, `vertical`, `compact`), background gradients, backdrop blur, borders/shadows/glow, 3 **Album color target** modes (`card`, `accent`, `subtle` exposing `--osmv-album-hue` / `--osmv-album-rgb`), **Vinyl spin while playing**, Google Fonts loading, marquee scrolling, 5 transitions (`fade`, `slide-up`, `slide-left`, `zoom`, `none`), hide-when-idle timers, and custom field templates (`$song`, `$artist`, `$album`, `$player`, `$status`, `*_upper`).
+- **5-Style Audio Visualizer**: Added `bars`, `mirrored`, `dots`, `wave`, and `blocks` with `top`, `bottom`, and `background` placement, `album` / `custom` gradient / `rainbow` color modes, and bar count (`8..48`), height, gap, and energy sliders.
+- **Custom CSS Editor**: Added a syntax-highlighted monospace CSS editor with line numbers, `Ln/Col` bar, **Load Studio CSS into Editor**, **Copy Generated CSS**, selector snippet chips, layered **Enable custom CSS**, and **Raw CSS only (disable generated Studio styles)**.
+- **CORS-Safe `file://` Delivery**: Daemon and settings write `shared/current_song.js` (`window.__OSMV_CURRENT_SONG`) and `shared/widget_config.js` (`window.__OSMV_WIDGET_CONFIG`, containing built-in and custom `presets` maps) alongside JSON files, plus `"player"` in `current_song.json`, so `?preset=<Name>` Browser Sources work without Chromium `file://` CORS issues.
+
+### Twitch Helix & Formatters
+- **Automatic Localhost OAuth**: Clicking **Get OAuth Token** starts a temporary local listener on `http://localhost` (port `80`, `180` seconds timeout) to capture `#access_token` automatically.
+- **Token Extraction & Status**: Added redirect-URL/`oauth:` token parsing and explicit inline OAuth/client error feedback.
+
+### Linux Desktop Integration & Window Identification
+- **Wayland `app_id` & X11 `WM_CLASS`**: Exposed `app_id="io.github.streammusicviewer.OSMV"` on Wayland and `WM_CLASS` (`instance="osmv"`, `class="OSMV"`) on X11/XWayland for Sway, Hyprland, and i3 window rules.
+- **Wayland Icon Fix & GLFW 3.4 Fallback**: Skipped `glfwSetWindowIcon` under Wayland and added automatic CMake FetchContent fallback to GLFW 3.4 when system GLFW is `< 3.4` and Wayland headers are present.
+- **Desktop Entry & Icon**: Added `linux/io.github.streammusicviewer.OSMV.desktop` and `linux/io.github.streammusicviewer.OSMV.png` with CMake install targets.
+
+### Build, Versioning & Licensing
+- **Single-Source Versioning & Windows Metadata**: Propagated `PROJECT_VERSION` (`5.1.0`) via generated `common/version.hpp` into HTTP User-Agent, GUI sidebar/About card, and `VS_VERSION_INFO` inside Windows `OSMV.exe`.
+- **Clean Windows Builds**: Updated `windows/build.bat` to pass `--clean-first` under Ninja/MSVC.
+- **GPL-3.0 License & English Docs**: Switched project licensing to **GNU General Public License v3.0 (`GPL-3.0`)** and translated `README.md` and `TROUBLESHOOTING.md` to English.
+
+---
+
+## v5.0.0 — C++20 Rewrite & Snaz Modules
+
+- Complete native **C++20** rewrite replacing `v4.0.0` with a dual-process architecture, **Dear ImGui** UI, Snaz-inspired text/timer/system/Twitch modules, and native Discord IPC (`type: 2`).
+

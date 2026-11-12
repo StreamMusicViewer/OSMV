@@ -1,4 +1,5 @@
 #include "locale.hpp"
+#include "common/version.hpp"
 #include <unordered_map>
 
 namespace osmv::gui {
@@ -277,7 +278,7 @@ const std::unordered_map<std::string_view, LangPair>& dict() {
         // Help
         {"help_title", {"À propos d'OSMV & Guide OBS", "About OSMV & OBS Guide"}},
         {"help_sub", {"Moteur natif C++20 ultra-léger + modules Snaz intégrés.", "Ultra-lightweight native C++20 engine with integrated Snaz modules."}},
-        {"help_desc", {"OSMV (OBS Stream Music Viewer) v5.0.0 combine un daemon C++ basse consommation et une interface moderne pour alimenter vos scènes OBS et votre Discord Rich Presence.", "OSMV (OBS Stream Music Viewer) v5.0.0 combines a tiny C++ background daemon with a clean interface for OBS overlays and Discord Rich Presence."}},
+        {"help_desc", {"OSMV (OBS Stream Music Viewer) v" OSMV_VERSION_STR " combine un daemon C++ basse consommation et une interface moderne pour alimenter vos scènes OBS et votre Discord Rich Presence.", "OSMV (OBS Stream Music Viewer) v" OSMV_VERSION_STR " combines a tiny C++ background daemon with a clean interface for OBS overlays and Discord Rich Presence."}},
         {"help_obs_title", {"Démarrage rapide OBS Studio", "OBS Studio Quick Setup"}},
         {"help_obs_1", {"1. Widget Musique : Ajoutez une source Navigateur -> Fichier local -> shared/index.html (500 x 140).", "1. Music Widget: Add a Browser Source -> Local file -> shared/index.html (500 x 140)."}},
         {"help_obs_2", {"2. Textes dynamiques : Ajoutez une source Texte (GDI+ ou FreeType 2) -> Lire depuis un fichier -> sélectionnez Time.txt, Date.txt, SystemInfo.txt, etc.", "2. Dynamic Text: Add a Text source (GDI+ or FreeType 2) -> Read from file -> select Time.txt, Date.txt, SystemInfo.txt, etc."}},

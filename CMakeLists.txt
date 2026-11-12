@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
-project(OSMV VERSION 5.0.0 LANGUAGES CXX)
+project(OSMV VERSION 5.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(CTest)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/common/version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/common/version.hpp
+    @ONLY
+)
 
 # ── Common Library (zero GUI/GPU dependencies) ────────────────────────────────
 set(OSMV_COMMON_SOURCES
@@ -26,6 +32,7 @@ endif()
 add_library(osmv_common STATIC ${OSMV_COMMON_SOURCES})
 target_include_directories(osmv_common PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohmann
 )
@@ -106,6 +113,7 @@ if(WIN32)
     )
     target_include_directories(OSMV PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_BINARY_DIR}/generated
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/misc/cpp

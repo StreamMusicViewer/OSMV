@@ -8,6 +8,7 @@
 #include "common/ipc.hpp"
 #include "common/os_utils.hpp"
 #include "common/settings.hpp"
+#include "common/version.hpp"
 
 #include "IconsFontAwesome6.h"
 #include <nlohmann/json.hpp>
@@ -217,10 +218,10 @@ void render_sidebar(GuiAppState& st, float sidebar_w) {
             ImGui::PushFont(st.ui.font_small);
             if (st.snap.daemon_ram_kb > 0) {
                 char rbuf[48];
-                std::snprintf(rbuf, sizeof(rbuf), "v5.0.0  |  %.1f MB", st.snap.daemon_ram_kb / 1024.0);
+                std::snprintf(rbuf, sizeof(rbuf), "v" OSMV_VERSION_STR "  |  %.1f MB", st.snap.daemon_ram_kb / 1024.0);
                 ImGui::TextColored(c.text_dim, "%s", rbuf);
             } else {
-                ImGui::TextColored(c.text_dim, "v5.0.0 C++");
+                ImGui::TextColored(c.text_dim, "v" OSMV_VERSION_STR " C++");
             }
             ImGui::PopFont();
         }

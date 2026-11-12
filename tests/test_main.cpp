@@ -2,6 +2,7 @@
 #include "common/obs_widget.hpp"
 #include "common/settings.hpp"
 #include "common/types.hpp"
+#include "common/version.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -240,6 +241,14 @@ int main() {
         CHECK(js_song == "window.__OSMV_CURRENT_SONG = {\"title\":\"a<\\/script>b\"};\n");
         std::string js_null = cfg::json_script_assignment("__OSMV_CURRENT_SONG", "null");
         CHECK(js_null == "window.__OSMV_CURRENT_SONG = null;\n");
+    }
+
+    // 11. Build version metadata
+    {
+        CHECK(OSMV_VERSION_MAJOR >= 5);
+        std::string ver(OSMV_VERSION_STR);
+        CHECK(!ver.empty());
+        CHECK(ver.find('.') != std::string::npos);
     }
 
     std::cout << "All OSMV C++ unit tests passed!\n";

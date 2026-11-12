@@ -2,6 +2,7 @@
 #include "locale.hpp"
 #include "common/os_utils.hpp"
 #include "common/settings.hpp"
+#include "common/version.hpp"
 #include "IconsFontAwesome6.h"
 #include "imgui_stdlib.h"
 
@@ -124,7 +125,7 @@ void render_view_help(GuiAppState& st) {
             ImGui::PushFont(ui.font_title);
             ImGui::TextUnformatted("OBS Stream Music Viewer (OSMV)");
             ImGui::PopFont();
-            ImGui::TextColored(c.accent, "Version 5.0.0 — C++20 Native");
+            ImGui::TextColored(c.accent, "Version " OSMV_VERSION_STR " — C++20 Native");
             ImGui::Dummy(ImVec2(0, 2));
             ImGui::PushStyleColor(ImGuiCol_Text, c.text_sub);
             ImGui::TextWrapped("%s", tr(lang, "help_desc"));

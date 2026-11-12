@@ -6,7 +6,7 @@
 ![C++20](https://img.shields.io/badge/Language-C%2B%2B20-00599C)
 ![GUI](https://img.shields.io/badge/GUI-Dear%20ImGui-blueviolet)
 
-> **OSMV v5.0.0** is an ultra-lightweight native C++20 companion tool for OBS Studio (Now Playing, Discord Rich Presence, and Snaz-inspired modules: Time, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files, and Twitch Helix).
+> **OSMV v5.1.0** is an ultra-lightweight native C++20 companion tool for OBS Studio (Now Playing, Discord Rich Presence, and Snaz-inspired modules: Time, Date, Countdown, Chrono Down/Up, System Info, Textline Changer, Dynamic Files, and Twitch Helix).
 
 ---
 
@@ -75,7 +75,7 @@ Compiles and copies `./osmv` (daemon) and `./osmv-gui` (GUI) to the project root
 
 ## Documentation
 
-Read the full documentation in `docs/` or at [streammusicviewer.github.io/OSMV](https://streammusicviewer.github.io/OSMV/). If you run into issues, check [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+Read the full documentation in `docs/` or at [streammusicviewer.github.io/OSMV](https://streammusicviewer.github.io/OSMV/). See [CHANGELOG.md](CHANGELOG.md) for release history, or check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you run into issues.
 
 ## License
 GNU General Public License v3.0 (GPL-3.0) — See [LICENSE](LICENSE) for details.

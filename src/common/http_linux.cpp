@@ -1,4 +1,5 @@
 #include "http.hpp"
+#include "common/version.hpp"
 
 #include <curl/curl.h>
 #include <algorithm>
@@ -51,7 +52,7 @@ HttpResponse request(const std::string& method,
     }
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "OSMV/5.0.0");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "OSMV/" OSMV_VERSION_STR);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, static_cast<long>(timeout_ms));
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, static_cast<long>(timeout_ms));

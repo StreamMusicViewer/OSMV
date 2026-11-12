@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide covers the most common issues when compiling or running OSMV v5.0.0 on Windows and Linux.
+This guide covers the most common issues when compiling or running OSMV v5.1.0 on Windows and Linux.
 
 ---
 

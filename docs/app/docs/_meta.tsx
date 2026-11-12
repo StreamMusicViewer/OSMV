@@ -23,4 +23,5 @@ export default {
     title: 'More',
   },
   faq: 'FAQ',
+  changelog: 'Changelog',
 }

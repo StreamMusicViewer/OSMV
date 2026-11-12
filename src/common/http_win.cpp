@@ -1,5 +1,6 @@
 #include "http.hpp"
 #include "os_utils.hpp"
+#include "common/version.hpp"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -47,7 +48,7 @@ HttpResponse request(const std::string& method,
     path.resize(uc.dwUrlPathLength);
     if (path.empty()) path = L"/";
 
-    HINTERNET session = WinHttpOpen(L"OSMV/5.0.0",
+    HINTERNET session = WinHttpOpen(L"OSMV/" OSMV_VERSION_WSTR,
                                     WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
                                     WINHTTP_NO_PROXY_NAME,
                                     WINHTTP_NO_PROXY_BYPASS,

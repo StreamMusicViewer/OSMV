@@ -7,7 +7,7 @@ import logo from '../public/logo.ico'
 
 export const metadata: Metadata = {
   description:
-    'OSMV v5.0.0 (OBS Stream Music Viewer) - Ultra-lightweight native C++20 overlay suite for OBS Studio (Now Playing, Discord RPC, Timers, System Info, Dynamic Files, and Twitch).',
+    'OSMV v5.1.0 (OBS Stream Music Viewer) - Ultra-lightweight native C++20 overlay suite for OBS Studio (Now Playing, Discord RPC, Timers, System Info, Dynamic Files, and Twitch).',
 }
 
 export default function IndexPage(): JSX.Element {
@@ -21,7 +21,7 @@ export default function IndexPage(): JSX.Element {
         OSMV
       </h1>
       <h2 className="text-lg md:text-2xl pt-4 md:pt-6 px-4 tracking-tight max-w-4xl text-center text-gray-600 dark:text-neutral-300">
-        OBS Stream Music Viewer v5.0.0 — Ultra-lightweight C++20 overlay tools for OBS and Discord RPC.
+        OBS Stream Music Viewer v5.1.0 — Ultra-lightweight C++20 overlay tools for OBS and Discord RPC.
       </h2>
 
       <div className="flex flex-col items-center my-8 md:my-10">

@@ -1,0 +1,118 @@
+name: Release OSMV
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to publish (e.g. v5.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC toolchain
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure and build (Release)
+        shell: pwsh
+        run: |
+          cmake -B windows/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build windows/build --clean-first -j
+          ctest --test-dir windows/build --output-on-failure
+
+      - name: Package Windows release archive
+        shell: pwsh
+        run: |
+          $tag = if ("${{ inputs.tag }}" -ne "") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $stage = "dist/win"
+          New-Item -ItemType Directory -Force -Path "$stage/shared" | Out-Null
+          Copy-Item "windows/build/OSMV.exe" "$stage/OSMV.exe"
+          Copy-Item "LICENSE","README.md","TROUBLESHOOTING.md","CHANGELOG.md" "$stage/"
+          Copy-Item "shared/index.html","shared/preview.html","shared/style.css","shared/widget.js" "$stage/shared/"
+          Compress-Archive -Path "$stage/*" -DestinationPath "OSMV_${tag}_win.zip" -CompressionLevel Optimal -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: OSMV_*_win.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++ pkg-config \
+            libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev \
+            libwayland-dev libwayland-bin libxkbcommon-dev
+
+      - name: Configure, build and test (Release)
+        run: |
+          cmake -B linux/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build linux/build -j"$(nproc)"
+          ctest --test-dir linux/build --output-on-failure
+
+      - name: Package Linux release archive
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          STAGE="dist/OSMV_${TAG}_linux"
+          mkdir -p "$STAGE/shared" "$STAGE/linux"
+          cp linux/build/osmv linux/build/osmv-gui "$STAGE/"
+          chmod +x "$STAGE/osmv" "$STAGE/osmv-gui"
+          cp LICENSE README.md TROUBLESHOOTING.md CHANGELOG.md "$STAGE/"
+          cp linux/io.github.streammusicviewer.OSMV.desktop linux/io.github.streammusicviewer.OSMV.png "$STAGE/linux/"
+          cp shared/index.html shared/preview.html shared/style.css shared/widget.js "$STAGE/shared/"
+          tar -C dist -czf "OSMV_${TAG}_linux.tar.gz" "OSMV_${TAG}_linux"
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: OSMV_*_linux.tar.gz
+
+  publish-release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS.txt
+        run: |
+          cd release-artifacts
+          sha256sum OSMV_* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: OSMV ${{ inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release-artifacts/*
+
