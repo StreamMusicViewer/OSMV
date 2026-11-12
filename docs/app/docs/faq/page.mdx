@@ -52,3 +52,9 @@ Make sure you build against **GLFW 3.4+** on Wayland (`glfw` on Arch, `glfw-deve
 ## Can I change where `.txt` files are generated?
 
 Yes. In **Settings -> Dynamic text files directory**, enter any custom path (or click **Reset Default** to revert to `shared/dynamic_text/`). All **Copy** buttons across the interface update automatically to match your chosen directory.
+
+---
+
+## Can I use different OBS overlay styles across different scenes?
+
+Yes. In **Now Playing -> Presets & Style**, configure your overlay, enter a preset name under **Saved Presets (Multi-Scene OBS)**, and click **Save Preset**. Use **Scene URL** (or append `?preset=<Name>` to `shared/index.html`) and add it to OBS as a Browser Source with **Local file** unchecked. Each scene loads its matching preset from `shared/widget_config.js` while reading live tracks from `shared/current_song.js`.

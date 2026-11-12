@@ -1,6 +1,6 @@
 # Now Playing Module
 
-The **Now Playing** module detects media playing on your system in real time and exports track details and cover art to both the OSMV OBS Browser widget and Snaz-compatible text/JSON files.
+The **Now Playing** module detects media playing on your system in real time, lets you design OBS browser overlays inside the built-in **OBS Overlay Studio**, and exports Snaz-compatible text and JSON files.
 
 ---
 
@@ -14,11 +14,23 @@ Album artwork is only read, downloaded (`file://` / `http(s)://`), and Base64-en
 
 ---
 
-## OBS Widget Options
+## OBS Overlay Studio & Previews
 
-- **Enable this module (`nowPlayingEnabled`)**: When turned off, deletes `shared/current_song.json` and stops text exports so overlays hide cleanly.
-- **Dynamic background color (`dynamicColor`)**: Lets `shared/index.html` extract the dominant color from the album cover and tint the widget background.
-- **Audio visualizer (`audioVisualizer`)**: Enables the animated visualizer bars above the OBS widget.
+- **Enable this module (`nowPlayingEnabled`)**: When turned off, deletes `shared/current_song.json` and `shared/current_song.js` along with `PlayingNow.txt`, `Track*.txt`, and `track-info.json` so overlays hide cleanly.
+- **Live Previews**: View updates live inside the embedded **Live OBS Stage Preview** in **Now Playing** (`OBS Checker` / `Dark` / `Light` stage and `Live Track` / `Demo Track`), or click **Browser Preview** (`shared/preview.html`) for a browser test page (`Checker` / `Dark` / `Light` and `Demo / Idle`).
+- **Presets & Style**:
+  - Includes 7 built-in presets (`classic` Classic Dark, `glass` Frosted Glass, `neon` Neon Cyber, `compact` Compact Pill, `vinyl` Vinyl Studio, `minimal` Minimal Clean, `banner` Lower-Third) plus **Reset to Defaults**.
+  - Customize background gradients, border width/color, accent color, title/artist/album text colors, backdrop blur, shadow intensity, outer glow, and 3 **Album color target** modes (`card`, `accent`, `subtle` exposing `--osmv-album-hue` / `--osmv-album-rgb`).
+  - Manage **Saved Presets (Multi-Scene OBS)** with **Save Preset**, **Update**, **Delete**, and **Scene URL** (`?preset=<Name>`).
+- **Layout & Content**:
+  - Configure 5 positions (`bottom-right`, `bottom-left`, `top-right`, `top-left`, `center`), 4 layouts (`horizontal`, `horizontal-right`, `vertical`, `compact`), width, padding, item gap, border radius, and album artwork size/radius (including **Vinyl spin while playing**).
+  - Customize title, artist, album, and badge formats using `$song`, `$artist`, `$album`, `$player`, `$status`, and uppercase `*_upper` tokens.
+  - Adjust fonts (built-in or **Load via Google Fonts**), sizes/weight/align, drop shadow, marquee scrolling & speed, 5 show/hide transitions (`fade`, `slide-up`, `slide-left`, `zoom`, `none`), and hide-when-idle timeout / placeholder text.
+- **Visualizer**:
+  - Choose from 5 styles (`bars`, `mirrored`, `dots`, `wave`, `blocks`), 3 placements (`top`, `bottom`, `background`), and 3 color modes (`album`, `custom` gradient, `rainbow`), with configurable bar count (`8..48`), height, gap, and energy/speed.
+- **Custom CSS**:
+  - Syntax-highlighted monospace CSS editor with line numbers, `Ln/Col` cursor tracking, **Load Studio CSS into Editor**, **Copy Generated CSS**, **Clear**, and clickable CSS snippets (`+.widget-container`, `+.album-art`, `+.track-title`, `+.track-badge`).
+  - Toggle **Enable custom CSS** for layered overrides on top of Studio styles, or **Raw CSS only (disable generated Studio styles)** for complete manual control (for example, `.obs-stack { gap: 0; }` removes spacing between a top/bottom visualizer and the widget card).
 
 ---
 

@@ -9,7 +9,8 @@ The **Twitch** tab uses the modern **Twitch Helix API** (replacing Snaz's legacy
 1. Create or open an application in the [Twitch Developer Console](https://dev.twitch.tv/console/apps) with an OAuth Redirect URL of `http://localhost`.
 2. Enter your **Twitch Client ID** and **Channel username** in the **Twitch** tab.
 3. Click **Get OAuth Token** to open Twitch authorization in your browser (requests the `channel:manage:broadcast` scope).
-4. Paste the resulting **OAuth Access Token** into OSMV.
+4. OSMV starts a temporary local listener on `http://localhost` (port `80`, `180` seconds timeout) and fills and saves your **OAuth Access Token** automatically once you approve access.
+5. If port `80` is occupied or blocked on your machine, copy the redirect URL from your browser address bar and paste it into the **OAuth Access Token** field (OSMV extracts `#access_token=...` automatically).
 
 ---
 

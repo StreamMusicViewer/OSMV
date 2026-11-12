@@ -16,7 +16,7 @@ OSMV splits the background service from the graphical user interface to keep mem
 
 1. **Background Daemon (~4.5 to 6 MB private RAM on Windows / zero X11, Wayland, OpenGL, or GTK dependencies on Linux)**:
    - Monitors media players via WinRT SMTC (Windows) or D-Bus MPRIS (Linux), caching cover art only when the track changes.
-   - Updates `shared/current_song.json` and OBS text files only when their content changes (atomic writes).
+   - Updates `shared/current_song.json`, `shared/current_song.js`, and OBS text files only when their content changes (atomic writes).
    - Handles Discord Rich Presence (native IPC), HTTP requests (Dynamic Files / Twitch on a dedicated network thread), and the system tray icon (`Shell_NotifyIconW` on Windows, D-Bus `StatusNotifierItem` + `dbusmenu` on Linux).
    - Exposes a local IPC server (`\\.\pipe\osmv-ipc-v3` on Windows, `$XDG_RUNTIME_DIR/osmv-ipc-v3.sock` on Linux) to communicate with the GUI.
 2. **Dear ImGui Interface (DirectX 11 on Windows, GLFW + OpenGL 3 on Linux)**:
@@ -28,13 +28,13 @@ OSMV splits the background service from the graphical user interface to keep mem
 
 ## Features
 
-- **Now Playing**: OBS Browser widget `shared/index.html` (cover art, dynamic color, audio visualizer) + Snaz-compatible text/JSON exports (`TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt` with `$artist`, `$song`, `$album`, `*_upper`, and `track-info.json`).
+- **Now Playing & OBS Overlay Studio**: Real-time OBS Browser widget (`shared/index.html`) with embedded **Live OBS Stage Preview**, standalone `shared/preview.html` (**Browser Preview**), 7 built-in presets (`classic`, `glass`, `neon`, `compact`, `vinyl`, `minimal`, `banner`), **Saved Presets (Multi-Scene OBS)** (`?preset=<Name>`), layout/typography/token controls (`$song`, `$artist`, `$album`, `$player`, `$status`, `*_upper`), dynamic album cover tinting, 5-style audio visualizer, and a syntax-highlighted auto-sizing CSS code editor. Also exports Snaz-compatible text/JSON files (`TrackArtist.txt`, `TrackSong.txt`, `TrackAlbum.txt`, `PlayingNow.txt`, and `track-info.json`).
 - **Time & Date**: `Time.txt` (`$h`, `$m`, `$s`, `$tt`, 12h/24h) and `Date.txt` (`$dd-MM-yy`, `$dd-MM-yyyy`, `$dd MMMM yyyy`, `$dddd dd MMMM yyyy`, localized EN/FR `$date`).
 - **Timers & Chronos**: `Countdown.txt` toward a target date/time (`$d`, `$h`, `$m`, `$s`), `ChronoDown.txt` (countdown timer with Start/Pause/Reset), and `ChronoUp.txt` (stopwatch with `$totalminutes`).
 - **System Info**: `SystemInfo.txt` (`$CPU_USAGE`, `$RAM_MB_AVAIL`, `$RAM_%_IN_USE`, `$RAM_%_AVAIL`, `$AMOUNT_PROCESSES`, `$UPLOAD`, `$DOWNLOAD`) via native Windows APIs and Linux `/proc`.
 - **Textline Changer & Dynamic Files**: sequential or random message rotation (`TextlineChanger.txt`) and periodic HTTP/HTTPS fetching of remote text or image files with custom headers.
 - **Discord Rich Presence**: Listening mode (`type: 2`, album shown without repeating the artist), automatic iTunes cover lookup (`- Topic` suffix cleanup and bounded cache), `SET_ACTIVITY` error detection, and automatic reconnection.
-- **Twitch (Helix API)**: live viewer counter (`TwitchViewers.txt` via `$viewers`), category search, and stream title/game updates with favorite presets.
+- **Twitch (Helix API)**: automatic localhost OAuth token capture (port 80 callback server with manual URL fallback), live viewer counter (`TwitchViewers.txt` via `$viewers`), category search, and stream title/game updates with favorite presets.
 - **Settings & Telemetry**: customizable output directory, launch on system startup (`--silent`), and live RAM monitoring for both daemon and GUI.
 
 ---
@@ -48,7 +48,7 @@ OSMV splits the background service from the graphical user interface to keep mem
 ```bat
 windows\build.bat
 ```
-Builds in Release mode, runs unit tests (`osmv_unit_tests`), and copies standalone `OSMV.exe` (~1.94 MB) to the project root.
+Builds cleanly from scratch (`--clean-first`) in Release mode, runs unit tests (`osmv_unit_tests`), and copies standalone `OSMV.exe` to the project root.
 
 ### Linux
 ```bash
@@ -66,9 +66,10 @@ Compiles and copies `./osmv` (daemon) and `./osmv-gui` (GUI) to the project root
 
 ## OBS Usage
 
-1. **Music Widget**: **Browser** source -> Local file `shared/index.html` (Width `500`, Height `140`).
-2. **Dynamic Text**: **Text (GDI+)** / **Text (FreeType 2)** source -> *Read from file* -> select the generated files in `shared/dynamic_text/` (or your custom directory).
-3. **Dynamic Images**: **Image** source -> select the image file saved by **Dynamic Files**.
+1. **Music Widget (Single Style)**: **Browser** source -> **Local file** -> select `shared/index.html` (Width `500`, Height `140`, or larger if positioned using Studio canvas margins).
+2. **Music Widget (Multi-Scene Presets)**: Save presets in **Now Playing -> Presets & Style -> Saved Presets (Multi-Scene OBS)**, click **Scene URL** (`file:///.../shared/index.html?preset=<Name>`), add an OBS **Browser** source with **Local file** unchecked, and paste the copied URL.
+3. **Dynamic Text**: **Text (GDI+)** / **Text (FreeType 2)** source -> *Read from file* -> select the generated files in `shared/dynamic_text/` (or your custom directory).
+4. **Dynamic Images**: **Image** source -> select the image file saved by **Dynamic Files**.
 
 ---
 

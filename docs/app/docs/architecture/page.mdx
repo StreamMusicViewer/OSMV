@@ -25,7 +25,7 @@ Keeping a graphical context and GPU driver buffers open in the background consum
   - If no daemon is running: starts the background daemon, initializes the system tray icon (`Shell_NotifyIconW` on Windows; D-Bus `StatusNotifierItem` + `com.canonical.dbusmenu` on Linux), and launches the GUI unless `--silent` is passed or *Open GUI on launch* is disabled.
   - If a daemon is already running: sends a `show_gui` IPC message to wake/open the GUI and exits.
 - **Headless Mode**: Closing the GUI window keeps the daemon running unobtrusively in the system tray.
-- **Quit**: Clicking **Quit OSMV** in the GUI or tray menu signals the daemon to shut down cleanly and resets `shared/current_song.json` to `null`.
+- **Quit**: Clicking **Quit OSMV** in the GUI or tray menu signals the daemon to shut down cleanly and clears `shared/current_song.json` and `shared/current_song.js` (`null`).
 
 ---
 

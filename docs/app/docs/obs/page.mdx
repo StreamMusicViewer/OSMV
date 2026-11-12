@@ -8,9 +8,11 @@ OSMV integrates with OBS Studio using a Browser Source for the animated music ca
 
 ## Adding the Music Widget (Browser Source)
 
-The music widget uses `shared/index.html` and `shared/style.css` to render cover art, scrolling track title/artist, dynamic background color extraction, and the optional audio visualizer.
+The music widget uses `shared/index.html`, `shared/style.css`, and `shared/widget.js` together with `shared/widget_config.json` / `.js` and `shared/current_song.json` / `.js` to render your **OBS Overlay Studio** configuration (cover art, custom text templates, marquee scrolling, transitions, dynamic colors, audio visualizer, and custom CSS).
 
-### Step-by-step Setup:
+Before adding it to OBS, design and test your overlay directly in **Now Playing** using the embedded **Live OBS Stage Preview** or click **Browser Preview** (`shared/preview.html`).
+
+### Option A: Single Default Style (Local File)
 
 1. Click the <Highlight>+</Highlight> icon in the **Sources** box of OBS Studio.
 2. Select <Highlight>Browser</Highlight>.
@@ -18,8 +20,17 @@ The music widget uses `shared/index.html` and `shared/style.css` to render cover
 4. In the properties window:
    - Check **Local file**.
    - Click **Browse** and select `shared/index.html` from your OSMV folder.
-   - Set **Width** to `500` and **Height** to `140`.
+   - Set **Width** and **Height** to give your widget and visualizer room (e.g., `600` x `200`).
 5. Click **OK**.
+
+### Option B: Multi-Scene Presets (`?preset=<Name>`)
+
+To display different styles or layouts per OBS scene (for example, `classic` during gameplay and `vinyl` on Just Chatting):
+
+1. In **Now Playing -> Presets & Style**, save your configured style under **Saved Presets (Multi-Scene OBS)** and click **Scene URL** (or append `?preset=<Name>` using a built-in preset like `classic`, `glass`, `neon`, `compact`, `vinyl`, `minimal`, `banner`).
+2. In OBS Browser Source properties, leave **Local file** unchecked.
+3. Paste the `file:///.../shared/index.html?preset=<Name>` URL into the **URL** field.
+4. Click **OK** (use **Refresh cache of current page** in OBS whenever you want to force an immediate reload).
 
 ---
 

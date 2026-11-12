@@ -4,15 +4,18 @@ OSMV exports live media metadata to `shared/current_song.json` for the built-in 
 
 ---
 
-## Primary JSON (`shared/current_song.json`)
+## Primary JSON & JS Fallback (`shared/current_song.json` & `shared/current_song.js`)
 
-When the player is stopped, closed, or exiting, OSMV writes `null` into `shared/current_song.json` so `shared/index.html` fades out cleanly.
+When playback stops, closes, or the module is turned off, OSMV clears/removes `shared/current_song.json` and `shared/current_song.js` so `shared/index.html` fades out cleanly.
+
+The companion `shared/current_song.js` defines `window.__OSMV_CURRENT_SONG`, allowing `shared/widget.js` to load track data when Chromium/OBS blocks `fetch()` on `file://` URLs with `?preset=<Name>` query strings.
 
 ```json filename="current_song.json"
 {
   "title": "Summer Of '69",
   "artist": "Bryan Adams",
   "album": "Reckless",
+  "player": "Spotify",
   "thumbnail": "iVBORw0KGgoAAAANSUhEUgAA...",
   "status": "playing",
   "dynamicColor": true,
@@ -25,11 +28,21 @@ When the player is stopped, closed, or exiting, OSMV writes `null` into `shared/
 - **`title`**: Name of the active song or video.
 - **`artist`**: Name of the musical artist or channel.
 - **`album`**: Album title (empty if unavailable).
+- **`player`**: Detected media player or browser application name.
 - **`thumbnail`**: Base64-encoded image bytes displayed directly by `shared/index.html`.
 - **`status`**: Playback state (`playing`, `paused`, `stopped`, or `closed`).
-- **`dynamicColor`**: Whether the OBS widget should adapt its background color to the cover art.
-- **`audioVisualizer`**: Whether the OBS widget visualizer bars are enabled.
+- **`dynamicColor`**: Whether the OBS widget adapts colors to the cover art.
+- **`audioVisualizer`**: Whether the OBS widget visualizer is enabled.
 - **`timestamp`**: Last update time in ISO 8601 (UTC).
+
+---
+
+## Overlay Studio Configuration (`shared/widget_config.json` & `shared/widget_config.js`)
+
+OBS Overlay Studio saves all styling, layout, visualizer, custom CSS, and multi-scene presets (`obsCustomPresets` in `shared/settings.json`) into `shared/widget_config.json` and `shared/widget_config.js` (`window.__OSMV_WIDGET_CONFIG`).
+
+- **`presets` map**: Contains all 7 built-in presets (`classic`, `glass`, `neon`, `compact`, `vinyl`, `minimal`, `banner`) alongside every saved custom preset so different OBS scenes can reference `shared/index.html?preset=<Name>`.
+- **CORS-safe `file://` loading**: `shared/widget.js` automatically falls back from `fetch()` to loading `shared/widget_config.js` and `shared/current_song.js` as `<script>` tags whenever running directly from local files.
 
 ---
 

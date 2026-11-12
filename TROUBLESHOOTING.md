@@ -19,6 +19,25 @@ This guide covers the most common issues when compiling or running OSMV v5.0.0 o
   - **Ubuntu / Debian**: `sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev` (on Ubuntu 24.04 or Debian 12 where `libglfw3-dev` is 3.3, also install `libwayland-dev libwayland-bin libxkbcommon-dev` so CMake can fetch GLFW 3.4 with native Wayland `app_id` support)
   - **Fedora**: `sudo dnf install cmake ninja-build gcc-c++ pkgconf-pkg-config dbus-devel libcurl-devel glfw-devel mesa-libGL-devel`
 
+### 3. Build errors after pulling header changes on Windows
+- **Description**: Localized MSVC compilers can omit header dependency tracking under Ninja.
+- **Solution**: `windows\build.bat` automatically runs `cmake --build windows\build --clean-first` so all translation units recompile consistently.
+
+---
+
+## OBS Browser Overlay Studio
+
+### 1. A `?preset=...` Scene URL Shows "Nothing currently playing"
+- **Description**: In OBS Browser Source properties, you pasted `file:///.../shared/index.html?preset=MyScene` with **Local file** unchecked, and the preset style loads while track info stays idle.
+- **Solutions**:
+  - Make sure you are running an updated `OSMV` daemon so both `shared/current_song.js` and `shared/widget_config.js` are generated alongside the `.json` files (Chromium/OBS blocks `fetch()` on `file://` URLs via CORS, so `shared/widget.js` loads `.js` script fallbacks automatically).
+  - Verify the preset name in `?preset=<Name>` matches a built-in preset (`classic`, `glass`, `neon`, `compact`, `vinyl`, `minimal`, `banner`) or one of your **Saved Presets** (case-insensitive).
+
+### 2. Custom CSS or Style Edits Do Not Update on a Scene URL
+- **Solutions**:
+  - If that scene uses `?preset=<Name>`, click **Update** next to your saved preset in **Now Playing -> Presets & Style -> Saved Presets (Multi-Scene OBS)** after modifying settings or Custom CSS.
+  - Enable **Enable custom CSS** in the **Custom CSS** tab before expecting rules to apply, and click **Refresh cache of current page** in OBS Browser Source properties.
+
 ---
 
 ## Linux Issues

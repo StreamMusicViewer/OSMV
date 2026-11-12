@@ -18,7 +18,7 @@ export function ModuleCards() {
       <Card
         title="Now Playing"
         icon={<Music className="w-5 h-5" />}
-        description="Real-time track detection (WinRT SMTC / D-Bus MPRIS) with OBS Browser widget and Snaz-style text/JSON exports."
+        description="Real-time track detection (WinRT SMTC / D-Bus MPRIS) with OBS Overlay Studio, multi-scene presets, and Snaz exports."
         variant="default"
         href="/docs/playing-now"
       />
@@ -66,7 +66,7 @@ export function ModuleCards() {
       <Card
         title="Twitch Helix"
         icon={<Tv className="w-5 h-5" />}
-        description="Export live viewer counts (TwitchViewers.txt), search categories, and update your stream title and game."
+        description="Automatic localhost OAuth, live viewer counts (TwitchViewers.txt), category search, and stream title/game updates."
         variant="default"
         href="/docs/twitch"
       />
