@@ -8,6 +8,7 @@ The **System Info** module samples CPU, RAM, running process count, and network 
 
 - **Windows**: `GetSystemTimes` (CPU %), `GlobalMemoryStatusEx` (RAM), `EnumProcesses` (process count), `GetIfTable2` (hardware network adapter RX/TX throughput).
 - **Linux**: `/proc/stat`, `/proc/meminfo`, `/proc/<pid>`, and `/proc/net/dev`.
+- **macOS**: Mach kernel (`host_cpu_load_info`, `host_statistics64`), `sysctl` (`HW_MEMSIZE`, `KERN_PROC`), and `getifaddrs` (network throughput).
 
 The update interval is configurable from **1 to 30 seconds**.
 

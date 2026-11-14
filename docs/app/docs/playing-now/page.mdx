@@ -9,6 +9,7 @@ The **Now Playing** module detects media playing on your system in real time, le
 The background daemon polls native OS media sessions every second:
 - **Windows**: Uses **C++/WinRT Global System Media Transport Controls (GSMTC)**. Automatically detects Spotify, Apple Music, web browsers (YouTube, Twitch), VLC, and other Windows media apps.
 - **Linux**: Uses direct **libdbus-1 MPRIS** (`org.mpris.MediaPlayer2.*`), preferring the active playing player.
+- **macOS**: Uses native **Cocoa AppleScript** (`NSAppleScript`). Automatically detects playback in **Apple Music** and **Spotify** without child process spawning overhead.
 
 Album artwork is only read, downloaded (`file://` / `http(s)://`), and Base64-encoded when the active song changes, minimizing CPU and memory overhead.
 

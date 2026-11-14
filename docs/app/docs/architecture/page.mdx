@@ -11,9 +11,10 @@ Keeping a graphical context and GPU driver buffers open in the background consum
 1. **The Background Daemon**:
    - **Windows (`OSMV.exe`)**: Single portable executable (~1.94 MB, no external DLLs). DirectX 11, DXGI, and DWM DLLs are marked `/DELAYLOAD` so the daemon never maps GPU libraries into memory, consuming only **~4.5 to 6 MB of private RAM**.
    - **Linux (`osmv`)**: Built as a standalone daemon binary that links only `libdbus-1`, `libcurl`, and `pthreads`—zero X11, Wayland, OpenGL, or GTK dependencies.
-   - Handles media polling (WinRT SMTC / D-Bus MPRIS), Discord IPC, Time/Date/Timers, native System Info sampling, Textline Changer, and a dedicated network worker thread for Dynamic Files and Twitch Helix so HTTP calls never stall local 1-second timers.
+   - **macOS (`osmv`)**: Lightweight background daemon linking Cocoa frameworks (`Cocoa`, `IOKit`, `CoreVideo`) and `libcurl`. Runs as an accessory app with a native menu bar item (`NSStatusItem`).
+   - Handles media polling (WinRT SMTC / D-Bus MPRIS / Cocoa AppleScript), Discord IPC, Time/Date/Timers, native System Info sampling, Textline Changer, and a dedicated network worker thread for Dynamic Files and Twitch Helix so HTTP calls never stall local 1-second timers.
 2. **The Configuration GUI (`--gui` / `osmv-gui`)**:
-   - Uses **Dear ImGui** (Win32 + DirectX 11 on Windows; GLFW + OpenGL 3 on Linux) with event-driven frame pacing (`0.25s` when idle, `0.016s` during animations or user input).
+   - Uses **Dear ImGui** (Win32 + DirectX 11 on Windows; GLFW + OpenGL 3 on Linux and macOS) with event-driven frame pacing (`0.25s` when idle, `0.016s` during animations or user input).
    - Uses **~51 to 58 MB of private RAM** on Windows while open.
    - Closing the window `[X]` or clicking **Mode Headless** / **Minimize to Tray** terminates the GUI process and releases 100% of its graphics memory back to the OS immediately.
 
@@ -21,10 +22,10 @@ Keeping a graphical context and GPU driver buffers open in the background consum
 
 ## Execution Flow
 
-- **Startup**: Running `OSMV.exe` (or `./osmv`) acquires a single-instance lock (`Local\osmv-daemon-instance-v3` on Windows, `flock` in `$XDG_RUNTIME_DIR` on Linux).
-  - If no daemon is running: starts the background daemon, initializes the system tray icon (`Shell_NotifyIconW` on Windows; D-Bus `StatusNotifierItem` + `com.canonical.dbusmenu` on Linux), and launches the GUI unless `--silent` is passed or *Open GUI on launch* is disabled.
+- **Startup**: Running `OSMV.exe` (or `./osmv`) acquires a single-instance lock (`Local\osmv-daemon-instance-v3` on Windows, `flock` in `$XDG_RUNTIME_DIR` or `/tmp` on POSIX/macOS).
+  - If no daemon is running: starts the background daemon, initializes the system tray / menu bar icon (`Shell_NotifyIconW` on Windows; D-Bus `StatusNotifierItem` + `com.canonical.dbusmenu` on Linux; `NSStatusBar` on macOS), and launches the GUI unless `--silent` is passed or *Open GUI on launch* is disabled.
   - If a daemon is already running: sends a `show_gui` IPC message to wake/open the GUI and exits.
-- **Headless Mode**: Closing the GUI window keeps the daemon running unobtrusively in the system tray.
+- **Headless Mode**: Closing the GUI window keeps the daemon running unobtrusively in the system tray or menu bar.
 - **Quit**: Clicking **Quit OSMV** in the GUI or tray menu signals the daemon to shut down cleanly and clears `shared/current_song.json` and `shared/current_song.js` (`null`).
 
 ---
@@ -34,6 +35,7 @@ Keeping a graphical context and GPU driver buffers open in the background consum
 The daemon and GUI communicate over a length-prefixed JSON local IPC channel:
 - **Windows**: Named Pipe `\\.\pipe\osmv-ipc-v3`
 - **Linux**: Unix Domain Socket `$XDG_RUNTIME_DIR/osmv-ipc-v3.sock` (fallback `/tmp/osmv-ipc-v3-<uid>.sock`)
+- **macOS**: Unix Domain Socket `/tmp/osmv-ipc-v3-<uid>.sock`
 
 Key performance optimizations:
 - **Instant IPC Control**: The GUI polls `get_state` every `500 ms` only while open and sends `reload_settings`, `chrono_down`, `chrono_up`, `textline_next`, `twitch_search_games`, `twitch_update_channel`, and `quit` commands without duplicating WinRT/MPRIS polling in the GUI process.

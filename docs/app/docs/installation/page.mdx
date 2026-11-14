@@ -34,6 +34,17 @@ sudo apt install cmake ninja-build g++ pkg-config libdbus-1-dev libcurl4-openssl
 sudo dnf install cmake ninja-build gcc-c++ pkgconf-pkg-config dbus-devel libcurl-devel glfw-devel mesa-libGL-devel
 ```
 
+### macOS (Apple Silicon & Intel)
+
+1. Install the **Xcode Command Line Tools**:
+   ```bash
+   xcode-select --install
+   ```
+2. Install **CMake**, **Ninja**, and **GLFW 3** using Homebrew:
+   ```bash
+   brew install cmake ninja glfw
+   ```
+
 ### Windows
 
 1. Install **Visual Studio 2022/2026 Build Tools** (select the **Desktop development with C++** workload and the **Windows 10/11 SDK** for C++/WinRT headers).
@@ -53,6 +64,20 @@ chmod +x linux/build.sh
 ./linux/build.sh
 ```
 This outputs `./osmv` (daemon) and `./osmv-gui` (GUI) at the project root.
+
+### On macOS:
+```bash
+cmake -B macos/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/homebrew;/usr/local"
+cmake --build macos/build -j
+ctest --test-dir macos/build --output-on-failure
+```
+This compiles `./macos/build/osmv` (daemon with native menu bar icon) and `./macos/build/osmv-gui` (Dear ImGui interface with OpenGL 3 Core).
+
+If running pre-built release binaries downloaded from GitHub, clear the quarantine attribute if prompted by Gatekeeper:
+```bash
+xattr -cr .
+./osmv-gui
+```
 
 ### On Windows:
 ```cmd
