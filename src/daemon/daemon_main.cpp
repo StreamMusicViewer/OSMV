@@ -34,8 +34,8 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <timeapi.h>
 #include <windows.h>
+#include <timeapi.h>
 #pragma comment(lib, "winmm.lib")
 #endif
 
