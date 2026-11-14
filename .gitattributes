@@ -1,0 +1,17 @@
+# Include all dependencies, documentation, and markdown in GitHub language statistics
+* linguist-vendored=false
+* linguist-documentation=false
+* linguist-generated=false
+
+deps/** linguist-vendored=false
+deps/** linguist-documentation=false
+third_party/** linguist-vendored=false
+src/third_party/** linguist-vendored=false
+docs/** linguist-documentation=false
+docs/** linguist-vendored=false
+
+*.md linguist-detectable=true
+*.mdx linguist-detectable=true
+*.json linguist-detectable=true
+*.yml linguist-detectable=true
+*.yaml linguist-detectable=true
