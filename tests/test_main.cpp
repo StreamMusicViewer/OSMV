@@ -84,6 +84,17 @@ int main() {
         CHECK(fmt::format_chrono_down(0, "$h:$m:$s", "Break over", true) == "Break over");
         CHECK(fmt::format_chrono_down(65100, "$h:$m:$s", "Break over", true) == "00:01:06");
 
+        // Test exact 1-second boundary behavior for Chrono Down
+        CHECK(fmt::format_chrono_down(10000, "$s", "0", false) == "10");
+        CHECK(fmt::format_chrono_down(9001, "$s", "0", false) == "10");
+        CHECK(fmt::format_chrono_down(9000, "$s", "0", false) == "9");
+        CHECK(fmt::format_chrono_down(8999, "$s", "0", false) == "9");
+        CHECK(fmt::format_chrono_down(1001, "$s", "0", false) == "2");
+        CHECK(fmt::format_chrono_down(1000, "$s", "0", false) == "1");
+        CHECK(fmt::format_chrono_down(1, "$s", "0", false) == "1");
+        CHECK(fmt::format_chrono_down(0, "$s", "Done!", false) == "Done!");
+        CHECK(fmt::format_chrono_down(-100, "$s", "Done!", false) == "Done!");
+
         // 1h 15m 35s = 4535s
         CHECK(fmt::format_chrono_up(4535000, "$totalminutes:$s", true) == "75:35");
         CHECK(fmt::format_chrono_up(4535000, "$h:$m:$s", false) == "1:15:35");

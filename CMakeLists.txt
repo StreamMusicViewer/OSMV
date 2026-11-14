@@ -165,6 +165,7 @@ if(WIN32)
         dxgi
         dwmapi
         delayimp
+        winmm
     )
     if(MSVC)
         target_compile_definitions(osmv_common PUBLIC UNICODE _UNICODE)

@@ -157,25 +157,66 @@ void render_view_timers(GuiAppState& st) {
         ImGui::TextColored(c.text_sub, "%s", tr(lang, "duration_hms"));
         ImGui::PopFont();
         ImGui::SetNextItemWidth(60);
-        if (ImGui::InputInt("##cdown_h", &cdown.initial_hours, 0, 0)) { cdown.initial_hours = std::clamp(cdown.initial_hours, 0, 999); st.mark_changed_immediate(); }
+        if (ImGui::InputInt("##cdown_h", &cdown.initial_hours, 0, 0)) {
+            cdown.initial_hours = std::clamp(cdown.initial_hours, 0, 999);
+            if (!st.snap.chrono_down_running) { st.chrono_down_sync_rem_ms = 0; st.snap.chrono_down_remaining_ms = 0; }
+            st.mark_changed_immediate();
+        }
         ImGui::SameLine(0, 4);
         ImGui::SetNextItemWidth(60);
-        if (ImGui::InputInt("##cdown_m", &cdown.initial_minutes, 0, 0)) { cdown.initial_minutes = std::clamp(cdown.initial_minutes, 0, 59); st.mark_changed_immediate(); }
+        if (ImGui::InputInt("##cdown_m", &cdown.initial_minutes, 0, 0)) {
+            cdown.initial_minutes = std::clamp(cdown.initial_minutes, 0, 59);
+            if (!st.snap.chrono_down_running) { st.chrono_down_sync_rem_ms = 0; st.snap.chrono_down_remaining_ms = 0; }
+            st.mark_changed_immediate();
+        }
         ImGui::SameLine(0, 4);
         ImGui::SetNextItemWidth(60);
-        if (ImGui::InputInt("##cdown_s", &cdown.initial_seconds, 0, 0)) { cdown.initial_seconds = std::clamp(cdown.initial_seconds, 0, 59); st.mark_changed_immediate(); }
+        if (ImGui::InputInt("##cdown_s", &cdown.initial_seconds, 0, 0)) {
+            cdown.initial_seconds = std::clamp(cdown.initial_seconds, 0, 59);
+            if (!st.snap.chrono_down_running) { st.chrono_down_sync_rem_ms = 0; st.snap.chrono_down_remaining_ms = 0; }
+            st.mark_changed_immediate();
+        }
+
+        auto cdown_configured_ms = [&]() -> int64_t {
+            return (static_cast<int64_t>(cdown.initial_hours) * 3600LL +
+                    static_cast<int64_t>(cdown.initial_minutes) * 60LL +
+                    static_cast<int64_t>(cdown.initial_seconds)) * 1000LL;
+        };
 
         ImGui::SameLine(0, 16);
         if (st.snap.chrono_down_running) {
             std::string plbl = std::string(ICON_FA_PAUSE " ") + tr(lang, "pause");
-            if (subtle_button(c, plbl.c_str())) send_timer_cmd("chrono_down", "pause");
+            if (subtle_button(c, plbl.c_str())) {
+                send_timer_cmd("chrono_down", "pause");
+                auto now = std::chrono::steady_clock::now();
+                int64_t elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - st.chrono_down_sync_tp).count();
+                st.chrono_down_sync_rem_ms = std::max<int64_t>(0, st.chrono_down_sync_rem_ms - elapsed);
+                st.snap.chrono_down_remaining_ms = st.chrono_down_sync_rem_ms;
+                st.snap.chrono_down_running = false;
+                fetch_daemon_state(st);
+            }
         } else {
             std::string slbl = std::string(ICON_FA_PLAY " ") + tr(lang, "start");
-            if (accent_button(c, slbl.c_str())) send_timer_cmd("chrono_down", "start");
+            if (accent_button(c, slbl.c_str())) {
+                send_timer_cmd("chrono_down", "start");
+                st.snap.chrono_down_running = true;
+                st.chrono_down_sync_tp = std::chrono::steady_clock::now();
+                if (st.chrono_down_sync_rem_ms <= 0) {
+                    st.chrono_down_sync_rem_ms = cdown_configured_ms();
+                }
+                st.snap.chrono_down_remaining_ms = st.chrono_down_sync_rem_ms;
+                fetch_daemon_state(st);
+            }
         }
         ImGui::SameLine();
         std::string rlbl = std::string(ICON_FA_ROTATE_LEFT " ") + tr(lang, "reset");
-        if (subtle_button(c, rlbl.c_str())) send_timer_cmd("chrono_down", "reset");
+        if (subtle_button(c, rlbl.c_str())) {
+            send_timer_cmd("chrono_down", "reset");
+            st.snap.chrono_down_running = false;
+            st.chrono_down_sync_rem_ms = cdown_configured_ms();
+            st.snap.chrono_down_remaining_ms = st.chrono_down_sync_rem_ms;
+            fetch_daemon_state(st);
+        }
 
         if (ImGui::BeginTable("##cdown_fmt_tbl", 2, ImGuiTableFlags_SizingStretchSame)) {
             ImGui::TableNextColumn();
@@ -199,13 +240,24 @@ void render_view_timers(GuiAppState& st) {
         ImGui::SameLine();
         if (token_chip(ui, "$s", cdown.format, "Seconds")) st.mark_changed_immediate();
 
-        std::string cdown_prev = !st.snap.chrono_down_preview.empty()
-                                     ? st.snap.chrono_down_preview
-                                     : fmt::format_chrono_down(
-                                           (static_cast<int64_t>(cdown.initial_hours) * 3600LL +
-                                            static_cast<int64_t>(cdown.initial_minutes) * 60LL +
-                                            static_cast<int64_t>(cdown.initial_seconds)) * 1000LL,
-                                           cdown.format, cdown.done_text, cdown.pad_zeros);
+        int64_t cdown_cur_ms = 0;
+        if (st.snap.chrono_down_running) {
+            auto now = std::chrono::steady_clock::now();
+            int64_t elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - st.chrono_down_sync_tp).count();
+            cdown_cur_ms = std::max<int64_t>(0, st.chrono_down_sync_rem_ms - elapsed);
+            if (cdown_cur_ms == 0) {
+                st.snap.chrono_down_running = false;
+            }
+            ui.animating = true;
+        } else {
+            cdown_cur_ms = st.chrono_down_sync_rem_ms > 0
+                               ? st.chrono_down_sync_rem_ms
+                               : (st.snap.chrono_down_remaining_ms > 0
+                                      ? st.snap.chrono_down_remaining_ms
+                                      : cdown_configured_ms());
+        }
+        std::string cdown_prev = fmt::format_chrono_down(
+            cdown_cur_ms, cdown.format, cdown.done_text, cdown.pad_zeros);
         live_preview_box(ui, tr(lang, "live_preview"), cdown_prev);
         copy_path_row(ui, "chrono_down_txt", tr(lang, "file_path"), os::path_to_utf8(dyn / "ChronoDown.txt"), lang);
     }
@@ -231,25 +283,66 @@ void render_view_timers(GuiAppState& st) {
         ImGui::TextColored(c.text_sub, "%s", tr(lang, "start_hms"));
         ImGui::PopFont();
         ImGui::SetNextItemWidth(60);
-        if (ImGui::InputInt("##cup_h", &cup.start_hours, 0, 0)) { cup.start_hours = std::clamp(cup.start_hours, 0, 999); st.mark_changed_immediate(); }
+        if (ImGui::InputInt("##cup_h", &cup.start_hours, 0, 0)) {
+            cup.start_hours = std::clamp(cup.start_hours, 0, 999);
+            if (!st.snap.chrono_up_running) { st.chrono_up_sync_el_ms = 0; st.snap.chrono_up_elapsed_ms = 0; }
+            st.mark_changed_immediate();
+        }
         ImGui::SameLine(0, 4);
         ImGui::SetNextItemWidth(60);
-        if (ImGui::InputInt("##cup_m", &cup.start_minutes, 0, 0)) { cup.start_minutes = std::clamp(cup.start_minutes, 0, 59); st.mark_changed_immediate(); }
+        if (ImGui::InputInt("##cup_m", &cup.start_minutes, 0, 0)) {
+            cup.start_minutes = std::clamp(cup.start_minutes, 0, 59);
+            if (!st.snap.chrono_up_running) { st.chrono_up_sync_el_ms = 0; st.snap.chrono_up_elapsed_ms = 0; }
+            st.mark_changed_immediate();
+        }
         ImGui::SameLine(0, 4);
         ImGui::SetNextItemWidth(60);
-        if (ImGui::InputInt("##cup_s", &cup.start_seconds, 0, 0)) { cup.start_seconds = std::clamp(cup.start_seconds, 0, 59); st.mark_changed_immediate(); }
+        if (ImGui::InputInt("##cup_s", &cup.start_seconds, 0, 0)) {
+            cup.start_seconds = std::clamp(cup.start_seconds, 0, 59);
+            if (!st.snap.chrono_up_running) { st.chrono_up_sync_el_ms = 0; st.snap.chrono_up_elapsed_ms = 0; }
+            st.mark_changed_immediate();
+        }
+
+        auto cup_start_ms = [&]() -> int64_t {
+            return (static_cast<int64_t>(cup.start_hours) * 3600LL +
+                    static_cast<int64_t>(cup.start_minutes) * 60LL +
+                    static_cast<int64_t>(cup.start_seconds)) * 1000LL;
+        };
 
         ImGui::SameLine(0, 16);
         if (st.snap.chrono_up_running) {
             std::string plbl = std::string(ICON_FA_PAUSE " ") + tr(lang, "pause");
-            if (subtle_button(c, plbl.c_str())) send_timer_cmd("chrono_up", "pause");
+            if (subtle_button(c, plbl.c_str())) {
+                send_timer_cmd("chrono_up", "pause");
+                auto now = std::chrono::steady_clock::now();
+                int64_t elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - st.chrono_up_sync_tp).count();
+                st.chrono_up_sync_el_ms += elapsed;
+                st.snap.chrono_up_elapsed_ms = st.chrono_up_sync_el_ms;
+                st.snap.chrono_up_running = false;
+                fetch_daemon_state(st);
+            }
         } else {
             std::string slbl = std::string(ICON_FA_PLAY " ") + tr(lang, "start");
-            if (accent_button(c, slbl.c_str())) send_timer_cmd("chrono_up", "start");
+            if (accent_button(c, slbl.c_str())) {
+                send_timer_cmd("chrono_up", "start");
+                st.snap.chrono_up_running = true;
+                st.chrono_up_sync_tp = std::chrono::steady_clock::now();
+                if (st.chrono_up_sync_el_ms == 0 && cup_start_ms() > 0) {
+                    st.chrono_up_sync_el_ms = cup_start_ms();
+                }
+                st.snap.chrono_up_elapsed_ms = st.chrono_up_sync_el_ms;
+                fetch_daemon_state(st);
+            }
         }
         ImGui::SameLine();
         std::string rlbl = std::string(ICON_FA_ROTATE_LEFT " ") + tr(lang, "reset");
-        if (subtle_button(c, rlbl.c_str())) send_timer_cmd("chrono_up", "reset");
+        if (subtle_button(c, rlbl.c_str())) {
+            send_timer_cmd("chrono_up", "reset");
+            st.snap.chrono_up_running = false;
+            st.chrono_up_sync_el_ms = cup_start_ms();
+            st.snap.chrono_up_elapsed_ms = st.chrono_up_sync_el_ms;
+            fetch_daemon_state(st);
+        }
 
         ImGui::PushFont(ui.font_small);
         ImGui::TextColored(c.text_sub, "%s", tr(lang, "format"));
@@ -267,13 +360,20 @@ void render_view_timers(GuiAppState& st) {
         ImGui::SameLine();
         if (token_chip(ui, "$totalminutes", cup.format, "Total minutes")) st.mark_changed_immediate();
 
-        std::string cup_prev = !st.snap.chrono_up_preview.empty()
-                                   ? st.snap.chrono_up_preview
-                                   : fmt::format_chrono_up(
-                                         (static_cast<int64_t>(cup.start_hours) * 3600LL +
-                                          static_cast<int64_t>(cup.start_minutes) * 60LL +
-                                          static_cast<int64_t>(cup.start_seconds)) * 1000LL,
-                                         cup.format, cup.pad_zeros);
+        int64_t cup_cur_ms = 0;
+        if (st.snap.chrono_up_running) {
+            auto now = std::chrono::steady_clock::now();
+            int64_t elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - st.chrono_up_sync_tp).count();
+            cup_cur_ms = st.chrono_up_sync_el_ms + elapsed;
+            ui.animating = true;
+        } else {
+            cup_cur_ms = st.chrono_up_sync_el_ms > 0
+                             ? st.chrono_up_sync_el_ms
+                             : (st.snap.chrono_up_elapsed_ms > 0
+                                    ? st.snap.chrono_up_elapsed_ms
+                                    : cup_start_ms());
+        }
+        std::string cup_prev = fmt::format_chrono_up(cup_cur_ms, cup.format, cup.pad_zeros);
         live_preview_box(ui, tr(lang, "live_preview"), cup_prev);
         copy_path_row(ui, "chrono_up_txt", tr(lang, "file_path"), os::path_to_utf8(dyn / "ChronoUp.txt"), lang);
     }

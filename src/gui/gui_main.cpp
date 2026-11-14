@@ -27,6 +27,23 @@
 
 namespace osmv::gui {
 
+void fetch_daemon_state(GuiAppState& st) {
+    std::string resp;
+    if (!ipc::send_request(R"({"cmd":"get_state"})", resp, 250)) return;
+    try {
+        auto j = nlohmann::json::parse(resp);
+        if (j.value("ok", false) && j.contains("state")) {
+            auto now = std::chrono::steady_clock::now();
+            cfg::snapshot_from_json_string(j["state"].dump(), st.snap);
+            st.chrono_down_sync_tp = now;
+            st.chrono_down_sync_rem_ms = st.snap.chrono_down_remaining_ms;
+            st.chrono_up_sync_tp = now;
+            st.chrono_up_sync_el_ms = st.snap.chrono_up_elapsed_ms;
+        }
+    } catch (...) {
+    }
+}
+
 namespace {
 void save_and_notify_daemon(GuiAppState& st) {
     cfg::save_settings(st.settings);
@@ -34,18 +51,6 @@ void save_and_notify_daemon(GuiAppState& st) {
     ipc::send_request(R"({"cmd":"reload_settings"})", resp, 300);
     st.settings_dirty = false;
     st.saved_until = ImGui::GetTime() + 1.8;
-}
-
-void fetch_daemon_state(GuiAppState& st) {
-    std::string resp;
-    if (!ipc::send_request(R"({"cmd":"get_state"})", resp, 250)) return;
-    try {
-        auto j = nlohmann::json::parse(resp);
-        if (j.value("ok", false) && j.contains("state")) {
-            cfg::snapshot_from_json_string(j["state"].dump(), st.snap);
-        }
-    } catch (...) {
-    }
 }
 
 void ensure_daemon_running() {
@@ -350,11 +355,13 @@ int run_gui() {
     auto last_poll = std::chrono::steady_clock::now();
 
     while (!backend->should_close() && !st.close_gui_requested && !st.quit_daemon_requested) {
-        double wait_sec = (st.ui.animating || backend->has_active_interaction()) ? 0.016 : 0.25;
+        bool timers_running = st.snap.chrono_down_running || st.snap.chrono_up_running;
+        double wait_sec = (st.ui.animating || backend->has_active_interaction() || timers_running) ? 0.016 : 0.25;
         backend->wait_events(wait_sec);
 
         auto now = std::chrono::steady_clock::now();
-        if (now - last_poll >= std::chrono::milliseconds(500)) {
+        auto poll_interval = timers_running ? std::chrono::milliseconds(250) : std::chrono::milliseconds(500);
+        if (now - last_poll >= poll_interval) {
             last_poll = now;
             fetch_daemon_state(st);
             sync_album_texture(st);

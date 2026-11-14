@@ -5,6 +5,8 @@
 #include "twitch_oauth.hpp"
 #include "common/types.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -52,6 +54,12 @@ struct GuiAppState {
     bool quit_daemon_requested = false;
     bool close_gui_requested = false;
 
+    // Timers interpolation
+    std::chrono::steady_clock::time_point chrono_down_sync_tp{};
+    int64_t chrono_down_sync_rem_ms = 0;
+    std::chrono::steady_clock::time_point chrono_up_sync_tp{};
+    int64_t chrono_up_sync_el_ms = 0;
+
     // Textline multiline editor cache
     std::string textline_buf;
     bool textline_buf_init = false;
@@ -73,6 +81,8 @@ struct GuiAppState {
     void mark_changed_immediate();
     void mark_changed_debounced();
 };
+
+void fetch_daemon_state(GuiAppState& st);
 
 void render_view_now_playing(GuiAppState& st);
 void render_obs_widget_preview(GuiAppState& st);
