@@ -88,8 +88,40 @@ jobs:
           name: release-linux
           path: OSMV_*_linux.tar.gz
 
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: brew install ninja glfw
+
+      - name: Configure, build and test (Release)
+        run: |
+          cmake -B macos/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/homebrew;/usr/local"
+          cmake --build macos/build -j
+          ctest --test-dir macos/build --output-on-failure
+
+      - name: Package macOS release archive
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          STAGE="dist/OSMV_${TAG}_macos"
+          mkdir -p "$STAGE/shared"
+          cp macos/build/osmv macos/build/osmv-gui "$STAGE/"
+          chmod +x "$STAGE/osmv" "$STAGE/osmv-gui"
+          cp LICENSE README.md TROUBLESHOOTING.md CHANGELOG.md "$STAGE/"
+          cp shared/index.html shared/preview.html shared/style.css shared/widget.js "$STAGE/shared/"
+          tar -C dist -czf "OSMV_${TAG}_macos.tar.gz" "OSMV_${TAG}_macos"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: OSMV_*_macos.tar.gz
+
   publish-release:
-    needs: [build-windows, build-linux]
+    needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -115,4 +147,3 @@ jobs:
           generate_release_notes: true
           files: |
             release-artifacts/*
-

@@ -21,6 +21,9 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 #endif
 
 namespace osmv::ipc {
@@ -229,6 +232,10 @@ void IpcServer::run_loop() {
         tv.tv_sec = 1;
         setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
         setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+#ifdef SO_NOSIGPIPE
+        int nosig = 1;
+        setsockopt(client, SOL_SOCKET, SO_NOSIGPIPE, &nosig, sizeof(nosig));
+#endif
 
         std::string req;
         if (recv_frame_posix(client, req) && handler_) {
@@ -260,6 +267,10 @@ bool send_request(const std::string& request_json,
 #else
     int fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) return false;
+#ifdef SO_NOSIGPIPE
+    int nosig = 1;
+    setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &nosig, sizeof(nosig));
+#endif
 
     timeval tv{};
     tv.tv_sec = timeout_ms / 1000;

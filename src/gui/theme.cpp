@@ -104,6 +104,10 @@ void load_fonts(float scale, UiContext& ui) {
         "C:\\Windows\\Fonts\\CascadiaMono.ttf",
         "C:\\Windows\\Fonts\\consola.ttf",
         "C:\\Windows\\Fonts\\lucon.ttf"
+#elif defined(__APPLE__)
+        "/System/Library/Fonts/Monaco.ttf",
+        "/System/Library/Fonts/SFNSMono.ttf",
+        "/Library/Fonts/Courier New.ttf"
 #else
         "/usr/share/fonts/TTF/JetBrainsMono-Regular.ttf",
         "/usr/share/fonts/truetype/jetbrains-mono/JetBrainsMono-Regular.ttf",

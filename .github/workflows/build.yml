@@ -1,0 +1,120 @@
+name: Build OSMV
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC toolchain
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Set up Ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          version: 1.11.1
+
+      - name: Configure and build (Release)
+        shell: pwsh
+        run: |
+          cmake -B windows/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build windows/build --clean-first -j
+          ctest --test-dir windows/build --output-on-failure
+
+      - name: Package Windows artifact
+        shell: pwsh
+        run: |
+          $stage = "dist/win"
+          New-Item -ItemType Directory -Force -Path "$stage/shared" | Out-Null
+          Copy-Item "windows/build/OSMV.exe" "$stage/OSMV.exe"
+          Copy-Item "LICENSE","README.md","TROUBLESHOOTING.md","CHANGELOG.md" "$stage/"
+          Copy-Item "shared/index.html","shared/preview.html","shared/style.css","shared/widget.js" "$stage/shared/"
+          Compress-Archive -Path "$stage/*" -DestinationPath "OSMV-windows-x64.zip" -CompressionLevel Optimal -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OSMV-windows-x64
+          path: OSMV-windows-x64.zip
+
+  build-linux:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++ pkg-config \
+            libdbus-1-dev libcurl4-openssl-dev libglfw3-dev libgl-dev \
+            libwayland-dev libwayland-bin libxkbcommon-dev
+
+      - name: Configure, build and test (Release)
+        run: |
+          cmake -B linux/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build linux/build -j"$(nproc)"
+          ctest --test-dir linux/build --output-on-failure
+
+      - name: Package Linux artifact
+        run: |
+          STAGE="dist/OSMV_linux"
+          mkdir -p "$STAGE/shared" "$STAGE/linux"
+          cp linux/build/osmv linux/build/osmv-gui "$STAGE/"
+          chmod +x "$STAGE/osmv" "$STAGE/osmv-gui"
+          cp LICENSE README.md TROUBLESHOOTING.md CHANGELOG.md "$STAGE/"
+          cp linux/io.github.streammusicviewer.OSMV.desktop linux/io.github.streammusicviewer.OSMV.png "$STAGE/linux/"
+          cp shared/index.html shared/preview.html shared/style.css shared/widget.js "$STAGE/shared/"
+          tar -C dist -czf "OSMV-linux-x86_64.tar.gz" "OSMV_linux"
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OSMV-linux-x86_64
+          path: OSMV-linux-x86_64.tar.gz
+
+  build-macos:
+    name: macOS arm64
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: brew install ninja glfw
+
+      - name: Configure, build and test (Release)
+        run: |
+          cmake -B macos/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/homebrew;/usr/local"
+          cmake --build macos/build -j
+          ctest --test-dir macos/build --output-on-failure
+
+      - name: Package macOS artifact
+        run: |
+          STAGE="dist/OSMV_macos"
+          mkdir -p "$STAGE/shared"
+          cp macos/build/osmv macos/build/osmv-gui "$STAGE/"
+          chmod +x "$STAGE/osmv" "$STAGE/osmv-gui"
+          cp LICENSE README.md TROUBLESHOOTING.md CHANGELOG.md "$STAGE/"
+          cp shared/index.html shared/preview.html shared/style.css shared/widget.js "$STAGE/shared/"
+          tar -C dist -czf "OSMV-macos-arm64.tar.gz" "OSMV_macos"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OSMV-macos-arm64
+          path: OSMV-macos-arm64.tar.gz

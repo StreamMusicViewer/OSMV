@@ -57,6 +57,7 @@ bool has_system_desktop_entry(const std::filesystem::path& data_home) {
     return false;
 }
 
+#ifndef __APPLE__
 // Wayland compositors resolve window icons from the .desktop file matching app_id.
 // When running locally without a system install, register a user-local icon and .desktop entry.
 void ensure_wayland_desktop_icon() {
@@ -105,6 +106,7 @@ void ensure_wayland_desktop_icon() {
     }
     cfg::write_file_text(desktop_path, expected);
 }
+#endif
 
 class LinuxGlfwBackend final : public GuiBackend {
 public:
@@ -112,11 +114,20 @@ public:
 
     bool init(const char* title, int width, int height, bool dark_titlebar) override {
         (void)dark_titlebar;
+#ifndef __APPLE__
         ensure_wayland_desktop_icon();
+#endif
         if (!glfwInit()) return false;
 
+#ifdef __APPLE__
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#else
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#endif
 #ifdef GLFW_WAYLAND_APP_ID
         glfwWindowHintString(GLFW_WAYLAND_APP_ID, kWaylandAppId);
 #endif
@@ -137,7 +148,9 @@ public:
         // Set window icon from embedded PNG (Wayland derives icons from .desktop via app_id;
         // calling glfwSetWindowIcon on Wayland triggers GLFW_PLATFORM_ERROR).
         bool allow_window_icon = true;
-#if defined(GLFW_PLATFORM_WAYLAND) && defined(GLFW_VERSION_MINOR) && \
+#if defined(__APPLE__)
+        allow_window_icon = false;
+#elif defined(GLFW_PLATFORM_WAYLAND) && defined(GLFW_VERSION_MINOR) && \
     (GLFW_VERSION_MAJOR > 3 || (GLFW_VERSION_MAJOR == 3 && GLFW_VERSION_MINOR >= 4))
         allow_window_icon = (glfwGetPlatform() != GLFW_PLATFORM_WAYLAND);
 #endif
@@ -180,7 +193,11 @@ public:
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
         ImGui_ImplGlfw_InitForOpenGL(window_, true);
+#ifdef __APPLE__
+        ImGui_ImplOpenGL3_Init("#version 150");
+#else
         ImGui_ImplOpenGL3_Init("#version 130");
+#endif
 
         last_interaction_ = std::chrono::steady_clock::now();
         return true;

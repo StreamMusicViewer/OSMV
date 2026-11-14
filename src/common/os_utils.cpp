@@ -22,6 +22,10 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#include <mach/mach.h>
+#endif
 #endif
 
 namespace osmv::os {
@@ -74,6 +78,14 @@ std::filesystem::path exe_path() {
         }
         buf.resize(buf.size() * 2);
     }
+#elif defined(__APPLE__)
+    char buf[4096];
+    uint32_t size = sizeof(buf);
+    if (_NSGetExecutablePath(buf, &size) == 0) {
+        std::error_code ec;
+        return std::filesystem::canonical(buf, ec);
+    }
+    return {};
 #else
     char buf[4096];
     ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
@@ -107,6 +119,20 @@ void open_url_in_browser(const std::string& url) {
 #ifdef _WIN32
     std::wstring wurl = utf8_to_wide(url);
     ShellExecuteW(nullptr, L"open", wurl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+#elif defined(__APPLE__)
+    pid_t pid = fork();
+    if (pid == 0) {
+        setsid();
+        int devnull = open("/dev/null", O_RDWR);
+        if (devnull >= 0) {
+            dup2(devnull, STDIN_FILENO);
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
+        execlp("open", "open", url.c_str(), static_cast<char*>(nullptr));
+        _exit(127);
+    }
 #else
     pid_t pid = fork();
     if (pid == 0) {
@@ -191,6 +217,12 @@ bool is_autostart_enabled() {
     bool exists = (RegQueryValueExW(hKey, L"OSMV", nullptr, &type, nullptr, &size) == ERROR_SUCCESS);
     RegCloseKey(hKey);
     return exists;
+#elif defined(__APPLE__)
+    const char* home = std::getenv("HOME");
+    if (!home) return false;
+    std::filesystem::path plist = std::filesystem::path(home) / "Library/LaunchAgents/io.github.streammusicviewer.osmv.plist";
+    std::error_code ec;
+    return std::filesystem::exists(plist, ec);
 #else
     const char* home = std::getenv("HOME");
     if (!home) return false;
@@ -220,6 +252,35 @@ bool set_autostart(bool enabled) {
     }
     RegCloseKey(hKey);
     return ok;
+#elif defined(__APPLE__)
+    const char* home = std::getenv("HOME");
+    if (!home) return false;
+    std::filesystem::path dir = std::filesystem::path(home) / "Library/LaunchAgents";
+    std::filesystem::path plist = dir / "io.github.streammusicviewer.osmv.plist";
+    std::error_code ec;
+    if (!enabled) {
+        std::filesystem::remove(plist, ec);
+        return true;
+    }
+    std::filesystem::create_directories(dir, ec);
+    std::ofstream f(plist, std::ios::trunc);
+    if (!f) return false;
+    f << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+         "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+         "<plist version=\"1.0\">\n"
+         "<dict>\n"
+         "    <key>Label</key>\n"
+         "    <string>io.github.streammusicviewer.osmv</string>\n"
+         "    <key>ProgramArguments</key>\n"
+         "    <array>\n"
+         "        <string>" << exe_path().string() << "</string>\n"
+         "        <string>--silent</string>\n"
+         "    </array>\n"
+         "    <key>RunAtLoad</key>\n"
+         "    <true/>\n"
+         "</dict>\n"
+         "</plist>\n";
+    return true;
 #else
     const char* home = std::getenv("HOME");
     if (!home) return false;
@@ -251,6 +312,14 @@ uint64_t get_process_memory_kb() {
                              reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc),
                              sizeof(pmc))) {
         return static_cast<uint64_t>(pmc.PrivateUsage / 1024);
+    }
+    return 0;
+#elif defined(__APPLE__)
+    struct mach_task_basic_info info;
+    mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                  reinterpret_cast<task_info_t>(&info), &count) == KERN_SUCCESS) {
+        return static_cast<uint64_t>(info.resident_size / 1024);
     }
     return 0;
 #else

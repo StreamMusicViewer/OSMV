@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(OSMV VERSION 5.1.0 LANGUAGES CXX)
 
+if(APPLE)
+    enable_language(OBJCXX)
+    set(CMAKE_OBJCXX_STANDARD 20)
+    set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+    set(CMAKE_OBJCXX_EXTENSIONS OFF)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -93,6 +100,13 @@ if(WIN32)
         src/daemon/sysinfo_win.cpp
         src/daemon/tray_win.cpp
     )
+elseif(APPLE)
+    list(APPEND OSMV_DAEMON_SOURCES
+        src/daemon/media_macos.mm
+        src/daemon/sysinfo_macos.cpp
+        src/daemon/tray_macos.mm
+        ${OSMV_EMBEDDED_LOGO_CPP}
+    )
 else()
     list(APPEND OSMV_DAEMON_SOURCES
         src/daemon/media_linux.cpp
@@ -180,6 +194,56 @@ if(WIN32)
             $<$<CONFIG:Release>:/OPT:ICF>
         )
     endif()
+elseif(APPLE)
+    find_package(OpenGL REQUIRED)
+    find_package(Threads REQUIRED)
+    find_package(glfw3 REQUIRED)
+
+    # 1. Pure ultra-lightweight Daemon (macOS Menu Bar / Status Item)
+    add_executable(osmv
+        src/main.cpp
+        ${OSMV_DAEMON_SOURCES}
+    )
+    target_link_libraries(osmv PRIVATE
+        osmv_common
+        "-framework Cocoa"
+        "-framework Foundation"
+        "-framework IOKit"
+        Threads::Threads
+    )
+    target_compile_options(osmv PRIVATE -Wall -Wextra -Wno-missing-field-initializers -ffunction-sections -fdata-sections)
+    target_link_options(osmv PRIVATE -Wl,-dead_strip)
+
+    # 2. Dedicated GUI process (ImGui + GLFW + OpenGL3)
+    list(APPEND OSMV_IMGUI_SOURCES
+        third_party/imgui/backends/imgui_impl_glfw.cpp
+        third_party/imgui/backends/imgui_impl_opengl3.cpp
+    )
+    list(APPEND OSMV_GUI_SOURCES src/gui/backend_linux_glfw.cpp)
+    add_executable(osmv-gui
+        src/gui/linux_gui_entry.cpp
+        ${OSMV_GUI_SOURCES}
+        ${OSMV_IMGUI_SOURCES}
+    )
+    target_include_directories(osmv-gui PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/misc/cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/fonts
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb
+    )
+    target_link_libraries(osmv-gui PRIVATE
+        osmv_common
+        glfw
+        OpenGL::GL
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        Threads::Threads
+    )
+    target_compile_options(osmv-gui PRIVATE -Wall -Wextra -Wno-missing-field-initializers -ffunction-sections -fdata-sections)
+    target_link_options(osmv-gui PRIVATE -Wl,-dead_strip)
 else()
     include(GNUInstallDirs)
     find_package(PkgConfig REQUIRED)

@@ -26,6 +26,9 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
 #endif
 
 namespace osmv::daemon {
@@ -196,6 +199,9 @@ private:
         return false;
 #else
         std::vector<std::string> dirs;
+        if (const char* tmp = std::getenv("TMPDIR"); tmp && tmp[0]) {
+            dirs.emplace_back(tmp);
+        }
         if (const char* xdg = std::getenv("XDG_RUNTIME_DIR"); xdg && xdg[0]) {
             dirs.emplace_back(xdg);
             dirs.emplace_back(std::string(xdg) + "/app/com.discordapp.Discord");
@@ -218,6 +224,10 @@ private:
                         tv.tv_sec = 1;
                         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
                         setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+#ifdef SO_NOSIGPIPE
+                        int nosig = 1;
+                        setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &nosig, sizeof(nosig));
+#endif
                         fd_ = fd;
                         return true;
                     }
